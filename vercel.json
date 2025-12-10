@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://your-api-url.com",
+    "NEXT_PUBLIC_ANALYTICS_ID": "your-analytics-id"
+  }
+}
