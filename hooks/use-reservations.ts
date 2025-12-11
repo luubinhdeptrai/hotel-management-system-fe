@@ -119,7 +119,53 @@ export function useReservations() {
   // Handle save reservation
   const handleSaveReservation = (data: ReservationFormData) => {
     if (formMode === "create") {
-      // Create new reservation
+      // Create new reservation with multi-room support
+      const roomSelections = data.roomSelections || [];
+
+      if (roomSelections.length === 0) {
+        console.error("No room selections provided");
+        return;
+      }
+
+      // Calculate total rooms and amount
+      const totalRooms = roomSelections.reduce(
+        (sum, sel) => sum + sel.quantity,
+        0
+      );
+      const checkIn = new Date(data.checkInDate);
+      const checkOut = new Date(data.checkOutDate);
+      const nights = Math.ceil(
+        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      const totalAmount = roomSelections.reduce((sum, sel) => {
+        return sum + sel.pricePerNight * sel.quantity * nights;
+      }, 0);
+
+      // Create details for each room
+      let detailCounter = 1;
+      const details = roomSelections.flatMap((selection) => {
+        return Array.from({ length: selection.quantity }, (_, index) => ({
+          detailID: `CTD${String(reservations.length + 1).padStart(
+            3,
+            "0"
+          )}_${detailCounter++}`,
+          reservationID: `DP${String(reservations.length + 1).padStart(
+            3,
+            "0"
+          )}`,
+          roomID: `P${selection.roomTypeID}_${index + 1}`, // Mock room ID
+          roomName: `${selection.roomTypeName} ${index + 1}`,
+          roomTypeID: selection.roomTypeID,
+          roomTypeName: selection.roomTypeName,
+          checkInDate: data.checkInDate,
+          checkOutDate: data.checkOutDate,
+          status: "Đã đặt" as ReservationStatus,
+          numberOfGuests: selection.numberOfGuests,
+          pricePerNight: selection.pricePerNight,
+        }));
+      });
+
       const newReservation: Reservation = {
         reservationID: `DP${String(reservations.length + 1).padStart(3, "0")}`,
         customerID: `KH${String(reservations.length + 1).padStart(3, "0")}`,
@@ -132,30 +178,14 @@ export function useReservations() {
           address: data.address,
         },
         reservationDate: new Date().toISOString().split("T")[0],
-        totalRooms: 1,
-        totalAmount: 0, // Calculate based on room type and dates
+        totalRooms,
+        totalAmount,
         depositAmount: data.depositAmount,
         notes: data.notes,
         status: "Đã đặt",
-        details: [
-          {
-            detailID: `CTD${String(reservations.length + 1).padStart(3, "0")}`,
-            reservationID: `DP${String(reservations.length + 1).padStart(
-              3,
-              "0"
-            )}`,
-            roomID: "P999", // Would be selected by user
-            roomName: "Phòng 999",
-            roomTypeID: data.roomTypeID,
-            roomTypeName: "Phòng tiêu chuẩn", // Mock name since we only have ID
-            checkInDate: data.checkInDate,
-            checkOutDate: data.checkOutDate,
-            status: "Đã đặt",
-            numberOfGuests: data.numberOfGuests,
-            pricePerNight: 0, // Get from room type
-          },
-        ],
+        details,
       };
+
       setReservations((prev) => [...prev, newReservation]);
     } else if (selectedReservation) {
       // Update existing reservation
@@ -178,7 +208,6 @@ export function useReservations() {
                   ...d,
                   checkInDate: data.checkInDate,
                   checkOutDate: data.checkOutDate,
-                  numberOfGuests: data.numberOfGuests,
                 })),
               }
             : r
