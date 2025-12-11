@@ -213,7 +213,7 @@ export default function RoomsPage() {
         onReset={resetFilters}
       />
 
-      {/* Rooms Grid */}
+      {/* Rooms Grouped by Floor */}
       {filteredRooms.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -224,16 +224,46 @@ export default function RoomsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-          {filteredRooms.map((room) => (
-            <RoomCard
-              key={room.roomID}
-              room={room}
-              onEdit={handleEditRoom}
-              onDelete={handleDeleteRoom}
-              onStatusChange={handleStatusChange}
-            />
-          ))}
+        <div className="space-y-6">
+          {uniqueFloors
+            .sort((a, b) => a - b)
+            .map((floor) => {
+              const floorRooms = filteredRooms.filter(
+                (room) => room.floor === floor
+              );
+              if (floorRooms.length === 0) return null;
+
+              return (
+                <div key={floor} className="space-y-4">
+                  {/* Floor Header */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 pl-3 py-1 border-l-4 border-primary-600">
+                      <span className="text-primary-600">{ICONS.HOME}</span>
+                      <h2 className="text-xl font-bold text-gray-800">
+                        Tầng {floor}
+                      </h2>
+                      <span className="text-sm text-gray-500 font-normal ml-1">
+                        ({floorRooms.length} phòng)
+                      </span>
+                    </div>
+                    <div className="flex-1 h-px bg-linear-to-r from-gray-200 to-transparent" />
+                  </div>
+
+                  {/* Floor Rooms Grid */}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {floorRooms.map((room) => (
+                      <RoomCard
+                        key={room.roomID}
+                        room={room}
+                        onEdit={handleEditRoom}
+                        onDelete={handleDeleteRoom}
+                        onStatusChange={handleStatusChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
         </div>
       )}
 

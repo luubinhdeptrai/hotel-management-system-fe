@@ -2,16 +2,13 @@
 // MINIBAR - Đồ uống và đồ ăn nhẹ trong phòng
 // LAUNDRY - Dịch vụ giặt là
 // F&B - Ăn uống (Food & Beverage)
-// PHUTHU - Phụ thu (Surcharges: early check-in, extra person, etc.)
-// PHAT - Phí phạt (Penalties: damage, loss, etc.)
-export type ServiceGroup = "MINIBAR" | "LAUNDRY" | "F&B" | "PHUTHU" | "PHAT";
+// Note: PHUTHU (Surcharges) and PHAT (Penalties) are now separate types in their own files
+export type ServiceGroup = "MINIBAR" | "LAUNDRY" | "F&B";
 
 export const SERVICE_GROUP_LABELS: Record<ServiceGroup, string> = {
   MINIBAR: "Minibar",
   LAUNDRY: "Giặt là",
   "F&B": "Ăn uống",
-  PHUTHU: "Phụ thu",
-  PHAT: "Phí phạt",
 };
 
 // Service Category Type

@@ -28,7 +28,6 @@ import {
   ServiceGroup,
   SERVICE_GROUP_LABELS,
 } from "@/lib/types/service";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface ServiceItemFormModalProps {
   isOpen: boolean;
@@ -56,7 +55,6 @@ export function ServiceItemFormModal({
           price: service.price,
           unit: service.unit,
           description: service.description || "",
-          isOpenPrice: service.isOpenPrice || false,
         }
       : {
           serviceName: "",
@@ -65,7 +63,6 @@ export function ServiceItemFormModal({
           price: 0,
           unit: "",
           description: "",
-          isOpenPrice: false,
         };
 
   const [formData, setFormData] = useState<ServiceItemFormData>(initialData);
@@ -82,8 +79,7 @@ export function ServiceItemFormModal({
       newErrors.categoryID = "Vui lòng chọn loại dịch vụ";
     }
 
-    // Price validation - skip if isOpenPrice is true for PHUTHU/PHAT
-    if (!formData.isOpenPrice && (!formData.price || formData.price <= 0)) {
+    if (!formData.price || formData.price <= 0) {
       newErrors.price = "Giá dịch vụ phải lớn hơn 0";
     }
 
@@ -118,7 +114,6 @@ export function ServiceItemFormModal({
       price: 0,
       unit: "",
       description: "",
-      isOpenPrice: false,
     });
     setErrors({});
     onClose();
@@ -208,11 +203,6 @@ export function ServiceItemFormModal({
                 setFormData({
                   ...formData,
                   serviceGroup: value,
-                  // Reset isOpenPrice when changing groups
-                  isOpenPrice:
-                    value === "PHUTHU" || value === "PHAT"
-                      ? formData.isOpenPrice
-                      : false,
                 });
               }}
             >
@@ -235,23 +225,6 @@ export function ServiceItemFormModal({
               <p className="text-sm text-error-600">{errors.serviceGroup}</p>
             )}
           </div>
-
-          {/* NEW: Open Price checkbox for PHUTHU/PHAT */}
-          {(formData.serviceGroup === "PHUTHU" ||
-            formData.serviceGroup === "PHAT") && (
-            <div className="flex items-center space-x-2 p-3 bg-warning-50 rounded-lg border border-warning-200">
-              <Checkbox
-                id="isOpenPrice"
-                checked={formData.isOpenPrice || false}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isOpenPrice: checked === true })
-                }
-              />
-              <Label htmlFor="isOpenPrice" className="text-sm cursor-pointer">
-                Giá mở (nhập giá khi post)
-              </Label>
-            </div>
-          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

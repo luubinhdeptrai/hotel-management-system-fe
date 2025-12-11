@@ -85,6 +85,15 @@ export interface Reservation {
   details: ReservationDetail[];
 }
 
+// Room Type Selection for multi-room booking
+export interface RoomTypeSelection {
+  roomTypeID: string;
+  roomTypeName: string;
+  quantity: number; // Number of rooms of this type
+  numberOfGuests: number; // Guests per room
+  pricePerNight: number;
+}
+
 // Reservation Form Data
 export interface ReservationFormData {
   customerName: string;
@@ -94,8 +103,11 @@ export interface ReservationFormData {
   address?: string;
   checkInDate: string;
   checkOutDate: string;
-  roomTypeID: string;
-  numberOfGuests: number;
+  // Legacy single room booking (for backward compatibility)
+  roomTypeID?: string;
+  numberOfGuests?: number;
+  // New multi-room booking
+  roomSelections?: RoomTypeSelection[];
   depositAmount: number;
   notes?: string;
 }

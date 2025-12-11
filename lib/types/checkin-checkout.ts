@@ -67,8 +67,19 @@ export interface CheckoutSummary {
 // Check-in Form Data
 export interface CheckInFormData {
   reservationID: string;
-  roomID: string;
+  roomID: string; // For single room check-in (backward compatibility)
   numberOfGuests: number;
+  notes?: string;
+}
+
+// Multi-room Check-in Form Data
+export interface MultiRoomCheckInFormData {
+  reservationID: string;
+  rooms: {
+    detailID: string; // Reservation detail ID
+    roomID: string; // Selected room ID
+    numberOfGuests: number;
+  }[];
   notes?: string;
 }
 

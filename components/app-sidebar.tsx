@@ -69,6 +69,16 @@ const serviceManagement = [
     icon: ICONS.UTENSILS,
   },
   {
+    title: "Phụ Thu",
+    url: "/surcharges",
+    icon: ICONS.SURCHARGE,
+  },
+  {
+    title: "Phí Phạt",
+    url: "/penalties",
+    icon: ICONS.PENALTY,
+  },
+  {
     title: "Thanh Toán",
     url: "/payments",
     icon: ICONS.RECEIPT,
