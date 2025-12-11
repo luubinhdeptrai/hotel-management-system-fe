@@ -13,9 +13,9 @@ export default function DashboardLayout({
     <AuthGuard>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="flex min-w-0 flex-col overflow-hidden ">
+        <SidebarInset className="flex min-w-0 flex-col">
           <Navbar />
-          <main className="flex-1 min-h-0 overflow-auto bg-gray-50">
+          <main className="flex-1 overflow-auto bg-gray-50">
             <div className="p-6 min-w-full">{children}</div>
           </main>
         </SidebarInset>
