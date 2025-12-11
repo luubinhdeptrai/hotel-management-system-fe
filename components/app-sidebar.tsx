@@ -144,7 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="bg-gray-50">
+        <SidebarContent className="bg-gray-50 scrollbar-hide">
           {/* Dashboard */}
           <SidebarGroup>
             <SidebarGroupContent>
