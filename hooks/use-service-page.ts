@@ -26,6 +26,11 @@ export function useServicePage() {
     softDeleteService,
   } = useServices();
 
+  // Filter out Phụ thu and Phí phạt categories (they have their own dedicated pages)
+  const filteredCategories = categories.filter(
+    (cat) => cat.categoryName !== "Phụ thu" && cat.categoryName !== "Phí phạt"
+  );
+
   // Category Modal State
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">(
@@ -163,15 +168,16 @@ export function useServicePage() {
     setNotification(null);
   };
 
-  // Statistics
+  // Statistics - use filtered categories, all services
   const statistics = {
-    activeCategoriesCount: categories.filter((cat) => cat.isActive).length,
+    activeCategoriesCount: filteredCategories.filter((cat) => cat.isActive)
+      .length,
     activeServicesCount: services.filter((srv) => srv.isActive).length,
   };
 
   return {
-    // Data
-    categories,
+    // Data - return filtered categories, all services
+    categories: filteredCategories,
     services,
     statistics,
     notification,

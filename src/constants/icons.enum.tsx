@@ -47,6 +47,8 @@ import {
   LineChart,
   BarChart2,
   Printer,
+  CircleDollarSign,
+  AlertTriangle,
 } from "lucide-react";
 
 export const ICONS = {
@@ -98,4 +100,6 @@ export const ICONS = {
   LINE_CHART: <LineChart />,
   BAR_CHART_2: <BarChart2 />,
   PRINTER: <Printer />,
+  SURCHARGE: <CircleDollarSign />,
+  PENALTY: <AlertTriangle />,
 };
