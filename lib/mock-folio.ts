@@ -1,4 +1,4 @@
-import { Folio, FolioTransaction } from "@/lib/types/folio";
+import { Folio, FolioTransaction, TransactionType } from "@/lib/types/folio";
 
 // Mock folio transactions
 const mockFolioTransactions: FolioTransaction[] = [
@@ -184,4 +184,167 @@ export const calculateFolioTotals = (transactions: FolioTransaction[]) => {
   const balance = totalDebit - totalCredit;
 
   return { totalDebit, totalCredit, balance };
+};
+
+// --- Mutable state management for mock data ---
+
+// Store for mutable folios (copy of initial data)
+let mutableFolios: Folio[] = JSON.parse(JSON.stringify(mockFolios));
+
+// Generate unique transaction ID
+const generateTransactionId = (): string => {
+  return `TXN${Date.now()}${Math.random()
+    .toString(36)
+    .substring(2, 5)
+    .toUpperCase()}`;
+};
+
+// Get current date/time strings
+const getCurrentDateTime = () => {
+  const now = new Date();
+  const date = now.toISOString().split("T")[0];
+  const time = now.toTimeString().split(" ")[0];
+  const createdAt = now.toISOString();
+  return { date, time, createdAt };
+};
+
+// Get folio by ID (mutable version)
+export const getMutableFolioById = (folioID: string): Folio | undefined => {
+  return mutableFolios.find((f) => f.folioID === folioID);
+};
+
+// Add a charge to folio
+export const addChargeToFolio = (
+  folioID: string,
+  charge: {
+    type: TransactionType;
+    description: string;
+    amount: number;
+  }
+): Folio | undefined => {
+  const folioIndex = mutableFolios.findIndex((f) => f.folioID === folioID);
+  if (folioIndex === -1) return undefined;
+
+  const { date, time, createdAt } = getCurrentDateTime();
+
+  const newTransaction: FolioTransaction = {
+    transactionID: generateTransactionId(),
+    folioID,
+    date,
+    time,
+    type: charge.type,
+    description: charge.description,
+    debit: charge.amount,
+    credit: 0,
+    createdBy: "Current User", // In real app, get from auth
+    createdAt,
+  };
+
+  mutableFolios[folioIndex].transactions.push(newTransaction);
+
+  // Recalculate totals
+  const { totalDebit, totalCredit, balance } = calculateFolioTotals(
+    mutableFolios[folioIndex].transactions
+  );
+  mutableFolios[folioIndex].totalDebit = totalDebit;
+  mutableFolios[folioIndex].totalCredit = totalCredit;
+  mutableFolios[folioIndex].balance = balance;
+
+  return mutableFolios[folioIndex];
+};
+
+// Add a payment to folio
+export const addPaymentToFolio = (
+  folioID: string,
+  payment: {
+    amount: number;
+    paymentMethod: "CASH" | "CARD" | "TRANSFER";
+    reference?: string;
+    notes?: string;
+  }
+): Folio | undefined => {
+  const folioIndex = mutableFolios.findIndex((f) => f.folioID === folioID);
+  if (folioIndex === -1) return undefined;
+
+  const { date, time, createdAt } = getCurrentDateTime();
+
+  const methodLabels = {
+    CASH: "Tiền mặt",
+    CARD: "Thẻ",
+    TRANSFER: "Chuyển khoản",
+  };
+
+  let description = `Thanh toán - ${methodLabels[payment.paymentMethod]}`;
+  if (payment.reference) {
+    description += ` (Ref: ${payment.reference})`;
+  }
+  if (payment.notes) {
+    description += ` - ${payment.notes}`;
+  }
+
+  const newTransaction: FolioTransaction = {
+    transactionID: generateTransactionId(),
+    folioID,
+    date,
+    time,
+    type: "PAYMENT",
+    description,
+    debit: 0,
+    credit: payment.amount,
+    createdBy: "Current User",
+    createdAt,
+  };
+
+  mutableFolios[folioIndex].transactions.push(newTransaction);
+
+  // Recalculate totals
+  const { totalDebit, totalCredit, balance } = calculateFolioTotals(
+    mutableFolios[folioIndex].transactions
+  );
+  mutableFolios[folioIndex].totalDebit = totalDebit;
+  mutableFolios[folioIndex].totalCredit = totalCredit;
+  mutableFolios[folioIndex].balance = balance;
+
+  return mutableFolios[folioIndex];
+};
+
+// Void a transaction
+export const voidTransaction = (
+  folioID: string,
+  transactionID: string,
+  reason: string
+): Folio | undefined => {
+  const folioIndex = mutableFolios.findIndex((f) => f.folioID === folioID);
+  if (folioIndex === -1) return undefined;
+
+  const txnIndex = mutableFolios[folioIndex].transactions.findIndex(
+    (t) => t.transactionID === transactionID
+  );
+  if (txnIndex === -1) return undefined;
+
+  const now = new Date().toISOString();
+
+  mutableFolios[folioIndex].transactions[txnIndex].isVoided = true;
+  mutableFolios[folioIndex].transactions[txnIndex].voidedBy = "Current User";
+  mutableFolios[folioIndex].transactions[txnIndex].voidedAt = now;
+
+  // Add void reason to description
+  mutableFolios[folioIndex].transactions[
+    txnIndex
+  ].description += ` [HỦY: ${reason}]`;
+
+  // Recalculate totals
+  const { totalDebit, totalCredit, balance } = calculateFolioTotals(
+    mutableFolios[folioIndex].transactions
+  );
+  mutableFolios[folioIndex].totalDebit = totalDebit;
+  mutableFolios[folioIndex].totalCredit = totalCredit;
+  mutableFolios[folioIndex].balance = balance;
+
+  return mutableFolios[folioIndex];
+};
+
+// Reset mock data to initial state (useful for testing)
+export const resetMockFolios = () => {
+  mutableFolios = JSON.parse(JSON.stringify(mockFolios));
 };
