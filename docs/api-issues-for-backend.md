@@ -1,8 +1,126 @@
 # API Issues & Notes for Backend Team
 
-Generated: 2025-12-14
+Generated: 2025-12-14  
+Last Updated: 2025-12-14
 
 This document tracks API integration notes, missing endpoints, or response data discrepancies discovered during frontend implementation.
+
+---
+
+## Dashboard APIs
+
+### Implemented Endpoints
+
+The following endpoints have been integrated for the dashboard page:
+
+| Endpoint                      | Method | Status         | Notes                                      |
+| ----------------------------- | ------ | -------------- | ------------------------------------------ |
+| `/v1/reports/dashboard`       | GET    | ✅ Implemented | **Response schema NOT defined in swagger** |
+| `/v1/reservations/arrivals`   | GET    | ✅ Implemented | Today's arrivals, schema needed            |
+| `/v1/reservations/departures` | GET    | ✅ Implemented | Today's departures, schema needed          |
+| `/v1/rooms`                   | GET    | ✅ Implemented | Room list with status                      |
+| `/v1/housekeeping/pending`    | GET    | ✅ Implemented | Housekeeping pending tasks                 |
+
+### ⚠️ Missing Response Schemas in Swagger
+
+The following endpoints exist in swagger but **lack detailed response schemas**. Please add these to the swagger documentation:
+
+#### 1. `GET /v1/reports/dashboard` - Expected Response
+
+```json
+{
+  "totalRooms": 20,
+  "availableRooms": 7,
+  "occupiedRooms": 10,
+  "dirtyRooms": 3,
+  "maintenanceRooms": 2,
+  "todayArrivals": 5,
+  "todayDepartures": 4,
+  "currentGuests": 14,
+  "occupancyRate": 65.0,
+  "todayRevenue": 45500000
+}
+```
+
+#### 2. `GET /v1/reservations/arrivals` - Expected Response
+
+```json
+{
+  "results": [
+    {
+      "id": 1,
+      "reservationId": 123,
+      "guestName": "Nguyễn Văn An",
+      "customerName": "Nguyễn Văn An",
+      "roomNumber": "101",
+      "roomTypeName": "Deluxe",
+      "checkInDate": "2025-12-14T14:00:00.000Z",
+      "checkInTime": "14:00",
+      "numberOfGuests": 2,
+      "specialRequests": "Late arrival",
+      "status": "CONFIRMED"
+    }
+  ],
+  "page": 1,
+  "limit": 10,
+  "totalPages": 1,
+  "totalResults": 5
+}
+```
+
+#### 3. `GET /v1/reservations/departures` - Expected Response
+
+```json
+{
+  "results": [
+    {
+      "id": 1,
+      "stayRecordId": 456,
+      "guestName": "Trần Thị Bình",
+      "customerName": "Trần Thị Bình",
+      "roomNumber": "205",
+      "roomTypeName": "Suite",
+      "checkOutDate": "2025-12-14T12:00:00.000Z",
+      "checkOutTime": "12:00",
+      "totalAmount": 3200000,
+      "balance": 0,
+      "status": "DUE_OUT"
+    }
+  ],
+  "page": 1,
+  "limit": 10,
+  "totalPages": 1,
+  "totalResults": 4
+}
+```
+
+#### 4. `GET /v1/housekeeping/pending` - Expected Response
+
+```json
+{
+  "results": [
+    {
+      "id": 1,
+      "roomId": 5,
+      "roomCode": "103",
+      "roomName": "Room 103",
+      "floor": 1,
+      "status": "PENDING",
+      "priority": "HIGH",
+      "assignedTo": {
+        "id": 10,
+        "name": "Nguyễn Văn C"
+      },
+      "stayRecordId": 789,
+      "notes": "Checkout cleaning"
+    }
+  ],
+  "page": 1,
+  "limit": 10,
+  "totalPages": 1,
+  "totalResults": 3
+}
+```
 
 ---
 
