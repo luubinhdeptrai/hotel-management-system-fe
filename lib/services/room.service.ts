@@ -19,6 +19,8 @@ import type {
   RoomTypesListResponse,
   Room,
   RoomType,
+} from "@/lib/types/room";
+import {
   transformApiRoomToUI,
   transformApiRoomTypeToUI,
 } from "@/lib/types/room";
