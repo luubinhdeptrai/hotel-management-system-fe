@@ -362,6 +362,166 @@ Before deleting a room type, the frontend needs to verify it's not being used by
 
 ---
 
+## Reservation APIs
+
+### Implemented Endpoints
+
+The following endpoints have been integrated for reservation management:
+
+| Endpoint                                    | Method | Status         | Notes                            |
+| ------------------------------------------- | ------ | -------------- | -------------------------------- |
+| `/v1/reservations`                          | GET    | ✅ Implemented | Get all reservations (paginated) |
+| `/v1/reservations`                          | POST   | ✅ Implemented | Create new reservation           |
+| `/v1/reservations/{reservationId}`          | GET    | ✅ Implemented | Get reservation by ID            |
+| `/v1/reservations/{reservationId}`          | PATCH  | ✅ Implemented | Update reservation               |
+| `/v1/reservations/{reservationId}/confirm`  | POST   | ✅ Implemented | Confirm reservation              |
+| `/v1/reservations/{reservationId}/cancel`   | POST   | ✅ Implemented | Cancel reservation               |
+| `/v1/reservations/{reservationId}/check-in` | POST   | ✅ Implemented | Check in reservation             |
+| `/v1/reservations/arrivals`                 | GET    | ✅ Implemented | Get today's arrivals             |
+| `/v1/reservations/departures`               | GET    | ✅ Implemented | Get today's departures           |
+
+### ⚠️ Missing Response Schemas in Swagger
+
+The following response schemas are **not defined** in swagger documentation. Please add:
+
+#### 1. `GET /v1/reservations` - Expected Response
+
+```json
+{
+  "results": [
+    {
+      "id": 1,
+      "customerId": 10,
+      "customer": {
+        "id": 10,
+        "firstName": "Nguyễn",
+        "lastName": "Văn An",
+        "email": "an@example.com",
+        "phone": "0901234567"
+      },
+      "roomTypeId": 2,
+      "roomType": {
+        "id": 2,
+        "code": "DLX",
+        "name": "Deluxe Room"
+      },
+      "checkInDate": "2025-12-14",
+      "checkOutDate": "2025-12-16",
+      "numberOfGuests": 2,
+      "specialRequests": "Late check-in",
+      "status": "CONFIRMED",
+      "totalAmount": 3600000,
+      "depositAmount": 1000000,
+      "paidAmount": 1000000,
+      "createdAt": "2025-12-10T08:00:00.000Z",
+      "updatedAt": "2025-12-10T08:00:00.000Z"
+    }
+  ],
+  "page": 1,
+  "limit": 10,
+  "totalPages": 5,
+  "totalResults": 50
+}
+```
+
+#### 2. `POST /v1/reservations` - Request Body
+
+Swagger has this documented but response schema is missing:
+
+```json
+// Request
+{
+  "customerId": 10,
+  "roomTypeId": 2,
+  "checkInDate": "2025-12-14",
+  "checkOutDate": "2025-12-16",
+  "numberOfGuests": 2,
+  "specialRequests": "Late check-in"
+}
+
+// Expected Response
+{
+  "id": 123,
+  "customerId": 10,
+  "roomTypeId": 2,
+  "checkInDate": "2025-12-14",
+  "checkOutDate": "2025-12-16",
+  "numberOfGuests": 2,
+  "specialRequests": "Late check-in",
+  "status": "PENDING",
+  "createdAt": "2025-12-14T07:00:00.000Z"
+}
+```
+
+### ⚠️ Missing Endpoints
+
+The following endpoints are **NOT in swagger documentation** but are needed by the frontend:
+
+| Endpoint                                     | Method | Purpose                 | Priority |
+| -------------------------------------------- | ------ | ----------------------- | -------- |
+| `/v1/reservations/{reservationId}/check-out` | POST   | Check out a reservation | HIGH     |
+| `/v1/reservations/{reservationId}`           | DELETE | Delete reservation      | MEDIUM   |
+| `/v1/reservations/search`                    | GET    | Search reservations     | MEDIUM   |
+| `/v1/reservations/{reservationId}/deposit`   | POST   | Record deposit payment  | HIGH     |
+
+### ⚠️ Notes for Backend Team
+
+#### 1. Reservation Status Values
+
+The frontend expects these status values from the API:
+
+```typescript
+type ApiReservationStatus =
+  | "PENDING" // Waiting for confirmation/deposit
+  | "CONFIRMED" // Reservation confirmed
+  | "CANCELLED" // Reservation cancelled
+  | "CHECKED_IN" // Guest has checked in
+  | "CHECKED_OUT"; // Guest has checked out
+```
+
+> [!NOTE]
+> The frontend maps these to Vietnamese labels internally.
+
+#### 2. Check-in Response
+
+After check-in, the reservation response should include:
+
+```json
+{
+  "id": 123,
+  "status": "CHECKED_IN",
+  "stayRecordId": 456, // NEW: Link to stay record
+  "roomId": 5, // NEW: Assigned room ID
+  "roomNumber": "301", // NEW: Assigned room number
+  "folioId": 789 // NEW: Created folio ID
+}
+```
+
+#### 3. Customer Information
+
+For `/v1/reservations` list endpoint, please include nested customer object with at least:
+
+- `firstName`, `lastName` for display name
+- `phone` for contact
+
+#### 4. Multi-Room Booking
+
+The current swagger only supports single room type per reservation. The frontend has support for multi-room bookings using `roomSelections` array. Please clarify if this will be supported:
+
+```json
+{
+  "customerId": 10,
+  "roomSelections": [
+    { "roomTypeId": 1, "quantity": 2, "numberOfGuests": 2 },
+    { "roomTypeId": 2, "quantity": 1, "numberOfGuests": 3 }
+  ],
+  "checkInDate": "2025-12-14",
+  "checkOutDate": "2025-12-16"
+}
+```
+
+---
+
 ## Missing APIs or Data (To Be Discussed)
 
 > [!IMPORTANT]
