@@ -4,12 +4,22 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Hotel } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { mockLogin, type LoginCredentials } from "@/lib/mock-auth";
+import { authService } from "@/lib/services/auth.service";
+import { ApiError } from "@/lib/services/api";
+import { mockLogin } from "@/lib/mock-auth";
+
+// Toggle this to use mock login during development when backend is unavailable
+const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === "true";
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    username: "",
+    email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -22,24 +32,47 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await mockLogin(credentials);
+      if (USE_MOCK_AUTH) {
+        // Use mock login for development
+        const response = await mockLogin({
+          username: credentials.email,
+          password: credentials.password,
+        });
 
-      if (response.success && response.user) {
-        // Redirect based on role
-        switch (response.user.role) {
-          case "Admin":
-          case "Quản lý":
-          case "Lễ tân":
-            router.push("/dashboard");
-            break;
-          default:
-            router.push("/dashboard");
+        if (response.success && response.user) {
+          router.push("/dashboard");
+        } else {
+          setErrorMessage(response.message || "Đăng nhập thất bại");
         }
       } else {
-        setErrorMessage(response.message || "Đăng nhập thất bại");
+        // Use real API
+        const response = await authService.login(
+          credentials.email,
+          credentials.password
+        );
+
+        console.log("Login response:", response);
+
+        // If we reach here without error, login was successful
+        // authService.login() throws on failure
+        router.push("/dashboard");
       }
     } catch (error) {
-      setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại sau.");
+      if (error instanceof ApiError) {
+        if (error.statusCode === 401) {
+          setErrorMessage("Email hoặc mật khẩu không đúng");
+        } else if (error.statusCode === 0) {
+          setErrorMessage(
+            "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng."
+          );
+        } else {
+          setErrorMessage(
+            error.message || "Có lỗi xảy ra. Vui lòng thử lại sau."
+          );
+        }
+      } else {
+        setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại sau.");
+      }
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -92,29 +125,29 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Username Field */}
+              {/* Email Field */}
               <div className="space-y-2">
                 <label
-                  htmlFor="username"
+                  htmlFor="email"
                   className="block text-sm font-medium text-neutral-950 tracking-[-0.1504px]"
                 >
-                  Tên đăng nhập
+                  Email
                 </label>
                 <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
                   required
-                  value={credentials.username}
+                  value={credentials.email}
                   onChange={(e) =>
                     setCredentials({
                       ...credentials,
-                      username: e.target.value,
+                      email: e.target.value,
                     })
                   }
                   className="h-9 bg-[#f3f3f5] border-transparent rounded-lg px-3 py-1 text-sm tracking-[-0.1504px] placeholder:text-[#717182]"
-                  placeholder="Nhập tên đăng nhập"
+                  placeholder="Nhập email"
                   disabled={isLoading}
                 />
               </div>
