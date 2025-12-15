@@ -1,5 +1,30 @@
-// Pricing Engine Types
+// Pricing Engine Types - Based on CHINHSACH_GIA database table
 
+// CHINHSACH_GIA (MaChinhSach, TenChinhSach, MaLoaiPhong, TuNgay, DenNgay, KieuNgay, HeSo, MucUuTien)
+export interface PricingPolicy {
+  MaChinhSach: string; // Policy ID
+  TenChinhSach: string; // Policy Name
+  MaLoaiPhong: string; // Room Type ID
+  TenLoaiPhong?: string; // Room Type Name (joined from room type table)
+  TuNgay: string; // From Date (YYYY-MM-DD)
+  DenNgay: string; // To Date (YYYY-MM-DD)
+  KieuNgay: "Ngày thường" | "Cuối tuần" | "Ngày lễ" | "Tất cả"; // Date Type
+  HeSo: number; // Multiplier Factor (e.g., 1.0, 1.2, 1.5)
+  MucUuTien: number; // Priority Level (higher = more priority)
+}
+
+// Form data for creating/editing pricing policies
+export interface PricingPolicyFormData {
+  TenChinhSach: string;
+  MaLoaiPhong: string;
+  TuNgay: string;
+  DenNgay: string;
+  KieuNgay: "Ngày thường" | "Cuối tuần" | "Ngày lễ" | "Tất cả";
+  HeSo: number;
+  MucUuTien: number;
+}
+
+// OLD TYPES - Keeping for backward compatibility
 // Pricing Rule for dynamic rates
 export interface PricingRule {
   ruleID: string;

@@ -9,7 +9,7 @@ import { ApiError } from "@/lib/services/api";
 import { mockLogin } from "@/lib/mock-auth";
 
 // Toggle this to use mock login during development when backend is unavailable
-const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === "true";
+const USE_MOCK_AUTH = true;
 
 interface LoginCredentials {
   email: string;

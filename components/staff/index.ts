@@ -7,3 +7,5 @@ export { RolePermissionEditModal } from "./role-permission-edit-modal";
 export { StaffStatistics } from "./staff-statistics";
 export { StaffFilters } from "./staff-filters";
 export { EmployeesTab } from "./employees-tab";
+export { StaffCard } from "./staff-card";
+export { StaffGrid } from "./staff-grid";

@@ -43,18 +43,18 @@ export function RoomFilters({
     filters.floor !== "Tất cả";
 
   return (
-    <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader>
+    <Card className="border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+      <CardHeader className="bg-linear-to-r from-gray-50 to-gray-100 border-b-2 border-primary-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 text-primary-600 shadow-sm">
               {ICONS.FILTER}
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">
+              <CardTitle className="text-xl font-bold text-gray-900">
                 Bộ lọc tìm kiếm
               </CardTitle>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-sm text-gray-600 mt-1 font-medium">
                 Lọc và tìm kiếm phòng theo tiêu chí
               </p>
             </div>
@@ -63,7 +63,7 @@ export function RoomFilters({
             variant="outline"
             size="sm"
             onClick={onReset}
-            className="hover:bg-gray-50"
+            className="h-10 px-4 hover:bg-error-50 hover:text-error-600 hover:border-error-300 hover:scale-105 transition-all font-semibold"
           >
             <span className="mr-1.5">{ICONS.CLOSE}</span>
             Đặt lại
@@ -74,20 +74,20 @@ export function RoomFilters({
       <CardContent>
         <div className="space-y-6">
           {/* Search - Full Width */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-              <span className="text-gray-400">{ICONS.SEARCH}</span>
+          <div className="space-y-3">
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wide">
+              <span className="text-primary-600">{ICONS.SEARCH}</span>
               Tìm kiếm nhanh
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500">
                 {ICONS.SEARCH}
               </span>
               <Input
                 placeholder="Nhập tên phòng, mã phòng để tìm kiếm..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                className="pl-12 h-12 bg-gradient-to-r from-gray-50 to-white border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all shadow-sm text-base font-medium"
               />
             </div>
           </div>
@@ -95,21 +95,21 @@ export function RoomFilters({
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full h-1 bg-linear-to-r from-transparent via-primary-200 to-transparent rounded-full"></div>
             </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-3 text-gray-500 font-medium">
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-4 py-1 text-primary-600 font-bold uppercase tracking-wider">
                 Lọc theo tiêu chí
               </span>
             </div>
           </div>
 
           {/* Filter Grid */}
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="flex flex-col md:flex-row gap-6 w-full">
             {/* Status Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-info-600"></span>
+            <div className=" ml-17 flex-2 space-y-3">
+              <label className="text-base font-bold text-gray-700 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-info-600 shadow-sm"></span>
                 Trạng thái phòng
               </label>
               <Select
@@ -121,7 +121,7 @@ export function RoomFilters({
                   })
                 }
               >
-                <SelectTrigger className="h-11 bg-gray-50 border-gray-200 hover:bg-white transition-colors">
+                <SelectTrigger className="h-14 bg-gradient-to-r from-gray-50 to-white border-gray-300 hover:border-primary-400 transition-all shadow-sm font-semibold text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -134,31 +134,31 @@ export function RoomFilters({
                   <SelectItem value="Sẵn sàng">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-success-600"></span>
-                      🟢 Sẵn sàng
+                      Sẵn sàng
                     </div>
                   </SelectItem>
                   <SelectItem value="Đang thuê">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-error-600"></span>
-                      🔴 Đang thuê
+                      Đang thuê
                     </div>
                   </SelectItem>
                   <SelectItem value="Bẩn">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-warning-600"></span>
-                      🟡 Bẩn
+                      Bẩn
                     </div>
                   </SelectItem>
                   <SelectItem value="Bảo trì">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-gray-600"></span>
-                      ⚫ Bảo trì
+                      Bảo trì
                     </div>
                   </SelectItem>
                   <SelectItem value="Đã đặt">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-info-600"></span>
-                      🔵 Đã đặt
+                      Đã đặt
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -166,9 +166,9 @@ export function RoomFilters({
             </div>
 
             {/* Room Type Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <span className="text-gray-400">{ICONS.BED_DOUBLE}</span>
+            <div className="flex-2 space-y-3">
+              <label className="text-base font-bold text-gray-700 flex items-center gap-2">
+                <span className="text-primary-600">{ICONS.BED_DOUBLE}</span>
                 Loại phòng
               </label>
               <Select
@@ -177,7 +177,7 @@ export function RoomFilters({
                   onFiltersChange({ ...filters, roomType: value })
                 }
               >
-                <SelectTrigger className="h-11 bg-gray-50 border-gray-200 hover:bg-white transition-colors">
+                <SelectTrigger className="h-14 bg-gradient-to-r from-gray-50 to-white border-gray-300 hover:border-primary-400 transition-all shadow-sm font-semibold text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -197,9 +197,9 @@ export function RoomFilters({
             </div>
 
             {/* Floor Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <span className="text-gray-400">{ICONS.HOME}</span>
+            <div className="flex-1 space-y-3">
+              <label className="text-base font-bold text-gray-700 flex items-center gap-2">
+                <span className="text-primary-600">{ICONS.HOME}</span>
                 Tầng
               </label>
               <Select
@@ -211,7 +211,7 @@ export function RoomFilters({
                   })
                 }
               >
-                <SelectTrigger className="h-11 bg-gray-50 border-gray-200 hover:bg-white transition-colors">
+                <SelectTrigger className="h-14 bg-gradient-to-r from-gray-50 to-white border-gray-300 hover:border-primary-400 transition-all shadow-sm font-semibold text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -60,9 +60,21 @@ export async function mockLogin(
   );
 
   if (user) {
-    // Store user in sessionStorage (for mock purposes)
+    // Store user in sessionStorage (for mock purposes) and localStorage (for AuthGuard compatibility)
     if (typeof window !== "undefined") {
       sessionStorage.setItem("currentUser", JSON.stringify(user));
+
+      // Set tokens for AuthGuard and real service compatibility
+      localStorage.setItem(
+        "auth_access_token",
+        "mock_access_token_" + user.employeeId
+      );
+      localStorage.setItem(
+        "auth_refresh_token",
+        "mock_refresh_token_" + user.employeeId
+      );
+      localStorage.setItem("auth_user", JSON.stringify(user));
+
       // Set auth cookie for middleware
       document.cookie = `auth-token=${user.employeeId}; path=/; max-age=${
         60 * 60 * 24 * 7
@@ -104,6 +116,12 @@ export function getCurrentUser(): User | null {
 export function mockLogout(): void {
   if (typeof window !== "undefined") {
     sessionStorage.removeItem("currentUser");
+
+    // Clear tokens for AuthGuard and real service compatibility
+    localStorage.removeItem("auth_access_token");
+    localStorage.removeItem("auth_refresh_token");
+    localStorage.removeItem("auth_user");
+
     // Clear auth cookie
     document.cookie = "auth-token=; path=/; max-age=0";
   }

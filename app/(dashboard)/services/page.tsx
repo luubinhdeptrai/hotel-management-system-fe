@@ -5,12 +5,11 @@ import { useServicePage } from "@/hooks/use-service-page";
 import { PageHeader } from "@/components/services/page-header";
 import { NotificationBanner } from "@/components/services/notification-banner";
 import { ServiceStatistics } from "@/components/services/service-statistics";
-import { ServicesSectionHeader } from "@/components/services/services-section-header";
 import { CategoriesSectionHeader } from "@/components/services/categories-section-header";
 import { ServiceCategoryFormModal } from "@/components/services/service-category-form-modal";
 import { ServiceItemFormModal } from "@/components/services/service-item-form-modal";
 import { ServiceCategoryTable } from "@/components/services/service-category-table";
-import { ServiceItemsTable } from "@/components/services/service-items-table";
+import { ServiceGrid } from "@/components/services/service-grid";
 
 export default function ServicesPage() {
   const {
@@ -69,13 +68,12 @@ export default function ServicesPage() {
 
         {/* Services Tab */}
         <TabsContent value="services" className="space-y-4">
-          <ServicesSectionHeader onAddService={handleAddService} />
-
-          <ServiceItemsTable
+          <ServiceGrid
             services={services}
             categories={categories}
             onEdit={handleEditService}
             onDelete={handleDeleteService}
+            onCreate={handleAddService}
           />
         </TabsContent>
 

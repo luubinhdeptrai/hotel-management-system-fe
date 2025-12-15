@@ -3,10 +3,8 @@
 import { usePenaltyPage } from "@/hooks/use-penalty-page";
 import { PageHeader } from "@/components/services/page-header";
 import { NotificationBanner } from "@/components/services/notification-banner";
-import { PenaltyTable } from "@/components/penalties/penalty-table";
+import { PenaltyGrid } from "@/components/penalties/penalty-grid";
 import { PenaltyFormModal } from "@/components/penalties/penalty-form-modal";
-import { Button } from "@/components/ui/button";
-import { ICONS } from "@/src/constants/icons.enum";
 
 export default function PenaltiesPage() {
   const {
@@ -40,25 +38,12 @@ export default function PenaltiesPage() {
         />
       )}
 
-      {/* Section Header with Add Button */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Danh sách Phí Phạt
-        </h2>
-        <Button
-          onClick={handleAddPenalty}
-          className="bg-primary-600 hover:bg-primary-700 text-white"
-        >
-          {ICONS.PLUS}
-          <span className="ml-2">Thêm Phí Phạt</span>
-        </Button>
-      </div>
-
-      {/* Penalty Table */}
-      <PenaltyTable
+      {/* Penalty Grid */}
+      <PenaltyGrid
         penalties={penalties}
         onEdit={handleEditPenalty}
         onDelete={handleDeletePenalty}
+        onCreate={handleAddPenalty}
       />
 
       {/* Penalty Form Modal */}
