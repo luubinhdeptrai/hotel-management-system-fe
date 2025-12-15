@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+    Folder,
   Search,
   Filter,
   Plus,
@@ -64,6 +65,7 @@ import {
   Loader2,
   ArrowUpDown,
   Star,
+  Percent,
 } from "lucide-react";
 
 export const ICONS = {
@@ -134,5 +136,7 @@ export const ICONS = {
   ALERT_CIRCLE: <AlertCircle />,
   LOADER: <Loader2 />,
   ARROW_UP_DOWN: <ArrowUpDown />,
+  FOLDER: <Folder />,
+  PERCENT: <Percent />,
   STAR: <Star />,
 };

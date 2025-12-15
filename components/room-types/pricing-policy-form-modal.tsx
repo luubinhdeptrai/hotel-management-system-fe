@@ -53,31 +53,39 @@ export function PricingPolicyFormModal({
 
   useEffect(() => {
     if (!open) return; // Only run when modal opens
-    
-    if (policy) {
-      setFormData({
-        TenChinhSach: policy.TenChinhSach,
-        MaLoaiPhong: policy.MaLoaiPhong,
-        TuNgay: policy.TuNgay,
-        DenNgay: policy.DenNgay,
-        KieuNgay: policy.KieuNgay,
-        HeSo: policy.HeSo,
-        MucUuTien: policy.MucUuTien,
-      });
-      const roomType = roomTypes.find((rt) => rt.roomTypeID === policy.MaLoaiPhong);
-      setSelectedRoomType(roomType || null);
-    } else {
-      setFormData({
-        TenChinhSach: "",
-        MaLoaiPhong: "",
-        TuNgay: "",
-        DenNgay: "",
-        KieuNgay: "Ngày thường",
-        HeSo: 1.0,
-        MucUuTien: 1,
-      });
-      setSelectedRoomType(null);
-    }
+
+    // Compute target state synchronously but defer setState to avoid cascading renders
+    const targetForm: PricingPolicyFormData = policy
+      ? {
+          TenChinhSach: policy.TenChinhSach,
+          MaLoaiPhong: policy.MaLoaiPhong,
+          TuNgay: policy.TuNgay,
+          DenNgay: policy.DenNgay,
+          KieuNgay: policy.KieuNgay as PricingPolicyFormData["KieuNgay"],
+          HeSo: policy.HeSo,
+          MucUuTien: policy.MucUuTien,
+        }
+      : {
+          TenChinhSach: "",
+          MaLoaiPhong: "",
+          TuNgay: "",
+          DenNgay: "",
+          KieuNgay: "Ngày thường",
+          HeSo: 1.0,
+          MucUuTien: 1,
+        };
+
+    const targetRoomType = policy
+      ? roomTypes.find((rt) => rt.roomTypeID === policy.MaLoaiPhong) || null
+      : null;
+
+    // Defer state updates to the next tick to avoid synchronous setState in effect
+    const t = setTimeout(() => {
+      setFormData(targetForm);
+      setSelectedRoomType(targetRoomType);
+    }, 0);
+
+    return () => clearTimeout(t);
   }, [policy, roomTypes, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
