@@ -125,10 +125,9 @@ export function StaffFilters({
           {hasFilters && (
             <Button
               onClick={onClearFilters}
-              variant="outline"
-              className="h-11 px-5 border-gray-300 hover:bg-gray-50 rounded-xl font-semibold"
+              className="h-11 px-5 bg-white border-2 border-gray-300 text-gray-700 hover:bg-linear-to-r hover:from-error-500 hover:to-error-600 hover:text-white hover:border-transparent rounded-xl font-semibold shadow-sm hover:shadow-lg transition-all flex items-center justify-center gap-2"
             >
-              <span className="w-4 h-4 mr-2">{ICONS.X}</span>
+              <span className="w-4 h-4">{ICONS.X}</span>
               Xóa lọc
             </Button>
           )}
