@@ -62,6 +62,8 @@ import {
   UserPlus,
   UserX,
   Loader2,
+  ArrowUpDown,
+  Star,
 } from "lucide-react";
 
 export const ICONS = {
@@ -131,4 +133,6 @@ export const ICONS = {
   MORE_VERTICAL: <MoreVertical />,
   ALERT_CIRCLE: <AlertCircle />,
   LOADER: <Loader2 />,
+  ARROW_UP_DOWN: <ArrowUpDown />,
+  STAR: <Star />,
 };

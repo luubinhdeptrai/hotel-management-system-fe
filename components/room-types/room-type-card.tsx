@@ -51,73 +51,73 @@ export function RoomTypeCard({
 
   return (
     <>
-      <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-200 transition-all duration-300 hover:-translate-y-1">
+      <div className="group relative bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-2xl hover:border-primary-300 transition-all duration-300 hover:-translate-y-2">
         {/* Image Section */}
-        <div className="relative h-48 overflow-hidden">
+        <div className="relative h-56 overflow-hidden">
           {!imageError ? (
             <Image
               src={imageUrl}
               alt={roomType.roomTypeName}
               fill
-              className="object-cover group-hover:scale-110 transition-transform duration-500"
+              className="object-cover group-hover:scale-110 transition-transform duration-700"
               onError={() => setImageError(true)}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-              <span className="w-16 h-16 text-primary-400">{ICONS.BED_DOUBLE}</span>
+            <div className="w-full h-full bg-linear-to-br from-primary-100 via-blue-100 to-primary-200 flex items-center justify-center">
+              <span className="w-20 h-20 text-primary-400">{ICONS.BED_DOUBLE}</span>
             </div>
           )}
           
           {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
           
           {/* Price badge */}
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-white/95 text-primary-700 font-bold text-sm px-3 py-1 shadow-lg backdrop-blur-sm">
+          <div className="absolute top-4 right-4">
+            <Badge className="bg-white/95 backdrop-blur-sm text-primary-700 font-extrabold text-base px-4 py-2 shadow-xl border-2 border-white/50">
               {formatCurrency(roomType.price)}/đêm
             </Badge>
           </div>
 
           {/* Room type name on image */}
-          <div className="absolute bottom-3 left-3 right-3">
-            <h3 className="text-xl font-bold text-white drop-shadow-lg">
+          <div className="absolute bottom-4 left-4 right-4">
+            <h3 className="text-2xl font-extrabold text-white drop-shadow-2xl">
               {roomType.roomTypeName}
             </h3>
-            <p className="text-white/90 text-sm font-medium">
+            <p className="text-white/95 text-sm font-bold mt-1 drop-shadow-lg">
               Mã: {roomType.roomTypeID}
             </p>
           </div>
         </div>
 
         {/* Content Section */}
-        <div className="p-5">
+        <div className="p-6">
           {/* Capacity */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 text-gray-600">
-              <span className="w-5 h-5 text-primary-500">{ICONS.USERS}</span>
-              <span className="font-medium">{roomType.capacity} khách</span>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
+              <span className="w-5 h-5 text-primary-600">{ICONS.USERS}</span>
+              <span className="font-bold text-sm">{roomType.capacity} khách</span>
             </div>
-            <span className="text-gray-300">•</span>
-            <div className="flex items-center gap-1.5 text-gray-600">
-              <span className="w-5 h-5 text-primary-500">{ICONS.BED_DOUBLE}</span>
-              <span className="font-medium">
+            <span className="text-gray-300 font-bold">•</span>
+            <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
+              <span className="w-5 h-5 text-primary-600">{ICONS.BED_DOUBLE}</span>
+              <span className="font-bold text-sm">
                 {roomType.capacity <= 2 ? "1 giường" : `${Math.ceil(roomType.capacity / 2)} giường`}
               </span>
             </div>
           </div>
 
           {/* Amenities */}
-          <div className="mb-5">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <div className="mb-6">
+            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">
               Tiện nghi
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {roomType.amenities.slice(0, 4).map((amenity, index) => (
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="bg-gray-50 text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200"
+                  className="bg-primary-50 text-primary-700 text-xs font-bold px-3 py-1.5 rounded-full border-2 border-primary-200"
                 >
                   {amenity}
                 </Badge>
@@ -125,7 +125,7 @@ export function RoomTypeCard({
               {roomType.amenities.length > 4 && (
                 <Badge
                   variant="secondary"
-                  className="bg-primary-50 text-primary-700 text-xs font-medium px-2.5 py-1 rounded-full border border-primary-200"
+                  className="bg-linear-to-r from-primary-100 to-blue-100 text-primary-700 text-xs font-extrabold px-3 py-1.5 rounded-full border-2 border-primary-300"
                 >
                   +{roomType.amenities.length - 4} khác
                 </Badge>
@@ -134,23 +134,23 @@ export function RoomTypeCard({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-3 border-t border-gray-100">
+          <div className="flex gap-3 pt-4 border-t-2 border-gray-100">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onEdit(roomType)}
-              className="flex-1 h-9 text-primary-600 border-primary-200 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-300 transition-colors"
+              className="flex-1 h-11 text-primary-600 border-2 border-primary-200 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-400 transition-all font-bold text-sm hover:scale-105"
             >
-              <span className="w-4 h-4 mr-1.5">{ICONS.EDIT}</span>
+              <span className="w-5 h-5 mr-2">{ICONS.EDIT}</span>
               Chỉnh sửa
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setDeleteConfirm(true)}
-              className="h-9 px-3 text-error-600 border-error-200 hover:bg-error-50 hover:text-error-700 hover:border-error-300 transition-colors"
+              className="h-11 px-4 text-error-600 border-2 border-error-200 hover:bg-error-50 hover:text-error-700 hover:border-error-400 transition-all font-bold hover:scale-105"
             >
-              <span className="w-4 h-4">{ICONS.TRASH}</span>
+              <span className="w-5 h-5">{ICONS.TRASH}</span>
             </Button>
           </div>
         </div>
@@ -158,12 +158,12 @@ export function RoomTypeCard({
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-gray-900">
+            <DialogTitle className="text-2xl font-bold text-gray-900">
               Xác nhận xóa loại phòng
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
+            <DialogDescription className="text-base text-gray-600 mt-2">
               Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
