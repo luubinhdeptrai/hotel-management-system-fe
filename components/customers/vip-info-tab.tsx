@@ -25,7 +25,7 @@ export function VIPInfoTab({ customer }: VIPInfoTabProps) {
   return (
     <div className="space-y-6">
       {/* Current Tier Card */}
-      <Card className="bg-gradient-to-br from-amber-50 to-purple-50 border-2">
+      <Card className="bg-linear-to-br from-amber-50 to-purple-50 border-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <span className="text-2xl">👑</span>

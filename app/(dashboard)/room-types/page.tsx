@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ICONS } from "@/src/constants/icons.enum";
 import { RoomTypeFormModal } from "@/components/room-types/room-type-form-modal";
-import { RoomTypeTable } from "@/components/room-types/room-type-table";
+import { RoomTypeGrid } from "@/components/room-types/room-type-grid";
 import { StatsCards } from "@/components/room-types/stats-cards";
 import { QuickAddSection } from "@/components/room-types/quick-add-section";
 import { PricingEngineTab } from "@/components/room-types/pricing-engine-tab";
@@ -112,14 +112,14 @@ export default function RoomTypesPage() {
 
           {/* Loading State */}
           {loading ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16">
               <div className="flex flex-col items-center justify-center">
-                <div className="w-8 h-8 border-4 border-primary-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-sm text-gray-500">Đang tải dữ liệu...</p>
+                <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-sm text-gray-500 font-medium">Đang tải dữ liệu...</p>
               </div>
             </div>
           ) : (
-            <RoomTypeTable
+            <RoomTypeGrid
               roomTypes={roomTypes}
               onEdit={handleEdit}
               onDelete={handleDelete}

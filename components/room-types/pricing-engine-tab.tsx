@@ -13,7 +13,7 @@ interface PricingEngineTabProps {
   roomTypes: RoomType[];
 }
 
-export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
+export function PricingEngineTab({ roomTypes: _roomTypes }: PricingEngineTabProps) {
   const [pricingRules] = useState(mockPricingRules);
   const [specialDates] = useState(mockSpecialPriceDates);
 

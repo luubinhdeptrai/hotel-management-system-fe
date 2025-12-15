@@ -23,7 +23,7 @@ export function BalanceCard({ folio }: BalanceCardProps) {
       : "text-gray-600"; // Balanced
 
   return (
-    <Card className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-primary-200">
+    <Card className="bg-linear-to-br from-primary-50 to-blue-50 border-2 border-primary-200">
       <CardContent className="pt-6">
         <div className="grid grid-cols-3 gap-6">
           {/* Total Debit */}

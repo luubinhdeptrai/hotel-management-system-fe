@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { EmployeeTable } from "./employee-table";
+import { StaffGrid } from "./staff-grid";
 import { StaffFilters } from "./staff-filters";
 import { Employee } from "@/lib/types/employee";
+import { ICONS } from "@/src/constants/icons.enum";
 
 interface EmployeesTabProps {
   employees: Employee[];
@@ -61,27 +62,31 @@ export function EmployeesTab({
         </p>
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={onClearFilters}>
+            <span className="w-4 h-4 mr-1">{ICONS.X}</span>
             Xóa bộ lọc
           </Button>
         )}
       </div>
 
-      {/* Employee Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-gray-500">Đang tải dữ liệu...</div>
+      {/* Employee Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12 bg-gray-50 rounded-xl">
+          <div className="text-center">
+            <div className="w-10 h-10 mx-auto mb-3 animate-spin text-primary-500">
+              {ICONS.LOADER}
+            </div>
+            <p className="text-gray-500">Đang tải dữ liệu...</p>
           </div>
-        ) : (
-          <EmployeeTable
-            employees={employees}
-            onEdit={onEdit}
-            onCreateAccount={onCreateAccount}
-            onDeactivate={onDeactivate}
-            onViewDetails={onViewDetails}
-          />
-        )}
-      </div>
+        </div>
+      ) : (
+        <StaffGrid
+          employees={employees}
+          onEdit={onEdit}
+          onCreateAccount={onCreateAccount}
+          onDeactivate={onDeactivate}
+          onViewDetails={onViewDetails}
+        />
+      )}
     </div>
   );
 }

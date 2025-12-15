@@ -3,10 +3,8 @@
 import { useSurchargePage } from "@/hooks/use-surcharge-page";
 import { PageHeader } from "@/components/services/page-header";
 import { NotificationBanner } from "@/components/services/notification-banner";
-import { SurchargeTable } from "@/components/surcharges/surcharge-table";
+import { SurchargeGrid } from "@/components/surcharges/surcharge-grid";
 import { SurchargeFormModal } from "@/components/surcharges/surcharge-form-modal";
-import { Button } from "@/components/ui/button";
-import { ICONS } from "@/src/constants/icons.enum";
 
 export default function SurchargesPage() {
   const {
@@ -40,25 +38,12 @@ export default function SurchargesPage() {
         />
       )}
 
-      {/* Section Header with Add Button */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Danh sách Phụ Thu
-        </h2>
-        <Button
-          onClick={handleAddSurcharge}
-          className="bg-primary-600 hover:bg-primary-700 text-white"
-        >
-          {ICONS.PLUS}
-          <span className="ml-2">Thêm Phụ Thu</span>
-        </Button>
-      </div>
-
-      {/* Surcharge Table */}
-      <SurchargeTable
+      {/* Surcharge Grid */}
+      <SurchargeGrid
         surcharges={surcharges}
         onEdit={handleEditSurcharge}
         onDelete={handleDeleteSurcharge}
+        onCreate={handleAddSurcharge}
       />
 
       {/* Surcharge Form Modal */}
