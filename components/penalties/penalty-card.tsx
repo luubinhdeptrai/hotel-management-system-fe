@@ -42,8 +42,14 @@ export function PenaltyCard({
 }: PenaltyCardProps) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState(
+    PENALTY_ITEM_IMAGES[penalty.penaltyID] || PENALTY_ITEM_IMAGES.DEFAULT
+  );
 
-  const imageUrl = PENALTY_ITEM_IMAGES[penalty.penaltyID] || PENALTY_ITEM_IMAGES.DEFAULT;
+  // Alternate images to try when primary remote image fails (helps with flaky external hosts)
+  const PENALTY_ITEM_ALT_IMAGES: Record<string, string> = {
+    PEN002: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=400&q=80",
+  };
 
   const handleDeleteConfirm = () => {
     onDelete(penalty.penaltyID);
@@ -57,11 +63,18 @@ export function PenaltyCard({
         <div className="relative h-40 overflow-hidden">
           {!imageError ? (
             <Image
-              src={imageUrl}
+              src={currentImageUrl}
               alt={penalty.penaltyName}
               fill
               className="object-cover group-hover:scale-110 transition-transform duration-700"
-              onError={() => setImageError(true)}
+              onError={() => {
+                const alt = PENALTY_ITEM_ALT_IMAGES[penalty.penaltyID as keyof typeof PENALTY_ITEM_ALT_IMAGES];
+                if (alt && currentImageUrl !== alt) {
+                  setCurrentImageUrl(alt);
+                } else {
+                  setImageError(true);
+                }
+              }}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             />
           ) : (
