@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useCallback, useMemo } from "react";
 import type { ReportType } from "@/lib/types/reports";
 import {
@@ -92,8 +94,9 @@ export function useReports() {
   }, []);
 
   const handleExportPdf = useCallback(() => {
-    // TODO: Implement PDF export functionality
-    console.log("Exporting to PDF...", {
+    // BACKEND INTEGRATION: Implement PDF export using jsPDF or server-side PDF generation
+    // Expected endpoint: POST /api/reports/export/pdf with { reportType, startDate, endDate, filters }
+    logger.log("Exporting to PDF...", {
       reportType,
       startDate,
       endDate,
@@ -103,8 +106,9 @@ export function useReports() {
   }, [reportType, startDate, endDate, currentReportData]);
 
   const handleExportExcel = useCallback(() => {
-    // TODO: Implement Excel export functionality
-    console.log("Exporting to Excel...", {
+    // BACKEND INTEGRATION: Implement Excel export using xlsx library or server-side generation
+    // Expected endpoint: POST /api/reports/export/excel with { reportType, startDate, endDate, filters }
+    logger.log("Exporting to Excel...", {
       reportType,
       startDate,
       endDate,

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -109,7 +111,7 @@ export default function NguoiOPage() {
 
   const handleSubmit = () => {
     // Simulate API call
-    console.log("Submitting guest registration...");
+    logger.log("Submitting guest registration...");
     setFormOpen(false);
     resetForm();
   };

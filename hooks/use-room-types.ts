@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect, useMemo } from "react";
 import { RoomType } from "@/lib/types/room";
 import {
@@ -33,7 +34,7 @@ export function useRoomTypes() {
       setRoomTypes(data);
       setError(null);
     } catch (err) {
-      console.error("Error loading room types:", err);
+      logger.error("Error loading room types:", err);
       setError("Không thể tải danh sách loại phòng");
     } finally {
       setLoading(false);
@@ -115,7 +116,7 @@ export function useRoomTypes() {
       await loadRoomTypes();
       setError(null);
     } catch (err) {
-      console.error("Error deleting room type:", err);
+      logger.error("Error deleting room type:", err);
       setError(err instanceof Error ? err.message : "Không thể xóa loại phòng");
       setTimeout(() => setError(null), 5000);
     } finally {

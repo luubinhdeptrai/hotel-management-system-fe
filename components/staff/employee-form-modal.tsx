@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -149,7 +151,7 @@ export function EmployeeFormModal({
       await onSave(employeeData);
       onOpenChange(false);
     } catch (error) {
-      console.error("Error saving employee:", error);
+      logger.error("Error saving employee:", error);
       setErrors({
         submit: "Có lỗi xảy ra khi lưu thông tin nhân viên",
       });

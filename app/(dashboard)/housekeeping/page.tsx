@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +35,7 @@ export default function HousekeepingPage() {
         room.roomID === roomID ? { ...room, roomStatus: newStatus } : room
       )
     );
-    console.log(`Changed room ${roomID} to ${newStatus}`);
+    logger.log(`Changed room ${roomID} to ${newStatus}`);
   };
 
   const getStatusColor = (status: RoomStatus) => {

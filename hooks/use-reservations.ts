@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 import { useState, useMemo } from "react";
 import {
   mockReservations,
@@ -66,7 +67,7 @@ export function useReservations() {
   // Handle search
   const handleSearch = () => {
     // In real app, this would trigger API call
-    console.log("Searching for available rooms...", {
+    logger.log("Searching for available rooms...", {
       checkInDate,
       checkOutDate,
       roomTypeFilter,
@@ -123,7 +124,7 @@ export function useReservations() {
       const roomSelections = data.roomSelections || [];
 
       if (roomSelections.length === 0) {
-        console.error("No room selections provided");
+        logger.error("No room selections provided");
         return;
       }
 

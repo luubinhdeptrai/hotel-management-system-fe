@@ -3,6 +3,7 @@
  * Handles all auth-related API calls to the backend
  */
 
+import { logger } from "@/lib/utils/logger";
 import type {
   LoginRequest,
   LoginResponse,
@@ -61,7 +62,7 @@ export const authService = {
         await api.post("/auth/logout", payload, { requiresAuth: true });
       } catch (error) {
         // Even if logout API fails, still clear local tokens
-        console.warn("Logout API call failed:", error);
+        logger.warn("Logout API call failed:", error);
       }
     }
 

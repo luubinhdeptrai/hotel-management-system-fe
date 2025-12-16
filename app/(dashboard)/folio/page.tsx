@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -129,8 +131,9 @@ export default function FolioPage() {
       alert("Vui lòng chọn transaction và folio đích");
       return;
     }
-    // TODO: Call API to transfer charge
-    console.log("Transfer charge:", transferData);
+    // BACKEND INTEGRATION: Call POST /api/folios/transfer-charge
+    // with { transactionId, sourceFolioId, targetFolioId }
+    logger.log("Transfer charge:", transferData);
     setTransferModalOpen(false);
     setTransferData({ selectedTransaction: "", targetFolio: "" });
   };
@@ -142,8 +145,9 @@ export default function FolioPage() {
       alert(`Tổng tiền split (${(splitData.companyAmount + splitData.guestAmount).toLocaleString("vi-VN")}đ) phải bằng tổng bill (${total.toLocaleString("vi-VN")}đ)`);
       return;
     }
-    // TODO: Call API to split bill
-    console.log("Split bill:", splitData);
+    // BACKEND INTEGRATION: Call POST /api/folios/split-bill
+    // with { folioId, companyAmount, guestAmount, newFolioType }
+    logger.log("Split bill:", splitData);
     setSplitModalOpen(false);
     setSplitData({ companyAmount: 0, guestAmount: 0 });
   };

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -133,7 +135,7 @@ export function AccountFormModal({
       await onSave(employee.employeeId, accountData);
       onOpenChange(false);
     } catch (error) {
-      console.error("Error creating account:", error);
+      logger.error("Error creating account:", error);
       setErrors({
         submit: "Có lỗi xảy ra khi tạo tài khoản",
       });

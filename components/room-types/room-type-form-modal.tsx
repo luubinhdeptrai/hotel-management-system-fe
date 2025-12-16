@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -115,7 +117,7 @@ export function RoomTypeFormModal({
       await onSave(roomTypeData);
       onOpenChange(false);
     } catch (error) {
-      console.error("Error saving room type:", error);
+      logger.error("Error saving room type:", error);
       setErrors({
         submit: error instanceof Error ? error.message : "Có lỗi xảy ra",
       });

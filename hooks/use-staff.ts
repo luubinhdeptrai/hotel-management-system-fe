@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import {
   Employee,
@@ -18,7 +20,7 @@ export function useStaff() {
       const { mockEmployees } = await import("@/lib/mock-employees");
       setEmployees(mockEmployees);
     } catch (error) {
-      console.error("Error loading employees:", error);
+      logger.error("Error loading employees:", error);
     } finally {
       setLoading(false);
     }
@@ -39,7 +41,7 @@ export function useStaff() {
 
       setEmployees([...employees, newEmployee]);
     } catch (error) {
-      console.error("Error adding employee:", error);
+      logger.error("Error adding employee:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -61,7 +63,7 @@ export function useStaff() {
         )
       );
     } catch (error) {
-      console.error("Error updating employee:", error);
+      logger.error("Error updating employee:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -89,7 +91,7 @@ export function useStaff() {
         )
       );
     } catch (error) {
-      console.error("Error creating account:", error);
+      logger.error("Error creating account:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -110,7 +112,7 @@ export function useStaff() {
         )
       );
     } catch (error) {
-      console.error("Error deactivating employee:", error);
+      logger.error("Error deactivating employee:", error);
       throw error;
     } finally {
       setLoading(false);

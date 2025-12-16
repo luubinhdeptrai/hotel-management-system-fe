@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import type { PaymentMethod } from "@/lib/types/payment";
 import type {
@@ -47,7 +48,7 @@ export function useCheckOut() {
     if (!selectedCheckout) return "";
 
     // In real app, this would call an API
-    console.log("Add service:", data);
+    logger.log("Add service:", data);
 
     const service = mockServices.find((s) => s.serviceID === data.serviceID);
     if (!service) return "";
@@ -77,7 +78,7 @@ export function useCheckOut() {
     if (!selectedCheckout) return false;
 
     // In real app, this would call an API
-    console.log("Add penalty:", data);
+    logger.log("Add penalty:", data);
 
     const newPenalty = {
       penaltyID: `PEN${Date.now()}`,
@@ -100,7 +101,7 @@ export function useCheckOut() {
     if (!selectedCheckout) return false;
 
     // In real app, this would call an API
-    console.log("Add surcharge:", data);
+    logger.log("Add surcharge:", data);
 
     const newSurcharge = {
       surchargeID: `SUR${Date.now()}`,
@@ -132,7 +133,7 @@ export function useCheckOut() {
   const handleConfirmPayment = (method: PaymentMethod): string => {
     if (!selectedCheckout) return "";
 
-    console.log("Confirm payment with method:", method);
+    logger.log("Confirm payment with method:", method);
 
     const roomName = selectedCheckout.receipt.roomName;
     // Remove from results and reset selected checkout

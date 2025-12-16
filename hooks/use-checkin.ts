@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import type { Reservation } from "@/lib/types/reservation";
 import type { CheckInFormData, WalkInFormData } from "@/lib/types/checkin-checkout";
@@ -27,7 +28,7 @@ export function useCheckIn() {
 
   const handleConfirmCheckIn = (data: CheckInFormData) => {
     // In real app, this would call an API
-    console.log("Check-in data:", data);
+    logger.log("Check-in data:", data);
 
     // Remove from results after successful check-in
     setResults((prev) =>
@@ -47,7 +48,7 @@ export function useCheckIn() {
     // 2. Create ad-hoc reservation
     // 3. Create rental receipt (check-in)
     // 4. Update room status
-    console.log("Walk-in check-in data:", data);
+    logger.log("Walk-in check-in data:", data);
   };
 
   const resetModal = () => {

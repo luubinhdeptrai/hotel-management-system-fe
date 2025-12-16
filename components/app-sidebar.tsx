@@ -143,9 +143,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         data-sidebar-state={state}
         {...props}
       >
-        <SidebarHeader className="border-b border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-50/30">
+        <SidebarHeader className="border-b border-primary-100 bg-linear-to-br from-primary-50 via-white to-primary-50/30">
           <div className="flex items-center gap-3 px-4 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-600/20">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-600/20">
               <span className="text-lg">{ICONS.HOTEL}</span>
             </div>
             <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
@@ -159,7 +159,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="bg-gradient-to-b from-gray-50 to-white scrollbar-hide">
+        <SidebarContent className="bg-linear-to-b from-gray-50 to-white scrollbar-hide">
           {/* Dashboard */}
           <SidebarGroup>
             <SidebarGroupContent>
@@ -175,7 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className={cn(
                               "transition-all duration-200 h-11 text-sm font-medium",
                               isActive
-                                ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
+                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
                                 : "hover:bg-primary-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
                             )}
                           >
@@ -216,7 +216,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className={cn(
                               "transition-all duration-200 h-11 text-sm font-medium",
                               isActive
-                                ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
+                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
                                 : "hover:bg-primary-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
                             )}
                           >
@@ -257,7 +257,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className={cn(
                               "transition-all duration-200 h-11 text-sm font-medium",
                               isActive
-                                ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
+                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
                                 : "hover:bg-success-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
                             )}
                           >
@@ -298,7 +298,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className={cn(
                               "transition-all duration-200 h-11 text-sm font-medium",
                               isActive
-                                ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
+                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
                                 : "hover:bg-error-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
                             )}
                           >
@@ -339,7 +339,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className={cn(
                               "transition-all duration-200 h-11 text-sm font-medium",
                               isActive
-                                ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
+                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
                                 : "hover:bg-warning-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
                             )}
                           >
@@ -380,7 +380,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className={cn(
                               "transition-all duration-200 h-11 text-sm font-medium",
                               isActive
-                                ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
+                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
                                 : "hover:bg-info-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
                             )}
                           >
@@ -402,7 +402,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-primary-100 bg-gradient-to-br from-error-50/50 via-white to-white">
+        <SidebarFooter className="border-t border-primary-100 bg-linear-to-br from-error-50/50 via-white to-white">
           <SidebarMenu>
             <SidebarMenuItem>
               <Tooltip>

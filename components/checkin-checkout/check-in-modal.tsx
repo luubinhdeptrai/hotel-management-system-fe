@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -420,8 +422,8 @@ export function CheckInModal({
         open={nguoioModalOpen}
         onOpenChange={setNguoioModalOpen}
         onSubmit={(guests) => {
-          console.log("Registered guests:", guests);
-          // TODO: Save to backend
+          logger.log("Registered guests:", guests);
+          // BACKEND INTEGRATION: Call POST /api/residents with guest data for police reporting
         }}
         roomNumber={reservation?.details[0]?.roomName || ""}
         checkInDate={reservation?.details[0]?.checkInDate || ""}

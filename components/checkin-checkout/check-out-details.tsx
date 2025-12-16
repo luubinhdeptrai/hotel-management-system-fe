@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -551,8 +553,9 @@ export function CheckOutDetails({
         open={extendStayModalOpen}
         onOpenChange={setExtendStayModalOpen}
         onConfirm={(additionalNights, newCheckOutDate) => {
-          console.log("Extend stay:", { additionalNights, newCheckOutDate });
-          // TODO: Update booking and recalculate totals
+          logger.log("Extend stay:", { additionalNights, newCheckOutDate });
+          // BACKEND INTEGRATION: Call PUT /api/bookings/{bookingId}/extend
+          // with { additionalNights, newCheckOutDate } and recalculate room charges
         }}
         roomNumber={summary.receipt.roomName}
         currentCheckOutDate={summary.receipt.checkOutDate}

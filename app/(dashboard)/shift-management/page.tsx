@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +85,7 @@ export default function ShiftManagementPage() {
       varianceReason: variance !== 0 ? varianceReason : undefined,
     };
 
-    console.log("Shift ended:", completedShift);
+    logger.log("Shift ended:", completedShift);
     setCurrentShift(null);
     setActualCash("");
     setVarianceReason("");

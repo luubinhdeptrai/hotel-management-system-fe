@@ -33,6 +33,29 @@ export interface Folio {
   masterFolioID?: string; // For Guest folio linking to Master
 }
 
+export interface TransactionBreakdown {
+  roomCharges: number;
+  services: number;
+  surcharges: number;
+  penalties: number;
+  deposits: number;
+  payments: number;
+  totalCharges: number;
+  totalPayments: number;
+  balance: number;
+}
+
+export interface Bill {
+  folioID: string;
+  guestName: string;
+  roomNumber: string;
+  checkInDate: string;
+  checkOutDate: string;
+  breakdown: TransactionBreakdown;
+  finalBalance: number;
+  closedAt: string;
+}
+
 /**
  * Calculate folio balance
  * Formula: Balance = Sum(Charges) - Sum(Payments)
@@ -362,11 +385,10 @@ export function transferRoomChargesToMaster(
 /**
  * Close folio - Mark as settled and generate final bill
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function closeFolio(folio: Folio): { folio: Folio; bill: any } {
+export function closeFolio(folio: Folio): { folio: Folio; bill: Bill } {
   const breakdown = getTransactionBreakdown(folio.transactions);
 
-  const bill = {
+  const bill: Bill = {
     folioID: folio.folioID,
     guestName: folio.guestName,
     roomNumber: folio.roomNumber,
