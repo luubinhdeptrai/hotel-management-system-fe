@@ -113,11 +113,11 @@ export default function RoomTypesPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 h-14 bg-gray-100 p-1.5 rounded-xl shadow-md">
           <TabsTrigger value="room-types" className="h-full text-base font-bold data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary-600 transition-all">
-            <span className="mr-2">{ICONS.BED_DOUBLE}</span>
+            <span className="w-5 h-5 mr-2">{ICONS.BED_DOUBLE}</span>
             Loại Phòng
           </TabsTrigger>
           <TabsTrigger value="pricing" className="h-full text-base font-bold data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary-600 transition-all">
-            <span className="mr-2">{ICONS.DOLLAR_SIGN}</span>
+            <span className="w-5 h-5 mr-2">{ICONS.DOLLAR_SIGN}</span>
             Cấu hình Giá
           </TabsTrigger>
         </TabsList>

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import type { CustomerFormData, CustomerRecord } from "@/lib/types/customer";
 
@@ -16,7 +18,7 @@ export function useCustomers() {
       const { mockCustomerRecords } = await import("@/lib/mock-customers");
       setCustomers(mockCustomerRecords);
     } catch (error) {
-      console.error("Error loading customers", error);
+      logger.error("Error loading customers", error);
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ export function useCustomers() {
 
       setCustomers((prev) => [...prev, newCustomer]);
     } catch (error) {
-      console.error("Error creating customer", error);
+      logger.error("Error creating customer", error);
       throw error;
     } finally {
       setLoading(false);
@@ -81,7 +83,7 @@ export function useCustomers() {
         )
       );
     } catch (error) {
-      console.error("Error updating customer", error);
+      logger.error("Error updating customer", error);
       throw error;
     } finally {
       setLoading(false);
@@ -100,7 +102,7 @@ export function useCustomers() {
         )
       );
     } catch (error) {
-      console.error("Error deactivating customer", error);
+      logger.error("Error deactivating customer", error);
       throw error;
     } finally {
       setLoading(false);
@@ -119,7 +121,7 @@ export function useCustomers() {
         )
       );
     } catch (error) {
-      console.error("Error reactivating customer", error);
+      logger.error("Error reactivating customer", error);
       throw error;
     } finally {
       setLoading(false);

@@ -47,16 +47,16 @@ export function ReservationFormModal({
   mode,
 }: ReservationFormModalProps) {
   const [formData, setFormData] = useState<ReservationFormData>({
-    customerName: reservation?.customer.customerName || "",
-    phoneNumber: reservation?.customer.phoneNumber || "",
-    email: reservation?.customer.email || "",
-    identityCard: reservation?.customer.identityCard || "",
-    address: reservation?.customer.address || "",
-    checkInDate: reservation?.details[0]?.checkInDate || "",
-    checkOutDate: reservation?.details[0]?.checkOutDate || "",
+    customerName: "",
+    phoneNumber: "",
+    email: "",
+    identityCard: "",
+    address: "",
+    checkInDate: "",
+    checkOutDate: "",
     roomSelections: [],
-    depositAmount: reservation?.depositAmount || 0,
-    notes: reservation?.notes || "",
+    depositAmount: 0,
+    notes: "",
   });
 
   // State for room selections
@@ -68,28 +68,83 @@ export function ReservationFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [conflictWarning, setConflictWarning] = useState<string>("");
 
-  // Initialize room selections from reservation if editing
+  // Load data when modal opens or reservation changes
   useEffect(() => {
-    if (reservation && mode === "edit") {
-      // Group details by room type
-      const groupedRooms = reservation.details.reduce((acc, detail) => {
-        const key = detail.roomTypeID;
-        if (!acc[key]) {
-          acc[key] = {
-            roomTypeID: detail.roomTypeID,
-            roomTypeName: detail.roomTypeName,
-            quantity: 0,
-            numberOfGuests: detail.numberOfGuests,
-            pricePerNight: detail.pricePerNight,
-          };
-        }
-        acc[key].quantity += 1;
-        return acc;
-      }, {} as Record<string, RoomTypeSelection>);
+    let cancelled = false;
 
-      setRoomSelections(Object.values(groupedRooms));
-    }
-  }, [reservation, mode]);
+    if (!isOpen) return;
+
+    // schedule state updates asynchronously (microtask) to avoid cascading renders
+    const schedule = () =>
+      Promise.resolve().then(() => {
+        if (cancelled) return;
+
+        if (reservation && mode === "edit") {
+          // prepare form data from reservation
+          const newFormData: ReservationFormData = {
+            customerName: reservation.customer.customerName || "",
+            phoneNumber: reservation.customer.phoneNumber || "",
+            email: reservation.customer.email || "",
+            identityCard: reservation.customer.identityCard || "",
+            address: reservation.customer.address || "",
+            checkInDate: reservation.details[0]?.checkInDate || "",
+            checkOutDate: reservation.details[0]?.checkOutDate || "",
+            roomSelections: [],
+            depositAmount: reservation.depositAmount || 0,
+            notes: reservation.notes || "",
+          };
+
+          // Group details by room type
+          const groupedRooms = reservation.details.reduce((acc, detail) => {
+            const key = detail.roomTypeID;
+            if (!acc[key]) {
+              acc[key] = {
+                roomTypeID: detail.roomTypeID,
+                roomTypeName: detail.roomTypeName,
+                quantity: 0,
+                numberOfGuests: detail.numberOfGuests,
+                pricePerNight: detail.pricePerNight,
+              };
+            }
+            acc[key].quantity += 1;
+            return acc;
+          }, {} as Record<string, RoomTypeSelection>);
+
+          if (!cancelled) {
+            setFormData(newFormData);
+            setRoomSelections(Object.values(groupedRooms));
+          }
+        } else {
+          // Reset form for create mode
+          if (!cancelled) {
+            setFormData({
+              customerName: "",
+              phoneNumber: "",
+              email: "",
+              identityCard: "",
+              address: "",
+              checkInDate: "",
+              checkOutDate: "",
+              roomSelections: [],
+              depositAmount: 0,
+              notes: "",
+            });
+            setRoomSelections([]);
+          }
+        }
+
+        if (!cancelled) {
+          setErrors({});
+          setConflictWarning("");
+        }
+      });
+
+    schedule();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, reservation, mode]);
 
   // Add room type to selections
   const handleAddRoomType = () => {
@@ -277,20 +332,30 @@ export function ReservationFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-900">
-            {mode === "create" ? "Tạo đặt phòng mới" : "Chỉnh sửa đặt phòng"}
-          </DialogTitle>
+      <DialogContent className="w-[95vw] md:w-[85vw] lg:w-[75vw] max-w-none max-h-[95vh] overflow-hidden flex flex-col bg-linear-to-br from-white via-gray-50 to-white mx-auto">
+        <DialogHeader className="border-b-2 border-gray-200 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="w-6 h-6 text-white">{ICONS.CALENDAR}</span>
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-extrabold text-gray-900">
+                {mode === "create" ? "Tạo đặt phòng mới" : "Chỉnh sửa đặt phòng"}
+              </DialogTitle>
+              <p className="text-sm text-gray-600 font-medium">
+                {mode === "create" ? "Điền thông tin khách hàng và chi tiết đặt phòng" : "Cập nhật thông tin đặt phòng"}
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto space-y-6 py-6 px-1">
           {/* Conflict Warning */}
           {conflictWarning && (
-            <Alert className="border-warning-600 bg-warning-50">
-              <div className="flex items-start gap-2">
-                <span className="text-warning-600">{ICONS.ALERT}</span>
-                <AlertDescription className="text-warning-700">
+            <Alert className="border-2 border-warning-600 bg-warning-50 shadow-md">
+              <div className="flex items-start gap-3">
+                <span className="text-warning-600 w-5 h-5">{ICONS.ALERT}</span>
+                <AlertDescription className="text-warning-800 font-semibold">
                   {conflictWarning}
                 </AlertDescription>
               </div>
@@ -298,13 +363,16 @@ export function ReservationFormModal({
           )}
 
           {/* Customer Information */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-4">
-              Thông tin khách hàng
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-5">
+              <span className="w-5 h-5 text-primary-600">{ICONS.USER}</span>
+              <h3 className="text-lg font-extrabold text-gray-900">
+                Thông tin khách hàng
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <Label htmlFor="customerName">
+                <Label htmlFor="customerName" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
                   Tên khách hàng <span className="text-red-600">*</span>
                 </Label>
                 <Input
@@ -312,17 +380,17 @@ export function ReservationFormModal({
                   value={formData.customerName}
                   onChange={(e) => handleChange("customerName", e.target.value)}
                   placeholder="Nguyễn Văn An"
-                  className={errors.customerName ? "border-red-600" : ""}
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${errors.customerName ? "border-red-600" : "border-gray-300"}`}
                 />
                 {errors.customerName && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
                     {errors.customerName}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="phoneNumber">
+                <Label htmlFor="phoneNumber" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
                   Số điện thoại <span className="text-red-600">*</span>
                 </Label>
                 <Input
@@ -330,17 +398,17 @@ export function ReservationFormModal({
                   value={formData.phoneNumber}
                   onChange={(e) => handleChange("phoneNumber", e.target.value)}
                   placeholder="0901234567"
-                  className={errors.phoneNumber ? "border-red-600" : ""}
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${errors.phoneNumber ? "border-red-600" : "border-gray-300"}`}
                 />
                 {errors.phoneNumber && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
                     {errors.phoneNumber}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="identityCard">
+                <Label htmlFor="identityCard" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
                   CMND/CCCD <span className="text-red-600">*</span>
                 </Label>
                 <Input
@@ -348,46 +416,51 @@ export function ReservationFormModal({
                   value={formData.identityCard}
                   onChange={(e) => handleChange("identityCard", e.target.value)}
                   placeholder="079012345678"
-                  className={errors.identityCard ? "border-red-600" : ""}
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${errors.identityCard ? "border-red-600" : "border-gray-300"}`}
                 />
                 {errors.identityCard && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
                     {errors.identityCard}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm font-bold text-gray-700 uppercase tracking-wide">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="example@email.com"
+                  className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
                 />
               </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="address">Địa chỉ</Label>
+              <div className="md:col-span-2">
+                <Label htmlFor="address" className="text-sm font-bold text-gray-700 uppercase tracking-wide">Địa chỉ</Label>
                 <Input
                   id="address"
                   value={formData.address}
                   onChange={(e) => handleChange("address", e.target.value)}
                   placeholder="123 Lê Lợi, Q.1, TP.HCM"
+                  className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
                 />
               </div>
             </div>
           </div>
 
           {/* Reservation Details */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-4">
-              Chi tiết đặt phòng
-            </h3>
-            <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-5">
+              <span className="w-5 h-5 text-primary-600">{ICONS.CALENDAR_DAYS}</span>
+              <h3 className="text-lg font-extrabold text-gray-900">
+                Chi tiết đặt phòng
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div>
-                <Label htmlFor="checkInDate">
+                <Label htmlFor="checkInDate" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
                   Ngày đến <span className="text-red-600">*</span>
                 </Label>
                 <Input
@@ -398,17 +471,17 @@ export function ReservationFormModal({
                     handleChange("checkInDate", e.target.value);
                     checkAvailability();
                   }}
-                  className={errors.checkInDate ? "border-red-600" : ""}
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${errors.checkInDate ? "border-red-600" : "border-gray-300"}`}
                 />
                 {errors.checkInDate && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
                     {errors.checkInDate}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="checkOutDate">
+                <Label htmlFor="checkOutDate" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
                   Ngày đi <span className="text-red-600">*</span>
                 </Label>
                 <Input
@@ -419,10 +492,10 @@ export function ReservationFormModal({
                     handleChange("checkOutDate", e.target.value);
                     checkAvailability();
                   }}
-                  className={errors.checkOutDate ? "border-red-600" : ""}
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${errors.checkOutDate ? "border-red-600" : "border-gray-300"}`}
                 />
                 {errors.checkOutDate && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
                     {errors.checkOutDate}
                   </p>
                 )}
@@ -430,13 +503,16 @@ export function ReservationFormModal({
             </div>
 
             {/* Multi-Room Selection */}
-            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4">
-              <h4 className="text-sm font-semibold text-gray-900">
-                Chọn loại phòng và số lượng
-              </h4>
+            <div className="border-2 border-gray-200 rounded-xl p-5 bg-gray-50/50 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 text-primary-600">{ICONS.BED_DOUBLE}</span>
+                <h4 className="text-base font-extrabold text-gray-900">
+                  Chọn loại phòng và số lượng
+                </h4>
+              </div>
 
               {/* Add Room Type Form */}
-              <div className="grid grid-cols-12 gap-3 items-end">
+              <div className="grid grid-cols-12 gap-8 items-end bg-white p-4 rounded-lg border-2 border-gray-200">
                 <div className="col-span-5">
                   <Label htmlFor="selectRoomType" className="text-sm">
                     Loại phòng
@@ -448,7 +524,7 @@ export function ReservationFormModal({
                     <SelectTrigger className="h-10 bg-white">
                       <SelectValue placeholder="Chọn loại phòng" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" sideOffset={8} align="start" className="z-50 max-w-xs">
                       {roomTypes.map((type) => (
                         <SelectItem
                           key={type.roomTypeID}
@@ -468,9 +544,9 @@ export function ReservationFormModal({
                   </Select>
                 </div>
 
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <Label htmlFor="quantity" className="text-sm">
-                    Số lượng
+                    SL
                   </Label>
                   <Input
                     id="quantity"
@@ -478,11 +554,11 @@ export function ReservationFormModal({
                     min="1"
                     value={quantity}
                     onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    className="h-10 bg-white"
+                    className="h-9 w-15 bg-white text-center text-base font-semibold border-2 border-gray-200 rounded-md"
                   />
                 </div>
 
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <Label htmlFor="guestsPerRoom" className="text-sm">
                     Khách/phòng
                   </Label>
@@ -494,7 +570,7 @@ export function ReservationFormModal({
                     onChange={(e) =>
                       setGuestsPerRoom(parseInt(e.target.value) || 1)
                     }
-                    className="h-10 bg-white"
+                    className="h-9 w-15 bg-white text-center text-base font-semibold border-2 border-gray-200 rounded-md"
                   />
                 </div>
 
@@ -503,7 +579,7 @@ export function ReservationFormModal({
                     type="button"
                     onClick={handleAddRoomType}
                     size="icon"
-                    className="h-10 w-10 bg-primary-600 hover:bg-primary-500"
+                    className="h-9 w-10 bg-primary-600 hover:bg-primary-500"
                   >
                     {ICONS.PLUS}
                   </Button>
@@ -551,7 +627,7 @@ export function ReservationFormModal({
                                 parseInt(e.target.value) || 1
                               )
                             }
-                            className="h-8 w-16 text-center"
+                            className="h-10 w-14 text-center text-base font-medium border-2 border-gray-200 rounded-md"
                           />
                         </div>
 
@@ -570,7 +646,7 @@ export function ReservationFormModal({
                                 parseInt(e.target.value) || 1
                               )
                             }
-                            className="h-8 w-16 text-center"
+                            className="h-10 w-14 text-center text-base font-medium border-2 border-gray-200 rounded-md"
                           />
                         </div>
 
@@ -613,50 +689,73 @@ export function ReservationFormModal({
             </div>
 
             {/* Deposit */}
-            <div className="mt-4">
-              <Label htmlFor="depositAmount">Tiền cọc (VNĐ)</Label>
-              <Input
-                id="depositAmount"
-                type="number"
-                min="0"
-                value={formData.depositAmount}
-                onChange={(e) =>
-                  handleChange("depositAmount", parseInt(e.target.value) || 0)
-                }
-                className={errors.depositAmount ? "border-red-600" : ""}
-              />
-              {errors.depositAmount && (
-                <p className="text-sm text-red-600 mt-1">
-                  {errors.depositAmount}
-                </p>
-              )}
-            </div>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <Label htmlFor="depositAmount" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                  Tiền cọc (VNĐ)
+                </Label>
+                <Input
+                  id="depositAmount"
+                  type="number"
+                  min="0"
+                  value={formData.depositAmount}
+                  onChange={(e) =>
+                    handleChange("depositAmount", parseInt(e.target.value) || 0)
+                  }
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${errors.depositAmount ? "border-red-600" : "border-gray-300"}`}
+                />
+                {errors.depositAmount && (
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
+                    {errors.depositAmount}
+                  </p>
+                )}
+              </div>
 
-            {/* Notes */}
-            <div className="mt-4">
-              <Label htmlFor="notes">Ghi chú</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => handleChange("notes", e.target.value)}
-                placeholder="Yêu cầu đặc biệt của khách hàng..."
-                rows={3}
-              />
+              {/* Notes */}
+              <div>
+                <Label htmlFor="notes" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                  Ghi chú
+                </Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => handleChange("notes", e.target.value)}
+                  placeholder="Yêu cầu đặc biệt của khách hàng..."
+                  rows={3}
+                  className="mt-2 border-2 border-gray-300 rounded-lg font-medium"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Hủy
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-primary-600 hover:bg-primary-500"
-          >
-            <span className="mr-2">{ICONS.SAVE}</span>
-            {mode === "create" ? "Tạo đặt phòng" : "Cập nhật"}
-          </Button>
+        <DialogFooter className="border-t-2 border-gray-200 pt-5 bg-gray-50">
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-gray-600">
+              {totalRooms > 0 && (
+                <span className="font-bold">
+                  {totalRooms} phòng • {totalAmount.toLocaleString("vi-VN")} VNĐ
+                </span>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={onClose}
+                className="h-11 px-6 border-2 border-gray-300 font-bold hover:bg-gray-100 hover:scale-105 transition-all"
+              >
+                <span className="w-4 h-4 mr-2">{ICONS.CLOSE}</span>
+                Hủy
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                className="h-11 px-6 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              >
+                <span className="w-4 h-4 mr-2">{ICONS.SAVE}</span>
+                {mode === "create" ? "Tạo đặt phòng" : "Cập nhật"}
+              </Button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

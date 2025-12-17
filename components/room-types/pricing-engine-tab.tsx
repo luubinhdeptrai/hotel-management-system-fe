@@ -118,7 +118,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                 Tổng chính sách
               </span>
               <div className="w-10 h-10 bg-linear-to-br from-primary-100 to-primary-200 rounded-lg flex items-center justify-center">
-                <span className="text-primary-600">{ICONS.CALENDAR}</span>
+                <span className="w-5 h-5 text-primary-600">{ICONS.CALENDAR}</span>
               </div>
             </div>
             <p className="text-4xl font-extrabold text-gray-900">{stats.total}</p>
@@ -134,7 +134,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                 Hệ số TB
               </span>
               <div className="w-10 h-10 bg-linear-to-br from-warning-100 to-warning-200 rounded-lg flex items-center justify-center">
-                <span className="text-warning-600">{ICONS.TRENDING_UP}</span>
+                <span className="w-5 h-5 text-warning-600">{ICONS.TRENDING_UP}</span>
               </div>
             </div>
             <p className="text-4xl font-extrabold text-gray-900">
@@ -152,7 +152,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                 Ưu tiên cao
               </span>
               <div className="w-10 h-10 bg-linear-to-br from-error-100 to-error-200 rounded-lg flex items-center justify-center">
-                <span className="text-error-600">{ICONS.ALERT}</span>
+                <span className="w-5 h-5 text-error-600">{ICONS.ALERT}</span>
               </div>
             </div>
             <p className="text-4xl font-extrabold text-gray-900">{stats.highPriority}</p>
@@ -168,7 +168,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                 Phân loại
               </span>
               <div className="w-10 h-10 bg-linear-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600">{ICONS.FILTER}</span>
+                <span className="w-5 h-5 text-blue-600">{ICONS.FILTER}</span>
               </div>
             </div>
             <div className="flex gap-2 mt-2">
@@ -202,7 +202,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
             onClick={handleAddNew}
             className="h-14 px-8 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 shadow-lg hover:shadow-2xl font-extrabold text-base hover:scale-105 transition-all"
           >
-            <span className="mr-3 text-xl">{ICONS.PLUS}</span>
+            <span className="w-5 h-5 mr-3">{ICONS.PLUS}</span>
             Thêm chính sách mới
           </Button>
         </CardHeader>
@@ -221,7 +221,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
         <CardHeader className="border-b-2">
           <CardTitle className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
             <span className="w-12 h-12 bg-success-100 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-success-600 text-xl">{ICONS.INFO}</span>
+              <span className="w-6 h-6 text-success-600">{ICONS.INFO}</span>
             </span>
             Ví dụ tính giá tự động
           </CardTitle>
@@ -277,7 +277,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
             <div className="bg-linear-to-r from-blue-50 to-primary-50 border-2 border-blue-300 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center shrink-0">
-                  <span className="text-white text-xl">{ICONS.INFO}</span>
+                  <span className="w-6 h-6 text-white">{ICONS.INFO}</span>
                 </div>
                 <div className="space-y-2">
                   <p className="text-base text-blue-900 font-bold">

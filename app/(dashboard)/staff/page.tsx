@@ -53,24 +53,24 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Quản lý Nhân Viên
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Quản lý thông tin nhân viên và phân quyền hệ thống
-        </p>
-      </div>
-
       {/* Statistics Cards */}
-      <StaffStatistics employees={employees} />
+      <StaffStatistics employees={employees} onAddEmployee={handleAddEmployee} />
 
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="employees">Quản lý Nhân viên</TabsTrigger>
-          <TabsTrigger value="roles">Quản lý Vai trò</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-12 bg-white border border-gray-200 rounded-xl p-1">
+          <TabsTrigger 
+            value="employees"
+            className="rounded-lg data-[state=active]:bg-linear-to-r data-[state=active]:from-info-500 data-[state=active]:to-info-600 data-[state=active]:text-white data-[state=active]:shadow-md font-semibold"
+          >
+            Quản lý Nhân viên
+          </TabsTrigger>
+          <TabsTrigger 
+            value="roles"
+            className="rounded-lg data-[state=active]:bg-linear-to-r data-[state=active]:from-info-500 data-[state=active]:to-info-600 data-[state=active]:text-white data-[state=active]:shadow-md font-semibold"
+          >
+            Quản lý Vai trò
+          </TabsTrigger>
         </TabsList>
 
         {/* Employees Tab */}
@@ -86,7 +86,6 @@ export default function StaffPage() {
             onStatusChange={(value) => updateFilter("statusFilter", value)}
             onAccountChange={(value) => updateFilter("accountFilter", value)}
             onClearFilters={clearFilters}
-            onAddEmployee={handleAddEmployee}
             onEdit={handleEditEmployee}
             onCreateAccount={handleCreateAccount}
             onDeactivate={handleDeactivate}

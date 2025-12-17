@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import type { PaymentMethod } from "@/lib/types/payment";
 import type {
@@ -6,6 +7,7 @@ import type {
   AddServiceFormData,
   AddPenaltyFormData,
 } from "@/lib/types/checkin-checkout";
+import type { AddSurchargeFormData } from "@/components/checkin-checkout/add-surcharge-modal";
 import {
   searchActiveRentals,
   getCheckoutSummary,
@@ -22,6 +24,7 @@ export function useCheckOut() {
     useState<CheckoutSummary | null>(null);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [showAddPenaltyModal, setShowAddPenaltyModal] = useState(false);
+  const [showAddSurchargeModal, setShowAddSurchargeModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handleSearch = (searchQuery: string) => {
@@ -45,7 +48,7 @@ export function useCheckOut() {
     if (!selectedCheckout) return "";
 
     // In real app, this would call an API
-    console.log("Add service:", data);
+    logger.log("Add service:", data);
 
     const service = mockServices.find((s) => s.serviceID === data.serviceID);
     if (!service) return "";
@@ -75,7 +78,7 @@ export function useCheckOut() {
     if (!selectedCheckout) return false;
 
     // In real app, this would call an API
-    console.log("Add penalty:", data);
+    logger.log("Add penalty:", data);
 
     const newPenalty = {
       penaltyID: `PEN${Date.now()}`,
@@ -94,6 +97,34 @@ export function useCheckOut() {
     return true;
   };
 
+  const handleAddSurcharge = (data: AddSurchargeFormData): boolean => {
+    if (!selectedCheckout) return false;
+
+    // In real app, this would call an API
+    logger.log("Add surcharge:", data);
+
+    const newSurcharge = {
+      surchargeID: `SUR${Date.now()}`,
+      surchargeName: data.surchargeName,
+      rate: data.rate,
+      amount: data.amount,
+      description: data.description,
+      dateApplied: new Date().toISOString().split("T")[0],
+    };
+
+    const currentSurchargesTotal = selectedCheckout.surchargesTotal || 0;
+    const newSurchargesArray = selectedCheckout.surcharges || [];
+
+    setSelectedCheckout({
+      ...selectedCheckout,
+      surcharges: [...newSurchargesArray, newSurcharge],
+      surchargesTotal: currentSurchargesTotal + newSurcharge.amount,
+      grandTotal: selectedCheckout.grandTotal + newSurcharge.amount,
+    });
+
+    return true;
+  };
+
   const handleCompleteCheckout = () => {
     // Open payment modal instead of native confirm
     setShowPaymentModal(true);
@@ -102,7 +133,7 @@ export function useCheckOut() {
   const handleConfirmPayment = (method: PaymentMethod): string => {
     if (!selectedCheckout) return "";
 
-    console.log("Confirm payment with method:", method);
+    logger.log("Confirm payment with method:", method);
 
     const roomName = selectedCheckout.receipt.roomName;
     // Remove from results and reset selected checkout
@@ -120,16 +151,19 @@ export function useCheckOut() {
     selectedCheckout,
     showAddServiceModal,
     showAddPenaltyModal,
+    showAddSurchargeModal,
     showPaymentModal,
     handleSearch,
     handleSelectRental,
     handleBackToSearch,
     handleAddService,
     handleAddPenalty,
+    handleAddSurcharge,
     handleCompleteCheckout,
     handleConfirmPayment,
     setShowAddServiceModal,
     setShowAddPenaltyModal,
+    setShowAddSurchargeModal,
     setShowPaymentModal,
   };
 }

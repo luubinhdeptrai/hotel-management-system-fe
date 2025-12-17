@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoomCard } from "@/components/rooms/room-card";
 import { RoomFormModal } from "@/components/rooms/room-form-modal";
 import { RoomFilters } from "@/components/rooms/room-filters";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AlertDialog } from "@/components/ui/alert-dialog-custom";
 import { ICONS } from "@/src/constants/icons.enum";
 import {
   mockRooms,
@@ -21,6 +23,9 @@ export default function RoomsPage() {
   const [rooms, setRooms] = useState<Room[]>(mockRooms);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; room: Room | null }>({ open: false, room: null });
+  const [maintenanceConfirm, setMaintenanceConfirm] = useState<{ open: boolean; room: Room | null; newStatus: RoomStatus | null }>({ open: false, room: null, newStatus: null });
+  const [duplicateAlert, setDuplicateAlert] = useState(false);
 
   // Use room filters hook
   const {
@@ -51,25 +56,21 @@ export default function RoomsPage() {
   };
 
   const handleDeleteRoom = (room: Room) => {
-    if (
-      window.confirm(
-        `Bạn có chắc chắn muốn xóa ${room.roomName}?\n\nLưu ý: Nên thực hiện xóa mềm thay vì xóa hoàn toàn.`
-      )
-    ) {
-      setRooms((prev) => prev.filter((r) => r.roomID !== room.roomID));
+    setDeleteConfirm({ open: true, room });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.room) {
+      setRooms((prev) => prev.filter((r) => r.roomID !== deleteConfirm.room!.roomID));
+      setDeleteConfirm({ open: false, room: null });
     }
   };
 
   const handleStatusChange = (room: Room, newStatus: RoomStatus) => {
     // Confirm for maintenance status
     if (newStatus === "Bảo trì") {
-      if (
-        !window.confirm(
-          `Đánh dấu ${room.roomName} là "Bảo trì"?\n\nCảnh báo: Nếu có đặt phòng trong tương lai, cần kiểm tra và xử lý.`
-        )
-      ) {
-        return;
-      }
+      setMaintenanceConfirm({ open: true, room, newStatus });
+      return;
     }
 
     setRooms((prev) =>
@@ -77,6 +78,17 @@ export default function RoomsPage() {
         r.roomID === room.roomID ? { ...r, trangThaiPhong: newStatus } : r
       )
     );
+  };
+
+  const confirmMaintenance = () => {
+    if (maintenanceConfirm.room && maintenanceConfirm.newStatus) {
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.roomID === maintenanceConfirm.room!.roomID ? { ...r, trangThaiPhong: maintenanceConfirm.newStatus! } : r
+        )
+      );
+      setMaintenanceConfirm({ open: false, room: null, newStatus: null });
+    }
   };
 
   const handleSaveRoom = (roomData: Partial<Room>) => {
@@ -90,7 +102,7 @@ export default function RoomsPage() {
     } else {
       // Add new room
       if (rooms.find((r) => r.roomID === roomData.roomID)) {
-        alert("Mã phòng đã tồn tại. Vui lòng chọn mã khác.");
+        setDuplicateAlert(true);
         return;
       }
       setRooms((prev) => [...prev, roomData as Room]);
@@ -304,6 +316,41 @@ export default function RoomsPage() {
             })}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ open, room: deleteConfirm.room })}
+        title={`Bạn có chắc chắn muốn xóa ${deleteConfirm.room?.roomName}?`}
+        description="Lưu ý: Nên thực hiện xóa mềm thay vì xóa hoàn toàn."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
+
+      {/* Maintenance Confirmation Dialog */}
+      <ConfirmDialog
+        open={maintenanceConfirm.open}
+        onOpenChange={(open) => setMaintenanceConfirm({ open, room: maintenanceConfirm.room, newStatus: maintenanceConfirm.newStatus })}
+        title={`Đánh dấu ${maintenanceConfirm.room?.roomName} là "Bảo trì"?`}
+        description="Cảnh báo: Nếu có đặt phòng trong tương lai, cần kiểm tra và xử lý."
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        variant="default"
+        onConfirm={confirmMaintenance}
+      />
+
+      {/* Duplicate Alert Dialog */}
+      <AlertDialog
+        open={duplicateAlert}
+        onOpenChange={setDuplicateAlert}
+        title="Mã phòng đã tồn tại"
+        description="Vui lòng chọn mã phòng khác."
+        confirmText="OK"
+        variant="warning"
+      />
+
 
       {/* Form Modal */}
       <RoomFormModal

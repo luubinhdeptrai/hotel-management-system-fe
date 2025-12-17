@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -48,22 +50,24 @@ export function RoomTypeFormModal({
   useEffect(() => {
     if (!open) return;
 
-    if (roomType) {
-      setFormData({
-        roomTypeName: roomType.roomTypeName,
-        price: roomType.price.toString(),
-        capacity: roomType.capacity.toString(),
-        amenities: roomType.amenities.join(", "),
-      });
-    } else {
-      setFormData({
-        roomTypeName: "",
-        price: "",
-        capacity: "",
-        amenities: "",
-      });
-    }
-    setErrors({});
+    setTimeout(() => {
+      if (roomType) {
+        setFormData({
+          roomTypeName: roomType.roomTypeName,
+          price: roomType.price.toString(),
+          capacity: roomType.capacity.toString(),
+          amenities: roomType.amenities.join(", "),
+        });
+      } else {
+        setFormData({
+          roomTypeName: "",
+          price: "",
+          capacity: "",
+          amenities: "",
+        });
+      }
+      setErrors({});
+    }, 0);
   }, [open, roomType]);
 
   const validateForm = () => {
@@ -113,7 +117,7 @@ export function RoomTypeFormModal({
       await onSave(roomTypeData);
       onOpenChange(false);
     } catch (error) {
-      console.error("Error saving room type:", error);
+      logger.error("Error saving room type:", error);
       setErrors({
         submit: error instanceof Error ? error.message : "Có lỗi xảy ra",
       });

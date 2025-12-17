@@ -55,24 +55,26 @@ export function RoomFormModal({
   useEffect(() => {
     if (!open) return;
 
-    if (room) {
-      setFormData({
-        roomID: room.roomID,
-        roomName: room.roomName,
-        roomTypeID: room.roomTypeID,
-        roomStatus: room.roomStatus,
-        floor: room.floor,
-      });
-    } else {
-      setFormData({
-        roomID: "",
-        roomName: "",
-        roomTypeID: roomTypes[0]?.roomTypeID || "",
-        roomStatus: "Sẵn sàng",
-        floor: 1,
-      });
-    }
-    setErrors({});
+    setTimeout(() => {
+      if (room) {
+        setFormData({
+          roomID: room.roomID,
+          roomName: room.roomName,
+          roomTypeID: room.roomTypeID,
+          roomStatus: room.roomStatus,
+          floor: room.floor,
+        });
+      } else {
+        setFormData({
+          roomID: "",
+          roomName: "",
+          roomTypeID: roomTypes[0]?.roomTypeID || "",
+          roomStatus: "Sẵn sàng",
+          floor: 1,
+        });
+      }
+      setErrors({});
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 

@@ -123,7 +123,7 @@ export function RoomCard({
         {/* Room Info Row */}
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-            <span className="text-primary-600">{ICONS.BED_DOUBLE}</span>
+            <span className="w-5 h-5 text-primary-600">{ICONS.BED_DOUBLE}</span>
             <span className="font-semibold text-gray-700">{room.roomType.capacity} người</span>
           </div>
         </div>
@@ -203,7 +203,7 @@ export function RoomCard({
               size="sm"
               onClick={() => router.push(`/payments/folio/${room.folioId}`)}
             >
-              <span className="mr-2">{ICONS.RECEIPT}</span>
+              <span className="w-5 h-5 mr-2">{ICONS.RECEIPT}</span>
               Xem chi tiết Folio
             </Button>
           )}

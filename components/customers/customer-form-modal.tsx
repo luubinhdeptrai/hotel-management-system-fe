@@ -56,22 +56,25 @@ export function CustomerFormModal({
 
   useEffect(() => {
     if (!open) return;
-    if (customer) {
-      setFormData({
-        customerName: customer.customerName,
-        phoneNumber: customer.phoneNumber,
-        email: customer.email,
-        identityCard: customer.identityCard,
-        address: customer.address,
-        nationality: customer.nationality,
-        customerType: customer.customerType,
-        isVip: customer.isVip,
-        notes: customer.notes || "",
-      });
-    } else {
-      setFormData(defaultFormState);
-    }
-    setErrors({});
+
+    setTimeout(() => {
+      if (customer) {
+        setFormData({
+          customerName: customer.customerName,
+          phoneNumber: customer.phoneNumber,
+          email: customer.email,
+          identityCard: customer.identityCard,
+          address: customer.address,
+          nationality: customer.nationality,
+          customerType: customer.customerType,
+          isVip: customer.isVip,
+          notes: customer.notes || "",
+        });
+      } else {
+        setFormData(defaultFormState);
+      }
+      setErrors({});
+    }, 0);
   }, [customer, open]);
 
   const validate = () => {
@@ -132,17 +135,17 @@ export function CustomerFormModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
+        <DialogHeader className="bg-linear-to-br from-primary-600 to-primary-500 -m-6 mb-0 p-6 rounded-t-xl">
+          <DialogTitle className="text-2xl font-bold text-white">
             {customer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-primary-50 text-base">
             Điền đầy đủ thông tin để lưu hồ sơ khách hàng. Các trường có dấu *
             là bắt buộc.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5 mt-6">
           {errors.submit && (
             <Alert variant="destructive">
               <div className="flex items-center gap-2">
@@ -154,13 +157,13 @@ export function CustomerFormModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="customerName">Họ tên / Tên công ty *</Label>
+              <Label htmlFor="customerName" className="text-sm font-semibold text-gray-700">Họ tên / Tên công ty <span className="text-error-600">*</span></Label>
               <Input
                 id="customerName"
                 value={formData.customerName}
                 onChange={(e) => handleChange("customerName", e.target.value)}
                 placeholder="VD: Nguyễn Văn A"
-                className={errors.customerName ? "border-error-600" : ""}
+                className={`h-11 mt-1 ${errors.customerName ? "border-error-600 focus:ring-error-500" : "focus:ring-primary-500"}`}
               />
               {errors.customerName && (
                 <p className="text-xs text-error-600 mt-1">
@@ -170,13 +173,13 @@ export function CustomerFormModal({
             </div>
 
             <div>
-              <Label htmlFor="phoneNumber">Số điện thoại *</Label>
+              <Label htmlFor="phoneNumber" className="text-sm font-semibold text-gray-700">Số điện thoại <span className="text-error-600">*</span></Label>
               <Input
                 id="phoneNumber"
                 value={formData.phoneNumber}
                 onChange={(e) => handleChange("phoneNumber", e.target.value)}
                 placeholder="090xxxxxxx"
-                className={errors.phoneNumber ? "border-error-600" : ""}
+                className={`h-11 mt-1 ${errors.phoneNumber ? "border-error-600 focus:ring-error-500" : "focus:ring-primary-500"}`}
               />
               {errors.phoneNumber && (
                 <p className="text-xs text-error-600 mt-1">
@@ -186,14 +189,14 @@ export function CustomerFormModal({
             </div>
 
             <div>
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email <span className="text-error-600">*</span></Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
                 placeholder="customer@domain.com"
-                className={errors.email ? "border-error-600" : ""}
+                className={`h-11 mt-1 ${errors.email ? "border-error-600 focus:ring-error-500" : "focus:ring-primary-500"}`}
               />
               {errors.email && (
                 <p className="text-xs text-error-600 mt-1">{errors.email}</p>
@@ -201,51 +204,52 @@ export function CustomerFormModal({
             </div>
 
             <div>
-              <Label htmlFor="identityCard">CCCD / Mã số thuế *</Label>
+              <Label htmlFor="identityCard" className="text-sm font-semibold text-gray-700">CCCD / Mã số thuế <span className="text-error-600">*</span></Label>
               <Input
                 id="identityCard"
                 value={formData.identityCard}
                 onChange={(e) => handleChange("identityCard", e.target.value)}
                 placeholder="0790xxxxxxx"
-                className={errors.identityCard ? "border-error-600" : ""}
+                className={`h-11 mt-1 ${errors.identityCard ? "border-error-600 focus:ring-error-500" : "focus:ring-primary-500"}`}
               />
               {errors.identityCard && (
-                <p className="text-xs text-error-600 mt-1">
+                <p className="text-xs text-error-600 mt-1 font-medium">
                   {errors.identityCard}
                 </p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="address">Địa chỉ *</Label>
+              <Label htmlFor="address" className="text-sm font-semibold text-gray-700">Địa chỉ <span className="text-error-600">*</span></Label>
               <Input
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleChange("address", e.target.value)}
                 placeholder="123 Nguyễn Huệ, Q1"
-                className={errors.address ? "border-error-600" : ""}
+                className={`h-11 mt-1 ${errors.address ? "border-error-600 focus:ring-error-500" : "focus:ring-primary-500"}`}
               />
               {errors.address && (
-                <p className="text-xs text-error-600 mt-1">{errors.address}</p>
+                <p className="text-xs text-error-600 mt-1 font-medium">{errors.address}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="nationality">Quốc tịch *</Label>
+              <Label htmlFor="nationality" className="text-sm font-semibold text-gray-700">Quốc tịch <span className="text-error-600">*</span></Label>
               <Input
                 id="nationality"
                 value={formData.nationality}
                 onChange={(e) => handleChange("nationality", e.target.value)}
+                className="h-11 mt-1 focus:ring-primary-500"
               />
             </div>
 
             <div>
-              <Label>Loại khách *</Label>
+              <Label className="text-sm font-semibold text-gray-700">Loại khách <span className="text-error-600">*</span></Label>
               <Select
                 value={formData.customerType}
                 onValueChange={(value) => handleChange("customerType", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11 mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -255,43 +259,53 @@ export function CustomerFormModal({
               </Select>
             </div>
 
-            <div className="flex items-center gap-3 pt-6">
-              <Checkbox
-                id="isVip"
-                checked={formData.isVip}
-                onCheckedChange={(checked) =>
-                  handleChange("isVip", Boolean(checked))
-                }
-              />
-              <Label htmlFor="isVip" className="font-medium">
-                Đánh dấu khách VIP
-              </Label>
+            <div className="bg-linear-to-br from-warning-50 to-warning-100/30 rounded-xl p-4 border border-warning-200">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="isVip"
+                  checked={formData.isVip}
+                  onCheckedChange={(checked) =>
+                    handleChange("isVip", Boolean(checked))
+                  }
+                  className="data-[state=checked]:bg-warning-600 data-[state=checked]:border-warning-600"
+                />
+                <div>
+                  <Label htmlFor="isVip" className="cursor-pointer font-semibold text-gray-900">
+                    Đánh dấu khách VIP
+                  </Label>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Khách VIP sẽ nhận ưu đãi và dịch vụ ưu tiên
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           <div>
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes" className="text-sm font-semibold text-gray-700">Ghi chú</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => handleChange("notes", e.target.value)}
               placeholder="Ghi chú ưu tiên, yêu cầu đặc biệt..."
-              rows={3}
+              rows={4}
+              className="mt-1 resize-none focus:ring-primary-500"
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 mt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="h-11 px-6 font-medium"
             >
-              Hủy
+              Hủy bỏ
             </Button>
             <Button
               type="submit"
               disabled={submitting}
-              className="bg-primary-600 hover:bg-primary-700"
+              className="h-11 px-6 font-semibold bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 shadow-lg"
             >
               {submitting ? "Đang lưu..." : "Lưu khách hàng"}
             </Button>

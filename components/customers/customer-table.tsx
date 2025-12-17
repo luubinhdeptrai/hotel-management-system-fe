@@ -29,8 +29,8 @@ interface CustomerTableProps {
 }
 
 const STATUS_STYLES = {
-  "Hoạt động": "bg-success-100 text-success-700",
-  "Đã vô hiệu": "bg-gray-100 text-gray-600",
+  "Hoạt động": "bg-linear-to-r from-success-500 to-success-600 text-white font-semibold",
+  "Đã vô hiệu": "bg-linear-to-r from-gray-500 to-gray-600 text-white font-semibold",
 };
 
 export function CustomerTable({
@@ -49,35 +49,41 @@ export function CustomerTable({
     }).format(value);
 
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+    <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50">
-            <TableHead className="font-semibold">Mã KH</TableHead>
-            <TableHead className="font-semibold">Khách hàng</TableHead>
-            <TableHead className="font-semibold">Loại</TableHead>
-            <TableHead className="font-semibold">Số điện thoại</TableHead>
-            <TableHead className="font-semibold">Email</TableHead>
-            <TableHead className="font-semibold">CCCD/Tax</TableHead>
-            <TableHead className="font-semibold">Trạng thái</TableHead>
-            <TableHead className="font-semibold text-right">
+          <TableRow className="bg-linear-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+            <TableHead className="font-bold text-gray-700">Mã KH</TableHead>
+            <TableHead className="font-bold text-gray-700">Khách hàng</TableHead>
+            <TableHead className="font-bold text-gray-700">Loại</TableHead>
+            <TableHead className="font-bold text-gray-700">Số điện thoại</TableHead>
+            <TableHead className="font-bold text-gray-700">Email</TableHead>
+            <TableHead className="font-bold text-gray-700">CCCD/Tax</TableHead>
+            <TableHead className="font-bold text-gray-700">Trạng thái</TableHead>
+            <TableHead className="font-bold text-gray-700 text-right">
               Tổng chi tiêu
             </TableHead>
-            <TableHead className="font-semibold text-right">Thao tác</TableHead>
+            <TableHead className="font-bold text-gray-700 text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {empty ? (
             <TableRow>
-              <TableCell colSpan={9} className="py-8 text-center text-gray-500">
-                Không tìm thấy khách hàng phù hợp
+              <TableCell colSpan={9} className="py-16">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-linear-to-br from-primary-100 to-primary-50 flex items-center justify-center">
+                    <span className="w-8 h-8 text-primary-500">{ICONS.USERS}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Không tìm thấy khách hàng</h3>
+                  <p className="text-gray-500 text-sm">Không có khách hàng nào phù hợp với bộ lọc hiện tại</p>
+                </div>
               </TableCell>
             </TableRow>
           ) : (
             customers.map((customer) => (
               <TableRow
                 key={customer.customerId}
-                className="hover:bg-gray-50 cursor-pointer"
+                className="hover:bg-linear-to-r hover:from-primary-50/30 hover:to-transparent cursor-pointer transition-all"
                 onClick={() => onViewDetails(customer)}
               >
                 <TableCell className="font-medium text-gray-900">
@@ -95,11 +101,15 @@ export function CustomerTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-primary-100 text-primary-700 border-0">
+                    <Badge className={`border-0 font-semibold ${
+                      customer.customerType === "Doanh nghiệp"
+                        ? "bg-linear-to-r from-info-500 to-info-600 text-white"
+                        : "bg-linear-to-r from-primary-500 to-primary-600 text-white"
+                    }`}>
                       {customer.customerType}
                     </Badge>
                     {customer.isVip && (
-                      <Badge className="bg-warning-100 text-warning-700 border-0">
+                      <Badge className="bg-linear-to-r from-warning-500 to-warning-600 text-white border-0 font-semibold">
                         VIP
                       </Badge>
                     )}
@@ -141,8 +151,9 @@ export function CustomerTable({
                           e.stopPropagation();
                           onViewDetails(customer);
                         }}
+                        className="cursor-pointer"
                       >
-                        <span className="mr-2">{ICONS.INFO}</span>
+                        <span className="mr-2 w-4 h-4">{ICONS.INFO}</span>
                         Xem chi tiết
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -150,8 +161,9 @@ export function CustomerTable({
                           e.stopPropagation();
                           onEdit(customer);
                         }}
+                        className="cursor-pointer"
                       >
-                        <span className="mr-2">{ICONS.EDIT}</span>
+                        <span className="mr-2 w-4 h-4">{ICONS.EDIT}</span>
                         Chỉnh sửa
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

@@ -46,8 +46,10 @@ export function RolePermissionEditModal({
 
   useEffect(() => {
     if (open && role) {
-      setSelectedPermissions([...role.permissions]);
-      setError("");
+      setTimeout(() => {
+        setSelectedPermissions([...role.permissions]);
+        setError("");
+      }, 0);
     }
   }, [open, role]);
 

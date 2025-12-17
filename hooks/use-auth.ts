@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Employee, AuthTokens } from "@/lib/types/auth";
@@ -40,11 +42,11 @@ export function useAuth(): UseAuthReturn {
             setUser(freshUser);
           } catch {
             // If API fails but we have stored user, keep using it
-            console.warn("Failed to refresh user from API, using stored user");
+            logger.warn("Failed to refresh user from API, using stored user");
           }
         }
       } catch (err) {
-        console.error("Auth initialization error:", err);
+        logger.error("Auth initialization error:", err);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -90,7 +92,7 @@ export function useAuth(): UseAuthReturn {
       setUser(null);
       router.push("/login");
     } catch (err) {
-      console.error("Logout error:", err);
+      logger.error("Logout error:", err);
       // Still clear local state even if API fails
       setUser(null);
       router.push("/login");
@@ -104,7 +106,7 @@ export function useAuth(): UseAuthReturn {
       const freshUser = await authService.getCurrentUser();
       setUser(freshUser);
     } catch (err) {
-      console.error("Failed to refresh user:", err);
+      logger.error("Failed to refresh user:", err);
     }
   }, []);
 

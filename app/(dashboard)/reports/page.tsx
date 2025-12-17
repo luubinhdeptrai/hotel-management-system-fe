@@ -6,6 +6,7 @@ import {
   ReportContent,
 } from "@/components/reports";
 import { useReports } from "@/hooks/use-reports";
+import { ICONS } from "@/src/constants/icons.enum";
 
 export default function ReportsPage() {
   const {
@@ -29,14 +30,22 @@ export default function ReportsPage() {
   } = useReports();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Báo Cáo & Thống Kê
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Xem các báo cáo về doanh thu, công suất phòng và các thống kê khác
-        </p>
+    <div className="space-y-6 pb-8">
+      {/* Modern Header with Gradient */}
+      <div className="bg-linear-to-br from-primary-600 via-primary-500 to-primary-600 rounded-2xl p-8 shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+            <span className="w-8 h-8 text-white">{ICONS.BAR_CHART}</span>
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold text-white">
+              Báo Cáo & Thống Kê
+            </h1>
+            <p className="text-sm text-white/90 mt-1 font-medium">
+              Xem các báo cáo về doanh thu, công suất phòng và các thống kê khác
+            </p>
+          </div>
+        </div>
       </div>
 
       <ReportSummaryCards

@@ -2,8 +2,6 @@
 
 import { use, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ICONS } from "@/src/constants/icons.enum";
 import {
   getMutableFolioById,
@@ -111,15 +109,27 @@ export default function FolioPage({ params }: FolioPageProps) {
 
   if (!folio) {
     return (
-      <div className="space-y-6">
-        <Alert variant="destructive">
-          <span className="w-4 h-4">{ICONS.ALERT}</span>
-          <AlertDescription>Không tìm thấy folio với ID: {id}</AlertDescription>
-        </Alert>
-        <Button variant="outline" onClick={() => window.history.back()}>
-          {ICONS.CHEVRON_LEFT}
-          <span className="ml-2">Quay lại</span>
-        </Button>
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="bg-linear-to-br from-error-50 to-error-100/30 rounded-2xl p-6 border-2 border-error-200 shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-linear-to-br from-error-600 to-error-500 rounded-xl flex items-center justify-center">
+                <span className="inline-flex items-center justify-center w-6 h-6 text-white">{ICONS.ALERT}</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Không tìm thấy Folio</h3>
+                <p className="text-sm text-gray-600">Không tìm thấy folio với ID: {id}</p>
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={() => window.history.back()}
+            className="inline-flex items-center gap-2 bg-linear-to-r from-gray-600 to-gray-500 hover:from-gray-700 hover:to-gray-600 text-white h-11 px-6 rounded-lg shadow-md"
+          >
+            <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.CHEVRON_LEFT}</span>
+            Quay lại
+          </Button>
+        </div>
       </div>
     );
   }
@@ -127,90 +137,126 @@ export default function FolioPage({ params }: FolioPageProps) {
   const isFolioClosed = folio.status === "CLOSED";
 
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => window.history.back()}
-        className="h-9"
-      >
-        {ICONS.CHEVRON_LEFT}
-        <span className="ml-2">Quay lại</span>
-      </Button>
-
-      {/* Folio Header */}
-      <FolioHeader folio={folio} />
-
-      {/* Balance Card */}
-      <BalanceCard folio={folio} />
-
-      {/* Action Buttons */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Thao tác</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
+      {/* Page Header with Gradient */}
+      <div className="bg-linear-to-r from-primary-600 to-primary-500 text-white px-4 sm:px-6 lg:px-8 py-8 mb-8 shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-md backdrop-blur-sm">
+              <span className="inline-flex items-center justify-center w-8 h-8 text-white">{ICONS.RECEIPT}</span>
+            </div>
+            <div className="flex-1">
+              <h1 className="text-3xl font-extrabold">Chi tiết Folio</h1>
+              <p className="text-primary-100 mt-1">
+                Quản lý giao dịch và thanh toán
+              </p>
+            </div>
             <Button
-              variant="outline"
-              className="h-20 flex-col gap-2 hover:border-blue-500 hover:bg-blue-50"
+              onClick={() => window.history.back()}
+              className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white h-11 px-6 rounded-lg shadow-md backdrop-blur-sm transition-all"
+            >
+              <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.CHEVRON_LEFT}</span>
+              Quay lại
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-6">
+        {/* Folio Header */}
+        <FolioHeader folio={folio} />
+
+        {/* Balance Cards */}
+        <BalanceCard folio={folio} />
+
+        {/* Action Buttons */}
+        <div className="rounded-2xl bg-white border-2 border-gray-100 p-6 shadow-lg">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-md">
+              <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.SETTINGS}</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Thao tác</h2>
+              <p className="text-xs text-gray-500">Quản lý giao dịch folio</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button
               disabled={isFolioClosed}
               onClick={() => setIsPostChargeOpen(true)}
+              className="h-24 flex-col gap-3 bg-linear-to-br from-primary-50 to-primary-100/30 hover:from-primary-100 hover:to-primary-200/50 border-2 border-primary-200 text-primary-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {ICONS.PLUS}
+              <div className="w-10 h-10 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.PLUS}</span>
+              </div>
               <span className="text-sm">Post Charge</span>
             </Button>
+
             <Button
-              variant="outline"
-              className="h-20 flex-col gap-2 hover:border-green-500 hover:bg-green-50"
               disabled={isFolioClosed}
               onClick={() => setIsPostPaymentOpen(true)}
+              className="h-24 flex-col gap-3 bg-linear-to-br from-success-50 to-success-100/30 hover:from-success-100 hover:to-success-200/50 border-2 border-success-200 text-success-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {ICONS.CREDIT_CARD}
+              <div className="w-10 h-10 bg-linear-to-br from-success-600 to-success-500 rounded-xl flex items-center justify-center">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.CREDIT_CARD}</span>
+              </div>
               <span className="text-sm">Post Payment</span>
             </Button>
+
             <Button
-              variant="outline"
-              className="h-20 flex-col gap-2 hover:border-red-500 hover:bg-red-50"
               disabled={
                 isFolioClosed ||
                 folio.transactions.filter((t) => !t.isVoided).length === 0
               }
               onClick={() => setIsVoidOpen(true)}
+              className="h-24 flex-col gap-3 bg-linear-to-br from-error-50 to-error-100/30 hover:from-error-100 hover:to-error-200/50 border-2 border-error-200 text-error-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {ICONS.X_CIRCLE}
+              <div className="w-10 h-10 bg-linear-to-br from-error-600 to-error-500 rounded-xl flex items-center justify-center">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.X_CIRCLE}</span>
+              </div>
               <span className="text-sm">Void/Adjust</span>
             </Button>
+
             <Button
-              variant="outline"
-              className="h-20 flex-col gap-2"
               onClick={() => window.print()}
+              className="h-24 flex-col gap-3 bg-linear-to-br from-gray-50 to-gray-100/30 hover:from-gray-100 hover:to-gray-200/50 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
             >
-              {ICONS.PRINTER}
+              <div className="w-10 h-10 bg-linear-to-br from-gray-600 to-gray-500 rounded-xl flex items-center justify-center">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.PRINTER}</span>
+              </div>
               <span className="text-sm">Print Folio</span>
             </Button>
           </div>
 
           {isFolioClosed && (
-            <p className="mt-3 text-sm text-amber-600">
-              ⚠️ Folio đã đóng. Không thể thêm/chỉnh sửa giao dịch.
-            </p>
+            <div className="mt-4 bg-warning-50 border-2 border-warning-200 rounded-xl p-4 flex items-center gap-3">
+              <span className="inline-flex items-center justify-center w-6 h-6 text-warning-600">{ICONS.ALERT_CIRCLE}</span>
+              <p className="text-sm text-warning-700 font-semibold">
+                Folio đã đóng. Không thể thêm/chỉnh sửa giao dịch.
+              </p>
+            </div>
           )}
-        </CardContent>
-      </Card>
-
+        </div>
       {/* Transaction Table */}
       <TransactionTable transactions={folio.transactions} />
 
       {/* Info Note */}
-      <Alert>
-        <span className="w-4 h-4">{ICONS.INFO}</span>
-        <AlertDescription>
-          <strong>Debit (Nợ):</strong> Các khoản phí khách cần thanh toán.{" "}
-          <strong>Credit (Có):</strong> Các khoản tiền khách đã thanh toán.
-        </AlertDescription>
-      </Alert>
+      <div className="bg-linear-to-br from-info-50 to-info-100/30 rounded-2xl p-5 border-2 border-info-200 shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 bg-linear-to-br from-info-600 to-info-500 rounded-xl flex items-center justify-center shrink-0">
+            <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.INFO}</span>
+          </div>
+          <div className="text-sm text-gray-700">
+            <p className="font-semibold mb-1">Hướng dẫn sử dụng:</p>
+            <ul className="space-y-1">
+              <li>• <strong>Debit (Nợ):</strong> Các khoản phí khách cần thanh toán (phòng, dịch vụ, phụ phí...)</li>
+              <li>• <strong>Credit (Có):</strong> Các khoản tiền khách đã thanh toán (tiền mặt, chuyển khoản...)</li>
+              <li>• <strong>Balance:</strong> Số dư = Debit - Credit (dương = khách nợ, âm = cần hoàn tiền)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
       {/* Modals */}
       <PostChargeModal
@@ -232,6 +278,7 @@ export default function FolioPage({ params }: FolioPageProps) {
         onVoid={handleVoidTransaction}
         transactions={folio.transactions}
       />
+    </div>
     </div>
   );
 }

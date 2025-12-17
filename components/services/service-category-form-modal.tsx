@@ -81,12 +81,12 @@ export function ServiceCategoryFormModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
             {mode === "create"
               ? "Thêm loại dịch vụ mới"
               : "Chỉnh sửa loại dịch vụ"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-base">
             {mode === "create"
               ? "Nhập thông tin loại dịch vụ mới"
               : "Cập nhật thông tin loại dịch vụ"}
@@ -125,21 +125,21 @@ export function ServiceCategoryFormModal({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="mr-2"
+              className="h-11 px-6 border-2 font-bold"
             >
               Hủy
             </Button>
             <Button
               type="submit"
-              className="bg-primary-600 hover:bg-primary-500"
+              className="h-11 px-6 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 font-bold shadow-lg"
             >
-              {ICONS.SAVE}
-              <span className="ml-2">
+              <div className="w-4 h-4 mr-2 flex items-center justify-center">{ICONS.SAVE}</div>
+              <span>
                 {mode === "create" ? "Thêm mới" : "Cập nhật"}
               </span>
             </Button>
@@ -149,3 +149,4 @@ export function ServiceCategoryFormModal({
     </Dialog>
   );
 }
+

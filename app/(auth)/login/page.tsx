@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Hotel } from "lucide-react";
@@ -51,7 +53,7 @@ export default function LoginPage() {
           credentials.password
         );
 
-        console.log("Login response:", response);
+        logger.log("Login response:", response);
 
         // If we reach here without error, login was successful
         // authService.login() throws on failure
@@ -73,7 +75,7 @@ export default function LoginPage() {
       } else {
         setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại sau.");
       }
-      console.error("Login error:", error);
+      logger.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }

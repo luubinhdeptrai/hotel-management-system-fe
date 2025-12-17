@@ -18,51 +18,51 @@ interface RecentInvoicesTableProps {
 
 export function RecentInvoicesTable({ items }: RecentInvoicesTableProps) {
   return (
-    <div className="rounded-lg border border-gray-300 bg-white">
-      <div className="border-b border-gray-200 p-4">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Hóa đơn gần đây (mẫu dữ liệu)
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-md overflow-hidden">
+      <div className="bg-linear-to-r from-primary-600 to-primary-500 p-5">
+        <h2 className="text-xl font-bold text-white mb-1">
+          Hóa đơn gần đây
         </h2>
-        <p className="text-sm text-gray-500">
-          Danh sách minh họa để in lại hóa đơn.
+        <p className="text-sm text-primary-50">
+          Danh sách minh họa để in lại hóa đơn đã phát hành.
         </p>
       </div>
       <Table>
         <TableHeader className="bg-gray-50">
-          <TableRow>
-            <TableHead className="font-semibold text-gray-900">
+          <TableRow className="border-b border-gray-200">
+            <TableHead className="font-bold text-gray-900 py-4">
               Mã phiếu
             </TableHead>
-            <TableHead className="font-semibold text-gray-900">
+            <TableHead className="font-bold text-gray-900">
               Khách hàng
             </TableHead>
-            <TableHead className="font-semibold text-gray-900">Phòng</TableHead>
-            <TableHead className="font-semibold text-gray-900">
+            <TableHead className="font-bold text-gray-900">Phòng</TableHead>
+            <TableHead className="font-bold text-gray-900">
               Tổng tiền
             </TableHead>
-            <TableHead className="text-right font-semibold text-gray-900">
+            <TableHead className="text-right font-bold text-gray-900">
               Thao tác
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((s) => (
-            <TableRow key={s.receiptID} className="hover:bg-gray-50">
-              <TableCell className="font-medium text-primary-600">
+            <TableRow key={s.receiptID} className="hover:bg-primary-50/30 transition-colors border-b border-gray-100 last:border-0">
+              <TableCell className="font-bold text-primary-600 py-4">
                 {s.receiptID}
               </TableCell>
-              <TableCell className="text-gray-900">
+              <TableCell className="font-medium text-gray-900">
                 {s.receipt.customerName}
               </TableCell>
-              <TableCell className="text-gray-900">
+              <TableCell className="font-medium text-gray-700">
                 {s.receipt.roomName}
               </TableCell>
-              <TableCell className="font-semibold text-gray-900">
+              <TableCell className="font-bold text-gray-900">
                 {formatCurrency(s.grandTotal)}
               </TableCell>
               <TableCell className="text-right">
                 <Button
-                  className="h-8 bg-primary-600 text-white hover:bg-primary-500"
+                  className="h-9 px-5 font-semibold bg-linear-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-md transition-all"
                   onClick={() =>
                     window.open(
                       `/payments/print?receiptID=${s.receiptID}`,

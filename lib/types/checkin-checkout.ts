@@ -52,15 +52,26 @@ export interface PenaltyDetail {
   dateIssued: string;
 }
 
+export interface SurchargeDetail {
+  surchargeID: string;
+  surchargeName: string;
+  rate: number; // Percentage (e.g., 10 = 10%)
+  amount: number;
+  description?: string;
+  dateApplied: string;
+}
+
 // Check-out Summary
 export interface CheckoutSummary {
   receiptID: string;
   receipt: RentalReceipt;
   services: ServiceDetail[];
   penalties: PenaltyDetail[];
+  surcharges: SurchargeDetail[];
   roomTotal: number;
   servicesTotal: number;
   penaltiesTotal: number;
+  surchargesTotal: number;
   grandTotal: number;
 }
 

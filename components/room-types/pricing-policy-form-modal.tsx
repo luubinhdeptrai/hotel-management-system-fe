@@ -53,31 +53,39 @@ export function PricingPolicyFormModal({
 
   useEffect(() => {
     if (!open) return; // Only run when modal opens
-    
-    if (policy) {
-      setFormData({
-        TenChinhSach: policy.TenChinhSach,
-        MaLoaiPhong: policy.MaLoaiPhong,
-        TuNgay: policy.TuNgay,
-        DenNgay: policy.DenNgay,
-        KieuNgay: policy.KieuNgay,
-        HeSo: policy.HeSo,
-        MucUuTien: policy.MucUuTien,
-      });
-      const roomType = roomTypes.find((rt) => rt.roomTypeID === policy.MaLoaiPhong);
-      setSelectedRoomType(roomType || null);
-    } else {
-      setFormData({
-        TenChinhSach: "",
-        MaLoaiPhong: "",
-        TuNgay: "",
-        DenNgay: "",
-        KieuNgay: "Ngày thường",
-        HeSo: 1.0,
-        MucUuTien: 1,
-      });
-      setSelectedRoomType(null);
-    }
+
+    // Compute target state synchronously but defer setState to avoid cascading renders
+    const targetForm: PricingPolicyFormData = policy
+      ? {
+          TenChinhSach: policy.TenChinhSach,
+          MaLoaiPhong: policy.MaLoaiPhong,
+          TuNgay: policy.TuNgay,
+          DenNgay: policy.DenNgay,
+          KieuNgay: policy.KieuNgay as PricingPolicyFormData["KieuNgay"],
+          HeSo: policy.HeSo,
+          MucUuTien: policy.MucUuTien,
+        }
+      : {
+          TenChinhSach: "",
+          MaLoaiPhong: "",
+          TuNgay: "",
+          DenNgay: "",
+          KieuNgay: "Ngày thường",
+          HeSo: 1.0,
+          MucUuTien: 1,
+        };
+
+    const targetRoomType = policy
+      ? roomTypes.find((rt) => rt.roomTypeID === policy.MaLoaiPhong) || null
+      : null;
+
+    // Defer state updates to the next tick to avoid synchronous setState in effect
+    const t = setTimeout(() => {
+      setFormData(targetForm);
+      setSelectedRoomType(targetRoomType);
+    }, 0);
+
+    return () => clearTimeout(t);
   }, [policy, roomTypes, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -102,7 +110,7 @@ export function PricingPolicyFormModal({
         <DialogHeader>
           <DialogTitle className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
             <span className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <span className="text-primary-600">{ICONS.DOLLAR_SIGN}</span>
+              <span className="w-5 h-5 text-primary-600">{ICONS.DOLLAR_SIGN}</span>
             </span>
             {policy ? "Chỉnh sửa chính sách giá" : "Thêm chính sách giá mới"}
           </DialogTitle>
@@ -340,7 +348,7 @@ export function PricingPolicyFormModal({
               type="submit"
               className="h-12 px-8 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
             >
-              <span className="mr-2">{ICONS.CHECK}</span>
+              <span className="w-4 h-4 mr-2">{ICONS.CHECK}</span>
               {policy ? "Cập nhật" : "Tạo chính sách"}
             </Button>
           </DialogFooter>

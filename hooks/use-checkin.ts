@@ -1,6 +1,7 @@
+import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import type { Reservation } from "@/lib/types/reservation";
-import type { CheckInFormData } from "@/lib/types/checkin-checkout";
+import type { CheckInFormData, WalkInFormData } from "@/lib/types/checkin-checkout";
 import { searchReservations } from "@/lib/mock-checkin-checkout";
 
 export function useCheckIn() {
@@ -12,6 +13,7 @@ export function useCheckIn() {
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showWalkInModal, setShowWalkInModal] = useState(false);
 
   const handleSearch = (searchQuery: string) => {
     setQuery(searchQuery);
@@ -26,7 +28,7 @@ export function useCheckIn() {
 
   const handleConfirmCheckIn = (data: CheckInFormData) => {
     // In real app, this would call an API
-    console.log("Check-in data:", data);
+    logger.log("Check-in data:", data);
 
     // Remove from results after successful check-in
     setResults((prev) =>
@@ -37,8 +39,16 @@ export function useCheckIn() {
   };
 
   const handleWalkIn = () => {
-    // This would open a walk-in form modal
-    alert("Chức năng khách vãng lai (Walk-in) đang được phát triển...");
+    setShowWalkInModal(true);
+  };
+
+  const handleConfirmWalkIn = (data: WalkInFormData) => {
+    // In real app, this would call an API to:
+    // 1. Create customer record if new
+    // 2. Create ad-hoc reservation
+    // 3. Create rental receipt (check-in)
+    // 4. Update room status
+    logger.log("Walk-in check-in data:", data);
   };
 
   const resetModal = () => {
@@ -51,11 +61,14 @@ export function useCheckIn() {
     results,
     selectedReservation,
     showModal,
+    showWalkInModal,
     handleSearch,
     handleSelectReservation,
     handleConfirmCheckIn,
     handleWalkIn,
+    handleConfirmWalkIn,
     resetModal,
     setShowModal,
+    setShowWalkInModal,
   };
 }
