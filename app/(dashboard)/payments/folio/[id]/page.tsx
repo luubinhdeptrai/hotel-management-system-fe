@@ -19,7 +19,7 @@ import { BalanceCard } from "@/components/folio/balance-card";
 import { TransactionTable } from "@/components/folio/transaction-table";
 import { PostChargeModal } from "@/components/folio/post-charge-modal";
 import { PostPaymentModal } from "@/components/folio/post-payment-modal";
-import { VoidTransactionModal } from "@/components/folio/void-transaction-modal";
+import { VoidConfirmDialog } from "@/components/folio/void-confirm-dialog";
 import { toast } from "sonner";
 
 interface FolioPageProps {
@@ -36,7 +36,11 @@ export default function FolioPage({ params }: FolioPageProps) {
   // Modal states
   const [isPostChargeOpen, setIsPostChargeOpen] = useState(false);
   const [isPostPaymentOpen, setIsPostPaymentOpen] = useState(false);
-  const [isVoidOpen, setIsVoidOpen] = useState(false);
+  const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string>("");
+  
+  // Get selected transaction for void confirmation
+  const selectedTransaction = folio?.transactions.find(t => t.transactionID === selectedTransactionId);
 
   // Handler for posting charges
   const handlePostCharge = useCallback(
@@ -73,11 +77,13 @@ export default function FolioPage({ params }: FolioPageProps) {
         paymentMethod: data.paymentMethod,
         reference: data.reference,
         notes: data.notes,
+        mode: data.mode || "PAYMENT",
       });
 
       if (updatedFolio) {
         setFolio({ ...updatedFolio });
-        toast.success("Ghi nhận thanh toán thành công", {
+        const successMsg = data.mode === "DEPOSIT" ? "Ghi nhận đặt cọc thành công" : "Ghi nhận thanh toán thành công";
+        toast.success(successMsg, {
           description: `Đã nhận ${new Intl.NumberFormat("vi-VN", {
             style: "currency",
             currency: "VND",
@@ -106,6 +112,20 @@ export default function FolioPage({ params }: FolioPageProps) {
     },
     [id]
   );
+  
+  // Open void confirmation dialog
+  const handleOpenVoidDialog = (transactionId: string) => {
+    setSelectedTransactionId(transactionId);
+    setIsVoidDialogOpen(true);
+  };
+  
+  // Confirm void transaction
+  const handleConfirmVoid = (reason: string) => {
+    if (selectedTransactionId) {
+      handleVoidTransaction(selectedTransactionId, reason);
+      setSelectedTransactionId("");
+    }
+  };
 
   if (!folio) {
     return (
@@ -181,7 +201,7 @@ export default function FolioPage({ params }: FolioPageProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Button
               disabled={isFolioClosed}
               onClick={() => setIsPostChargeOpen(true)}
@@ -205,20 +225,6 @@ export default function FolioPage({ params }: FolioPageProps) {
             </Button>
 
             <Button
-              disabled={
-                isFolioClosed ||
-                folio.transactions.filter((t) => !t.isVoided).length === 0
-              }
-              onClick={() => setIsVoidOpen(true)}
-              className="h-24 flex-col gap-3 bg-linear-to-br from-error-50 to-error-100/30 hover:from-error-100 hover:to-error-200/50 border-2 border-error-200 text-error-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="w-10 h-10 bg-linear-to-br from-error-600 to-error-500 rounded-xl flex items-center justify-center">
-                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.X_CIRCLE}</span>
-              </div>
-              <span className="text-sm">Void/Adjust</span>
-            </Button>
-
-            <Button
               onClick={() => window.print()}
               className="h-24 flex-col gap-3 bg-linear-to-br from-gray-50 to-gray-100/30 hover:from-gray-100 hover:to-gray-200/50 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
             >
@@ -239,7 +245,11 @@ export default function FolioPage({ params }: FolioPageProps) {
           )}
         </div>
       {/* Transaction Table */}
-      <TransactionTable transactions={folio.transactions} />
+      <TransactionTable 
+        transactions={folio.transactions} 
+        onVoidTransaction={handleOpenVoidDialog}
+        isFolioClosed={isFolioClosed}
+      />
 
       {/* Info Note */}
       <div className="bg-linear-to-br from-info-50 to-info-100/30 rounded-2xl p-5 border-2 border-info-200 shadow-lg">
@@ -272,11 +282,14 @@ export default function FolioPage({ params }: FolioPageProps) {
         balance={folio.balance}
       />
 
-      <VoidTransactionModal
-        isOpen={isVoidOpen}
-        onClose={() => setIsVoidOpen(false)}
-        onVoid={handleVoidTransaction}
-        transactions={folio.transactions}
+      <VoidConfirmDialog
+        isOpen={isVoidDialogOpen}
+        onClose={() => {
+          setIsVoidDialogOpen(false);
+          setSelectedTransactionId("");
+        }}
+        onConfirm={handleConfirmVoid}
+        transactionDescription={selectedTransaction?.description}
       />
     </div>
     </div>

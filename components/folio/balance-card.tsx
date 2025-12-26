@@ -86,7 +86,7 @@ export function BalanceCard({ folio }: BalanceCardProps) {
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-600 mb-2">Số dư (Balance)</p>
             <p className={`text-3xl font-extrabold ${balanceTextColor}`}>
-              {formatCurrency(Math.abs(folio.balance))}
+              {folio.balance < 0 ? "-" : ""}{formatCurrency(Math.abs(folio.balance))}
             </p>
             <p className="text-xs text-gray-500 mt-2">
               {folio.balance > 0

@@ -31,6 +31,7 @@ interface PostPaymentModalProps {
 }
 
 type PaymentMethod = "CASH" | "CARD" | "TRANSFER";
+type PaymentMode = "PAYMENT" | "DEPOSIT";
 
 export function PostPaymentModal({
   isOpen,
@@ -38,16 +39,31 @@ export function PostPaymentModal({
   onSubmit,
   balance,
 }: PostPaymentModalProps) {
+  const [mode, setMode] = useState<PaymentMode>("PAYMENT");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+  const [validationError, setValidationError] = useState<string>("");
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(value);
+  };
+
+  // Validate amount on change
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    const numericAmount = parseFloat(value);
+    
+    // Only validate for PAYMENT mode, DEPOSIT has no limit
+    if (mode === "PAYMENT" && value && numericAmount > balance) {
+      setValidationError(`Số tiền thanh toán không được vượt quá số dư cần thanh toán (${formatCurrency(balance)})`);
+    } else {
+      setValidationError("");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -57,31 +73,45 @@ export function PostPaymentModal({
       return;
     }
 
+    const numericAmount = parseFloat(amount);
+    
+    // Final validation before submit - only for PAYMENT mode
+    if (mode === "PAYMENT" && numericAmount > balance) {
+      setValidationError(`Số tiền thanh toán không được vượt quá số dư cần thanh toán (${formatCurrency(balance)})`);
+      return;
+    }
+
     onSubmit({
-      amount: parseFloat(amount),
+      amount: numericAmount,
       paymentMethod,
       reference: reference || undefined,
       notes: notes || undefined,
+      mode,
     });
 
     // Reset form
+    setMode("PAYMENT");
     setAmount("");
     setPaymentMethod("CASH");
     setReference("");
     setNotes("");
+    setValidationError("");
     onClose();
   };
 
   const handleClose = () => {
+    setMode("PAYMENT");
     setAmount("");
     setPaymentMethod("CASH");
     setReference("");
     setNotes("");
+    setValidationError("");
     onClose();
   };
 
   const handlePayFullBalance = () => {
     setAmount(balance.toString());
+    setValidationError("");
   };
 
   return (
@@ -90,12 +120,45 @@ export function PostPaymentModal({
         <DialogHeader>
           <DialogTitle>Ghi nhận thanh toán (Post Payment)</DialogTitle>
           <DialogDescription>
-            Ghi nhận thanh toán từ khách hàng. Số tiền sẽ được tính vào cột
-            Credit.
+            Ghi nhận thanh toán từ khách hàng. Số tiền sẽ được tính vào cột Credit.
           </DialogDescription>
         </DialogHeader>
 
-        {balance > 0 && (
+        {/* Payment Mode Selection */}
+        <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4">
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("PAYMENT");
+                setValidationError("");
+              }}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                mode === "PAYMENT"
+                  ? "bg-success-600 text-white shadow-md"
+                  : "bg-white text-gray-600 border-2 border-gray-300 hover:border-success-300"
+              }`}
+            >
+              Thanh toán
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("DEPOSIT");
+                setValidationError("");
+              }}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                mode === "DEPOSIT"
+                  ? "bg-primary-600 text-white shadow-md"
+                  : "bg-white text-gray-600 border-2 border-gray-300 hover:border-primary-300"
+              }`}
+            >
+              Đặt cọc
+            </button>
+          </div>
+        </div>
+
+        {balance > 0 && mode === "PAYMENT" && (
           <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
             <p className="text-sm text-amber-800">
               Số dư cần thanh toán:{" "}
@@ -115,19 +178,36 @@ export function PostPaymentModal({
           </div>
         )}
 
+        {mode === "DEPOSIT" && (
+          <div className="bg-primary-50 border border-primary-200 rounded-md p-3">
+            <p className="text-sm text-primary-800">
+              <strong>Đặt cọc:</strong> Khách có thể đặt cọc bất kỳ số tiền nào, không giới hạn theo số dư hiện tại.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Số tiền (VND)</Label>
+            <Label htmlFor="amount">
+              {mode === "PAYMENT" ? "Số tiền thanh toán (VND)" : "Số tiền đặt cọc (VND)"}
+            </Label>
             <Input
               id="amount"
               type="number"
               placeholder="0"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => handleAmountChange(e.target.value)}
               min="0"
               step="1000"
               required
+              className={validationError ? "border-error-500 focus:ring-error-500" : ""}
             />
+            {validationError && (
+              <p className="text-sm text-error-600 flex items-center gap-1">
+                <span>⚠️</span>
+                {validationError}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -189,7 +269,7 @@ export function PostPaymentModal({
             </Button>
             <Button
               type="submit"
-              disabled={!amount || !paymentMethod}
+              disabled={!amount || !paymentMethod || !!validationError}
               className="bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-500"
             >
               Ghi nhận thanh toán

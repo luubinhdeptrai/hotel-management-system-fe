@@ -29,7 +29,7 @@ function mapApiToServiceItem(apiService: ApiService, categories: ServiceCategory
     serviceName: apiService.name,
     categoryID: category.categoryID,
     category: category,
-    serviceGroup: "Dịch vụ",
+    serviceGroup: "F&B" as ServiceGroup,
     price: parseFloat(apiService.price),
     unit: apiService.unit || "lần",
     description: "",
@@ -51,6 +51,7 @@ export function useServices() {
 
   useEffect(() => {
     loadServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadServices = async () => {

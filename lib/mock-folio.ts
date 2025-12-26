@@ -261,6 +261,7 @@ export const addPaymentToFolio = (
     paymentMethod: "CASH" | "CARD" | "TRANSFER";
     reference?: string;
     notes?: string;
+    mode?: "PAYMENT" | "DEPOSIT";
   }
 ): Folio | undefined => {
   const folioIndex = mutableFolios.findIndex((f) => f.folioID === folioID);
@@ -274,7 +275,9 @@ export const addPaymentToFolio = (
     TRANSFER: "Chuyển khoản",
   };
 
-  let description = `Thanh toán - ${methodLabels[payment.paymentMethod]}`;
+  const isDeposit = payment.mode === "DEPOSIT";
+  const modePrefix = isDeposit ? "Đặt cọc" : "Thanh toán";
+  let description = `${modePrefix} - ${methodLabels[payment.paymentMethod]}`;
   if (payment.reference) {
     description += ` (Ref: ${payment.reference})`;
   }
@@ -287,7 +290,7 @@ export const addPaymentToFolio = (
     folioID,
     date,
     time,
-    type: "PAYMENT",
+    type: isDeposit ? "DEPOSIT" : "PAYMENT",
     description,
     debit: 0,
     credit: payment.amount,

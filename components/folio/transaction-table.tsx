@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ICONS } from "@/src/constants/icons.enum";
 import type { FolioTransaction } from "@/lib/types/folio";
 import {
@@ -16,11 +18,14 @@ import {
   TRANSACTION_TYPE_COLORS,
 } from "@/lib/types/folio";
 
+
 interface TransactionTableProps {
   transactions: FolioTransaction[];
+  onVoidTransaction?: (transactionId: string) => void;
+  isFolioClosed?: boolean;
 }
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({ transactions, onVoidTransaction, isFolioClosed = false }: TransactionTableProps) {
   const formatCurrency = (amount: number) => {
     if (amount === 0) return "-";
     return new Intl.NumberFormat("vi-VN", {
@@ -67,6 +72,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <TableHead className="text-right font-bold">Debit</TableHead>
               <TableHead className="text-right font-bold">Credit</TableHead>
               <TableHead className="font-bold">Người tạo</TableHead>
+              {onVoidTransaction && !isFolioClosed && (
+                <TableHead className="w-20 font-bold text-center">Thao tác</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,6 +143,23 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   <TableCell className="text-sm text-gray-500">
                     {txn.createdBy}
                   </TableCell>
+                  {onVoidTransaction && !isFolioClosed && (
+                    <TableCell className="text-center">
+                      {!txn.isVoided ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onVoidTransaction(txn.transactionID)}
+                          className="h-8 w-8 p-0 hover:bg-error-50 text-error-600 hover:text-error-700 transition-colors"
+                          title="Hủy giao dịch"
+                        >
+                          <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.TRASH}</span>
+                        </Button>
+                      ) : (
+                        <span className="text-gray-400 text-xs">Đã hủy</span>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
