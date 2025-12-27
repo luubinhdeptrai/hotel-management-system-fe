@@ -42,18 +42,19 @@ export default function RoomMovePage() {
   const [notes, setNotes] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [currentRoomSearchQuery, setCurrentRoomSearchQuery] = useState("");
+  const [newRoomSearchQuery, setNewRoomSearchQuery] = useState("");
   const [succeededRoomData, setSucceededRoomData] = useState<{ current: typeof mockOccupiedRooms[0] | undefined; new: typeof mockAvailableRooms[0] | undefined }>({ current: undefined, new: undefined });
 
   const currentRoomData = mockOccupiedRooms.find((r) => r.roomId === selectedCurrentRoom);
   const newRoomData = mockAvailableRooms.find((r) => r.roomId === selectedNewRoom);
 
   const filteredOccupiedRooms = mockOccupiedRooms.filter((room) =>
-    room.roomNumber.includes(searchQuery) || room.guestName.toLowerCase().includes(searchQuery.toLowerCase())
+    room.roomNumber.includes(currentRoomSearchQuery) || room.guestName.toLowerCase().includes(currentRoomSearchQuery.toLowerCase())
   );
 
   const filteredAvailableRooms = mockAvailableRooms.filter((room) =>
-    room.roomNumber.includes(searchQuery) || room.roomType.toLowerCase().includes(searchQuery.toLowerCase())
+    room.roomNumber.includes(newRoomSearchQuery) || room.roomType.toLowerCase().includes(newRoomSearchQuery.toLowerCase())
   );
 
   const handleMoveRoom = () => {
@@ -121,8 +122,8 @@ export default function RoomMovePage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400">{ICONS.SEARCH}</span>
                 <Input
                   placeholder="Tìm số phòng hoặc tên khách..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={currentRoomSearchQuery}
+                  onChange={(e) => setCurrentRoomSearchQuery(e.target.value)}
                   className="h-11 pl-10 border-gray-300 focus:ring-primary-500"
                 />
               </div>
@@ -208,8 +209,8 @@ export default function RoomMovePage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400">{ICONS.SEARCH}</span>
                 <Input
                   placeholder="Tìm số phòng hoặc loại phòng..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={newRoomSearchQuery}
+                  onChange={(e) => setNewRoomSearchQuery(e.target.value)}
                   className="h-11 pl-10 border-gray-300 focus:ring-success-500"
                 />
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -67,6 +67,32 @@ export function ServiceItemFormModal({
 
   const [formData, setFormData] = useState<ServiceItemFormData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Load data when modal opens or service changes
+  useEffect(() => {
+    if (isOpen) {
+      if (service && mode === "edit") {
+        setFormData({
+          serviceName: service.serviceName,
+          categoryID: service.categoryID,
+          serviceGroup: service.serviceGroup,
+          price: service.price,
+          unit: service.unit,
+          description: service.description || "",
+        });
+      } else {
+        setFormData({
+          serviceName: "",
+          categoryID: "",
+          serviceGroup: "F&B" as ServiceGroup,
+          price: 0,
+          unit: "",
+          description: "",
+        });
+      }
+      setErrors({});
+    }
+  }, [isOpen, service, mode]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
