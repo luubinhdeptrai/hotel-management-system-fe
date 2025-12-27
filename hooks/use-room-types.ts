@@ -75,7 +75,7 @@ export function useRoomTypes() {
     try {
       const result = await roomService.getRooms({
         page: 1,
-        limit: 500,
+        limit: 100,
       });
       setRooms(result.data);
     } catch (err) {

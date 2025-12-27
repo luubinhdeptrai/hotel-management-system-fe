@@ -322,7 +322,7 @@ export function ReservationFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[98vw] md:w-[90vw] lg:w-[85vw] max-w-7xl max-h-[98vh] overflow-hidden flex flex-col bg-linear-to-br from-white via-gray-50 to-white mx-auto">
+      <DialogContent className="!max-w-[950px] w-[98vw] md:w-[90vw] lg:w-[90vw] max-h-[98vh] overflow-hidden flex flex-col bg-linear-to-br from-white via-gray-50 to-white mx-auto">
         <DialogHeader className="border-b-2 border-gray-200 pb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -561,7 +561,7 @@ export function ReservationFormModal({
                       onClick={handleAddRoomType}
                       className="h-10 w-full bg-primary-600 hover:bg-primary-500 font-bold"
                     >
-                      <span className="w-4 h-4 mr-2">{ICONS.PLUS}</span>
+                      {ICONS.PLUS}
                       Thêm
                     </Button>
                   </div>
