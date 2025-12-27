@@ -348,6 +348,15 @@ export type PaymentMethod =
   | "BANK_TRANSFER"
   | "E_WALLET";
 
+// ============================================================================
+// Booking Related Types
+// ============================================================================
+
+export interface RoomRequest {
+  roomTypeId: string;
+  count: number;
+}
+
 export interface CreateBookingRequest {
   rooms: Array<{
     roomTypeId: string;
