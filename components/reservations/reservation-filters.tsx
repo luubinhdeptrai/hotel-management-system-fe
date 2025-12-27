@@ -66,10 +66,10 @@ export function ReservationFilters({
             </div>
             <div>
               <CardTitle className="text-2xl font-extrabold text-gray-900">
-                Tìm kiếm & Lọc
+                Tìm kiếm Phòng Trống
               </CardTitle>
               <CardDescription className="text-base text-gray-600 font-medium">
-                Tìm kiếm đặt phòng và phòng trống theo tiêu chí
+                Chọn ngày và loại phòng để tìm phòng trống có thể đặt
               </CardDescription>
             </div>
           </div>
@@ -82,7 +82,7 @@ export function ReservationFilters({
             {/* Check-in Date */}
             <div className="space-y-3">
               <Label htmlFor="filterCheckIn" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                Ngày đến
+                Ngày đến <span className="text-red-600">*</span>
               </Label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10">
@@ -94,6 +94,7 @@ export function ReservationFilters({
                   value={checkInDate}
                   onChange={(e) => onCheckInChange(e.target.value)}
                   className="h-12 pl-12 pr-4 border-2 border-gray-300 rounded-lg font-medium text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  required
                 />
               </div>
             </div>
@@ -101,7 +102,7 @@ export function ReservationFilters({
             {/* Check-out Date */}
             <div className="space-y-3">
               <Label htmlFor="filterCheckOut" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                Ngày đi
+                Ngày đi <span className="text-red-600">*</span>
               </Label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10">
@@ -113,6 +114,7 @@ export function ReservationFilters({
                   value={checkOutDate}
                   onChange={(e) => onCheckOutChange(e.target.value)}
                   className="h-12 pl-12 pr-4 border-2 border-gray-300 rounded-lg font-medium text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  required
                 />
               </div>
             </div>
