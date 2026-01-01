@@ -163,6 +163,7 @@ export interface Customer {
   updatedAt: string;
   _count?: {
     bookings: number;
+    customerPromotions: number;
   };
 }
 

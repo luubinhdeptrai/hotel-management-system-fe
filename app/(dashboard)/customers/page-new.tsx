@@ -51,7 +51,6 @@ import { toast } from "sonner";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -61,21 +60,11 @@ export default function CustomersPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [promotionsDialogOpen, setPromotionsDialogOpen] = useState(false);
   const [selectedCustomerForPromotions, setSelectedCustomerForPromotions] = useState<Customer | null>(null);
-  const [bookingsDialogOpen, setBookingsDialogOpen] = useState(false);
-  const [selectedCustomerForBookings, setSelectedCustomerForBookings] = useState<Customer | null>(null);
 
   // Load customers
   const loadCustomers = async () => {
     setLoading(true);
     try {
-      // Load all customers (for stats)
-      const allResponse = await customerService.getCustomers({
-        page: 1,
-        limit: 100,
-      });
-      setAllCustomers(allResponse.data);
-
-      // Load filtered customers (for display)
       const params: any = {
         page: 1,
         limit: 100,
@@ -156,17 +145,11 @@ export default function CustomersPage() {
     setPromotionsDialogOpen(true);
   };
 
-  // Show bookings modal
-  const handleShowBookings = (customer: Customer) => {
-    setSelectedCustomerForBookings(customer);
-    setBookingsDialogOpen(true);
-  };
-
-  // Statistics - Always use ALL customers (not filtered)
+  // Statistics
   const stats = {
-    total: allCustomers.length,
-    withBookings: allCustomers.filter((c) => c._count && c._count.bookings > 0).length,
-    withPromotions: allCustomers.filter((c) => c._count && c._count.customerPromotions > 0).length,
+    total: customers.length,
+    withBookings: customers.filter((c) => c._count && c._count.bookings > 0).length,
+    withPromotions: customers.filter((c) => c._count && c._count.customerPromotions > 0).length,
   };
 
   const hasFilters = searchQuery;
@@ -385,10 +368,7 @@ export default function CustomersPage() {
                   {/* Stats Row */}
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     {/* Bookings */}
-                    <div 
-                      onClick={() => handleShowBookings(customer)}
-                      className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 text-center cursor-pointer hover:from-blue-100 hover:to-blue-200 transition-colors"
-                    >
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 text-center">
                       <p className="text-xs text-blue-600 font-semibold uppercase">Booking</p>
                       <p className="text-2xl font-bold text-blue-900 mt-1">
                         {customer._count?.bookings || 0}
@@ -440,7 +420,7 @@ export default function CustomersPage() {
           </DialogHeader>
 
           <div className="space-y-3">
-            {selectedCustomerForPromotions?._count?.customerPromotions > 0 ? (
+            {selectedCustomerForPromotions && selectedCustomerForPromotions._count?.customerPromotions > 0 ? (
               <div className="text-sm space-y-2">
                 <Badge variant="outline" className="bg-pink-100 text-pink-700 border-pink-300 block w-full text-center py-2">
                   {selectedCustomerForPromotions._count.customerPromotions} khuyến mại
@@ -453,36 +433,6 @@ export default function CustomersPage() {
               <div className="text-center py-6 text-gray-500">
                 <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>Chưa có khuyến mại nào</p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bookings Details Modal */}
-      <Dialog open={bookingsDialogOpen} onOpenChange={setBookingsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Booking của {selectedCustomerForBookings?.fullName}</DialogTitle>
-            <DialogDescription>
-              Danh sách tất cả booking của khách hàng
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            {selectedCustomerForBookings?._count?.bookings > 0 ? (
-              <div className="text-sm space-y-2">
-                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 block w-full text-center py-2">
-                  {selectedCustomerForBookings._count.bookings} booking
-                </Badge>
-                <p className="text-gray-600 text-center py-4">
-                  ℹ️ Xem chi tiết booking tại trang quản lý booking
-                </p>
-              </div>
-            ) : (
-              <div className="text-center py-6 text-gray-500">
-                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Chưa có booking nào</p>
               </div>
             )}
           </div>

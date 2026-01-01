@@ -50,7 +50,7 @@ import {
   UserCircle,
   AlertCircle,
 } from "lucide-react";
-import { EmployeeFormModal } from "@/components/staff/employee-form-modal";
+import { EmployeeFormModal } from "./employee-form-modal-new";
 import { employeeService } from "@/lib/services/employee.service";
 import type { Employee, EmployeeRole, CreateEmployeeRequest, UpdateEmployeeRequest } from "@/lib/types/api";
 import { toast } from "sonner";
