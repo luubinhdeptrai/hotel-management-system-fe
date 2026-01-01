@@ -49,6 +49,39 @@ export function ActivityFilters({
   const [localSearch, setLocalSearch] = useState(filters.search || "");
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Helper: Format date to YYYY-MM-DD
+  const formatDateForInput = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper: Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => formatDateForInput(new Date());
+
+  // Handle start date change - auto-set end date if not set
+  const handleStartDateChange = (value: string) => {
+    const newFilters: Partial<ActivityFilters> = { startDate: value || undefined };
+    // If start date is set and end date is not set, auto-set end date to today
+    if (value && !filters.endDate) {
+      newFilters.endDate = getTodayDate();
+    }
+    onFilterChange(newFilters);
+  };
+
+  // Handle end date change - auto-set start date if not set
+  const handleEndDateChange = (value: string) => {
+    const newFilters: Partial<ActivityFilters> = { endDate: value || undefined };
+    // If end date is set and start date is not set, auto-set start date to 30 days ago
+    if (value && !filters.startDate) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      newFilters.startDate = formatDateForInput(thirtyDaysAgo);
+    }
+    onFilterChange(newFilters);
+  };
+
   // Debounced search
   useEffect(() => {
     if (debounceTimerRef.current) {
@@ -76,92 +109,87 @@ export function ActivityFilters({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-linear-to-br from-primary-100 to-blue-100">
-            <span className="w-6 h-6 text-primary-600">{ICONS.FILTER}</span>
+      {/* Header with Gradient */}
+      <div className="flex items-center justify-between bg-linear-to-r from-primary-600 via-blue-600 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+            <span className="w-7 h-7 text-white">{ICONS.FILTER}</span>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Bộ Lọc Hoạt Động</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-xl font-bold tracking-tight">Bộ Lọc Hoạt Động</h3>
+            <p className="text-sm text-white/90 mt-1">
               {activeFiltersCount > 0
-                ? `${activeFiltersCount} bộ lọc đang áp dụng`
-                : "Tìm kiếm và lọc nhật ký hoạt động"}
+                ? `✨ ${activeFiltersCount} bộ lọc đang áp dụng`
+                : "🔍 Tìm kiếm và lọc nhật ký hoạt động"}
             </p>
           </div>
         </div>
         {activeFiltersCount > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={onClearFilters}
-            className="border-error-300 text-error-600 hover:bg-error-50 hover:border-error-400"
+            className="px-5 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-semibold text-white transition-all duration-200 hover:scale-105 backdrop-blur-sm border border-white/30"
           >
-            <span className="w-4 h-4 mr-2">{ICONS.X}</span>
-            Xóa Lọc
-          </Button>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">✕</span> Xóa Lọc
+            </span>
+          </button>
         )}
       </div>
 
       {/* Active Filters Chips */}
       {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap gap-2 p-4 bg-primary-50 rounded-lg border border-primary-200">
+        <div className="flex flex-wrap gap-3 p-5 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl border-2 border-primary-200 shadow-md animate-in fade-in slide-in-from-top-2 duration-300">
           {filters.type && (
-            <Badge
-              variant="secondary"
-              className="bg-primary-600 text-white font-semibold px-3 py-1.5 hover:bg-primary-700 cursor-pointer"
+            <button
               onClick={() => onFilterChange({ type: undefined })}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-blue-500 text-white rounded-full font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 group"
             >
-              Loại: {selectedTypeLabel}
-              <span className="w-4 h-4 ml-2">{ICONS.X}</span>
-            </Badge>
+              <span className="text-sm">🏷️ {selectedTypeLabel}</span>
+              <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold group-hover:bg-white/50 transition-colors">×</span>
+            </button>
           )}
           {filters.startDate && (
-            <Badge
-              variant="secondary"
-              className="bg-success-600 text-white font-semibold px-3 py-1.5 hover:bg-success-700 cursor-pointer"
+            <button
               onClick={() => onFilterChange({ startDate: undefined })}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-full font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 group"
             >
-              Từ: {new Date(filters.startDate).toLocaleDateString("vi-VN")}
-              <span className="w-4 h-4 ml-2">{ICONS.X}</span>
-            </Badge>
+              <span className="text-sm">📅 Từ {new Date(filters.startDate).toLocaleDateString("vi-VN")}</span>
+              <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold group-hover:bg-white/50 transition-colors">×</span>
+            </button>
           )}
           {filters.endDate && (
-            <Badge
-              variant="secondary"
-              className="bg-error-600 text-white font-semibold px-3 py-1.5 hover:bg-error-700 cursor-pointer"
+            <button
               onClick={() => onFilterChange({ endDate: undefined })}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 group"
             >
-              Đến: {new Date(filters.endDate).toLocaleDateString("vi-VN")}
-              <span className="w-4 h-4 ml-2">{ICONS.X}</span>
-            </Badge>
+              <span className="text-sm">📅 Đến {new Date(filters.endDate).toLocaleDateString("vi-VN")}</span>
+              <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold group-hover:bg-white/50 transition-colors">×</span>
+            </button>
           )}
           {filters.search && (
-            <Badge
-              variant="secondary"
-              className="bg-info-600 text-white font-semibold px-3 py-1.5 hover:bg-info-700 cursor-pointer"
+            <button
               onClick={() => {
                 setLocalSearch("");
                 onFilterChange({ search: undefined });
               }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 group"
             >
-              Tìm: &quot;{filters.search}&quot;
-              <span className="w-4 h-4 ml-2">{ICONS.X}</span>
-            </Badge>
+              <span className="text-sm">🔍 &quot;{filters.search}&quot;</span>
+              <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold group-hover:bg-white/50 transition-colors">×</span>
+            </button>
           )}
         </div>
       )}
 
       {/* Filter Form */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+      <div className="p-6 bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl border-2 border-primary-200 shadow-lg space-y-6">
         {/* Search */}
-        <div className="md:col-span-3 space-y-2">
-          <Label className="text-sm font-semibold text-gray-900">
-            Tìm Kiếm
+        <div className="space-y-3">
+          <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+            <span className="text-primary-600">🔍</span> Tìm Kiếm
           </Label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400">
+          <div className="relative group">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-500 group-focus-within:text-primary-600 transition-colors">
               {ICONS.SEARCH}
             </span>
             <Input
@@ -169,64 +197,81 @@ export function ActivityFilters({
               placeholder="Tìm kiếm trong mô tả hoạt động..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-10 h-11 rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500"
+              className="pl-12 h-12 rounded-xl border-2 border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 shadow-sm hover:shadow-md transition-all bg-white"
             />
           </div>
         </div>
 
-        {/* Activity Type */}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-gray-900">
-            Loại Hoạt Động
-          </Label>
-          <Select
-            value={filters.type || "ALL"}
-            onValueChange={(value) =>
-              onFilterChange({ type: value === "ALL" ? undefined : (value as ActivityType) })
-            }
-          >
-            <SelectTrigger className="h-11 rounded-lg border-gray-300 focus:border-primary-500">
-              <SelectValue placeholder="Tất cả loại" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Tất cả loại</SelectItem>
-              {ACTIVITY_TYPE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full bg-${option.color}-600`}></span>
-                    {option.label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+          {/* Activity Type */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+              <span className="text-purple-600">📋</span> Loại Hoạt Động
+            </Label>
+            <Select
+              value={filters.type || "ALL"}
+              onValueChange={(value) =>
+                onFilterChange({ type: value === "ALL" ? undefined : (value as ActivityType) })
+              }
+            >
+              <SelectTrigger className="h-12 rounded-xl border-2 border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 shadow-sm hover:shadow-md transition-all bg-white">
+                <SelectValue placeholder="Tất cả loại" />
+              </SelectTrigger>
+              <SelectContent className="max-h-80">
+                <SelectItem value="ALL">✨ Tất cả loại</SelectItem>
+                {ACTIVITY_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <span className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full bg-${option.color}-500`}></span>
+                      {option.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Start Date */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+              <span className="text-green-600">📅</span> Từ Ngày
+            </Label>
+            <Input
+              type="date"
+              value={filters.startDate || ""}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              className="h-12 rounded-xl border-2 border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 shadow-sm hover:shadow-md transition-all bg-white"
+            />
+          </div>
+
+          {/* End Date */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+              <span className="text-orange-600">📅</span> Đến Ngày
+            </Label>
+            <Input
+              type="date"
+              value={filters.endDate || ""}
+              onChange={(e) => handleEndDateChange(e.target.value)}
+              className="h-12 rounded-xl border-2 border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 shadow-sm hover:shadow-md transition-all bg-white"
+            />
+          </div>
         </div>
 
-        {/* Start Date */}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-gray-900">
-            Từ Ngày
-          </Label>
-          <Input
-            type="date"
-            value={filters.startDate || ""}
-            onChange={(e) => onFilterChange({ startDate: e.target.value || undefined })}
-            className="h-11 rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500"
-          />
-        </div>
-
-        {/* End Date */}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-gray-900">
-            Đến Ngày
-          </Label>
-          <Input
-            type="date"
-            value={filters.endDate || ""}
-            onChange={(e) => onFilterChange({ endDate: e.target.value || undefined })}
-            className="h-11 rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500"
-          />
-        </div>
+        {/* Date Range Hint */}
+        {filters.startDate && filters.endDate && (
+          <div className="p-4 bg-gradient-to-r from-emerald-50 to-cyan-50 rounded-xl border-2 border-emerald-300 shadow-sm animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3 text-sm text-emerald-800 font-semibold">
+              <span className="text-xl">⏰</span>
+              <span>
+                Đang lọc từ <span className="text-emerald-600 font-bold">{new Date(filters.startDate).toLocaleDateString("vi-VN")}</span>
+                {" "}đến{" "}
+                <span className="text-emerald-600 font-bold">{new Date(filters.endDate).toLocaleDateString("vi-VN")}</span>
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

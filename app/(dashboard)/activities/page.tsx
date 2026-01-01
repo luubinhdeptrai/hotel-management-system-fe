@@ -57,62 +57,66 @@ export default function ActivitiesPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-6 bg-linear-to-br from-blue-50 to-white rounded-xl border-2 border-blue-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-blue-100">
-                <span className="w-5 h-5 text-blue-600">{ICONS.CALENDAR}</span>
+        {/* Stats Cards - Enhanced Design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="p-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-blue-400">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                <span className="w-6 h-6 text-white">{ICONS.CALENDAR}</span>
               </div>
-              <p className="text-sm text-gray-600 font-medium">Bookings</p>
+              <p className="text-sm text-white/90 font-semibold">Bookings</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-white">
               {Array.isArray(activities)
                 ? activities.filter((a) => a.type.includes("BOOKING")).length
                 : 0}
             </p>
+            <p className="text-xs text-white/80 mt-2">Hoạt động đặt phòng</p>
           </div>
 
-          <div className="p-6 bg-linear-to-br from-emerald-50 to-white rounded-xl border-2 border-emerald-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-emerald-100">
-                <span className="w-5 h-5 text-emerald-600">{ICONS.WALLET}</span>
+          <div className="p-6 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-emerald-400">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                <span className="w-6 h-6 text-white">{ICONS.WALLET}</span>
               </div>
-              <p className="text-sm text-gray-600 font-medium">Thanh Toán</p>
+              <p className="text-sm text-white/90 font-semibold">Thanh Toán</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-white">
               {Array.isArray(activities)
                 ? activities.filter((a) => a.type.includes("TRANSACTION")).length
                 : 0}
             </p>
+            <p className="text-xs text-white/80 mt-2">Giao dịch thanh toán</p>
           </div>
 
-          <div className="p-6 bg-linear-to-br from-purple-50 to-white rounded-xl border-2 border-purple-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-purple-100">
-                <span className="w-5 h-5 text-purple-600">{ICONS.SERVICE}</span>
+          <div className="p-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-purple-400">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                <span className="w-6 h-6 text-white">{ICONS.SERVICE}</span>
               </div>
-              <p className="text-sm text-gray-600 font-medium">Dịch Vụ</p>
+              <p className="text-sm text-white/90 font-semibold">Dịch Vụ</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-white">
               {Array.isArray(activities)
                 ? activities.filter((a) => a.type.includes("SERVICE")).length
                 : 0}
             </p>
+            <p className="text-xs text-white/80 mt-2">Sử dụng dịch vụ</p>
           </div>
 
-          <div className="p-6 bg-linear-to-br from-pink-50 to-white rounded-xl border-2 border-pink-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-pink-100">
-                <span className="w-5 h-5 text-pink-600">{ICONS.USER}</span>
+          <div className="p-6 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-pink-400">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                <span className="w-6 h-6 text-white">{ICONS.USER}</span>
               </div>
-              <p className="text-sm text-gray-600 font-medium">Khách Hàng</p>
+              <p className="text-sm text-white/90 font-semibold">Khách Hàng</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-white">
               {Array.isArray(activities)
                 ? activities.filter((a) => a.type.includes("CUSTOMER")).length
                 : 0}
             </p>
+            <p className="text-xs text-white/80 mt-2">Quản lý khách hàng</p>
           </div>
         </div>
 
