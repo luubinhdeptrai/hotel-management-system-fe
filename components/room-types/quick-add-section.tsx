@@ -57,7 +57,11 @@ export function QuickAddSection({
               onClick={() =>
                 onSelectTemplate({
                   roomTypeID: "",
-                  ...template,
+                  roomTypeName: template.roomTypeName,
+                  capacity: template.capacity,
+                  totalBed: template.totalBed || 1,
+                  price: template.price,
+                  tags: template.tags || [],
                 })
               }
               className="bg-white rounded-xl border-2 border-gray-200 p-5 text-left hover:border-primary-400 hover:shadow-xl transition-all group hover:-translate-y-1"

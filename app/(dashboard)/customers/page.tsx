@@ -76,7 +76,7 @@ export default function CustomersPage() {
       setAllCustomers(allResponse.data);
 
       // Load filtered customers (for display)
-      const params: any = {
+      const params: Record<string, number | string> = {
         page: 1,
         limit: 100,
       };
@@ -84,9 +84,10 @@ export default function CustomersPage() {
 
       const response = await customerService.getCustomers(params);
       setCustomers(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Vui lòng thử lại sau";
       toast.error("Không thể tải danh sách khách hàng", {
-        description: error.message || "Vui lòng thử lại sau",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
@@ -121,8 +122,9 @@ export default function CustomersPage() {
         toast.success("Tạo khách hàng mới thành công");
       }
       loadCustomers();
-    } catch (error: any) {
-      throw new Error(error.message || "Không thể lưu khách hàng");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Không thể lưu khách hàng";
+      throw new Error(errorMessage);
     }
   };
 
@@ -141,9 +143,10 @@ export default function CustomersPage() {
       toast.success("Xóa khách hàng thành công");
       loadCustomers();
       setDeleteDialogOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Khách hàng có thể đang có lịch sử đặt phòng";
       toast.error("Không thể xóa khách hàng", {
-        description: error.message || "Khách hàng có thể đang có lịch sử đặt phòng",
+        description: errorMessage,
       });
     } finally {
       setIsDeleting(false);
@@ -440,10 +443,10 @@ export default function CustomersPage() {
           </DialogHeader>
 
           <div className="space-y-3">
-            {selectedCustomerForPromotions?._count?.customerPromotions > 0 ? (
+            {selectedCustomerForPromotions?._count?.customerPromotions ? (
               <div className="text-sm space-y-2">
                 <Badge variant="outline" className="bg-pink-100 text-pink-700 border-pink-300 block w-full text-center py-2">
-                  {selectedCustomerForPromotions._count.customerPromotions} khuyến mại
+                  {selectedCustomerForPromotions._count?.customerPromotions} khuyến mại
                 </Badge>
                 <p className="text-gray-600 text-center py-4">
                   ℹ️ Xem chi tiết khuyến mại tại trang quản lý khuyến mại
@@ -470,10 +473,10 @@ export default function CustomersPage() {
           </DialogHeader>
 
           <div className="space-y-3">
-            {selectedCustomerForBookings?._count?.bookings > 0 ? (
+            {selectedCustomerForBookings?._count?.bookings ? (
               <div className="text-sm space-y-2">
                 <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 block w-full text-center py-2">
-                  {selectedCustomerForBookings._count.bookings} booking
+                  {selectedCustomerForBookings._count?.bookings} booking
                 </Badge>
                 <p className="text-gray-600 text-center py-4">
                   ℹ️ Xem chi tiết booking tại trang quản lý booking
