@@ -282,52 +282,6 @@ export default function RoomsPage() {
 
       {/* Enhanced Search & Filters - Modern Design */}
       <div className="space-y-4">
-        {/* Active Filter Tags Row */}
-        {hasActiveFilters && (
-          <div className="flex items-center gap-3 flex-wrap animate-in slide-in-from-top-2 duration-300">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg border border-blue-200/50">
-              <Filter className="h-4 w-4 text-blue-600" />
-              <span className="text-xs font-semibold text-blue-700">Bộ lọc đang áp dụng</span>
-            </div>
-            
-            {statusFilter !== "ALL" && (
-              <div className="group px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
-                <span>{statusOptions.find(s => s.value === statusFilter)?.label}</span>
-                <button 
-                  onClick={() => handleStatusFilterChange("ALL")} 
-                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-            {floorFilter !== "ALL" && (
-              <div className="group px-3 py-1.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
-                <Layers className="h-3.5 w-3.5" />
-                <span>Tầng {floorFilter}</span>
-                <button 
-                  onClick={() => handleFloorFilterChange("ALL")} 
-                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-            {roomTypeFilter !== "ALL" && (
-              <div className="group px-3 py-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
-                <Hotel className="h-3.5 w-3.5" />
-                <span>{roomTypes.find(t => t.roomTypeID === roomTypeFilter)?.roomTypeName}</span>
-                <button 
-                  onClick={() => handleRoomTypeFilterChange("ALL")} 
-                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Main Search & Filters Card */}
         <Card className="border-0 shadow-xl bg-gradient-to-br from-white via-slate-50 to-blue-50/30 backdrop-blur-sm overflow-hidden">
           <CardContent className="p-8">
@@ -473,6 +427,52 @@ export default function RoomsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Active Filter Tags Row - Moved Below */}
+        {hasActiveFilters && (
+          <div className="flex items-center gap-3 flex-wrap animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg border border-blue-200/50">
+              <Filter className="h-4 w-4 text-blue-600" />
+              <span className="text-xs font-semibold text-blue-700">Bộ lọc đang áp dụng</span>
+            </div>
+            
+            {statusFilter !== "ALL" && (
+              <div className="group px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
+                <span>{statusOptions.find(s => s.value === statusFilter)?.label}</span>
+                <button 
+                  onClick={() => handleStatusFilterChange("ALL")} 
+                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            {floorFilter !== "ALL" && (
+              <div className="group px-3 py-1.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
+                <Layers className="h-3.5 w-3.5" />
+                <span>Tầng {floorFilter}</span>
+                <button 
+                  onClick={() => handleFloorFilterChange("ALL")} 
+                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            {roomTypeFilter !== "ALL" && (
+              <div className="group px-3 py-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
+                <Hotel className="h-3.5 w-3.5" />
+                <span>{roomTypes.find(t => t.roomTypeID === roomTypeFilter)?.roomTypeName}</span>
+                <button 
+                  onClick={() => handleRoomTypeFilterChange("ALL")} 
+                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* View Toggle */}
         <div className="flex justify-end">
