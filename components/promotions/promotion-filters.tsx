@@ -41,7 +41,22 @@ export function PromotionFilters({
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [statusFilter, setStatusFilter] = useState<PromotionStatusFilter>("all");
   const [showFilters, setShowFilters] = useState(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout>();
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleFilter = () => {
+    const params: GetPromotionsParams & { statusFilter?: PromotionStatusFilter } = {};
+
+    // Search term is used for both code and description
+    if (searchTerm.trim()) {
+      params.code = searchTerm.trim();
+      params.description = searchTerm.trim();
+    }
+    if (startDate) params.startDate = startDate.toISOString();
+    if (endDate) params.endDate = endDate.toISOString();
+    if (statusFilter !== "all") params.statusFilter = statusFilter;
+
+    onFilter(params);
+  };
 
   // Auto-filter when search term changes (with debounce)
   useEffect(() => {
@@ -60,22 +75,8 @@ export function PromotionFilters({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [searchTerm]);
-
-  const handleFilter = () => {
-    const params: GetPromotionsParams & { statusFilter?: PromotionStatusFilter } = {};
-
-    // Search term is used for both code and description
-    if (searchTerm.trim()) {
-      params.code = searchTerm.trim();
-      params.description = searchTerm.trim();
-    }
-    if (startDate) params.startDate = startDate.toISOString();
-    if (endDate) params.endDate = endDate.toISOString();
-    if (statusFilter !== "all") params.statusFilter = statusFilter;
-
-    onFilter(params);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, startDate, endDate]);
 
   const handleReset = () => {
     setSearchTerm("");
@@ -105,7 +106,7 @@ export function PromotionFilters({
           <Button 
             onClick={handleFilter} 
             size="default"
-            className="h-12 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+            className="h-12 px-6 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
             title="Search immediately (or wait 300ms for auto-search)"
           >
             <Search className="h-5 w-5" />
@@ -133,7 +134,7 @@ export function PromotionFilters({
           {searchTerm && (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
               <Search className="h-4 w-4" />
-              <span>"{searchTerm}"</span>
+              <span>&quot;{searchTerm}&quot;</span>
               <button 
                 onClick={() => setSearchTerm("")}
                 className="ml-1 hover:bg-blue-200 rounded-full p-0.5 transition-colors"
@@ -186,10 +187,10 @@ export function PromotionFilters({
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="border-2 border-slate-200 rounded-2xl p-6 bg-gradient-to-br from-slate-50 to-slate-100/50 shadow-sm">
+        <div className="border-2 border-slate-200 rounded-2xl p-6 bg-linear-to-br from-slate-50 to-slate-100/50 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-bold text-lg flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
+              <div className="p-2.5 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 shadow-md">
                 <Filter className="h-5 w-5 text-white" />
               </div>
               <span>Advanced Filters</span>

@@ -80,7 +80,7 @@ export function usePromotions(
           await promotionService.getPromotions(apiParams);
 
         // Ensure response.data is an array
-        let promotionData = Array.isArray(response.data) 
+        const promotionData = Array.isArray(response.data) 
           ? response.data 
           : response.data && typeof response.data === 'object' && 'data' in response.data
           ? ((response.data as unknown as { data: unknown }).data as Promotion[])
@@ -296,7 +296,7 @@ export function usePromotions(
     loading,
     error,
 
-    // Actions
+    /* Actions */
     fetchPromotions,
     createPromotion,
     updatePromotion,
