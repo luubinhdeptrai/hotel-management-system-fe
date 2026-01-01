@@ -117,6 +117,11 @@ const adminManagement = [
     icon: ICONS.USER_COG,
   },
   {
+    title: "Hoạt Động",
+    url: "/activities",
+    icon: ICONS.ACTIVITY,
+  },
+  {
     title: "Báo Cáo",
     url: "/reports",
     icon: ICONS.BAR_CHART,

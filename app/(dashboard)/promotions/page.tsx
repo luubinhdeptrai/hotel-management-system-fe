@@ -23,17 +23,20 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePromotions } from "@/hooks/use-promotions";
+import { useActivities } from "@/hooks/use-activities";
 import { PromotionForm, PromotionCard, PromotionFilters } from "@/components/promotions";
 import type {
   Promotion,
   CreatePromotionRequest,
   UpdatePromotionRequest,
-  GetPromotionsParams,
 } from "@/lib/types/promotion";
 import { Plus, Tag, AlertCircle, Sparkles, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function PromotionsPage() {
+  // Activity refetch callback
+  const { refetch: refetchActivities } = useActivities();
+
   const {
     promotions,
     total,
@@ -46,7 +49,7 @@ export default function PromotionsPage() {
     updatePromotion,
     disablePromotion,
     enablePromotion,
-  } = usePromotions({ page: 1, limit: 20 });
+  } = usePromotions({ page: 1, limit: 20 }, refetchActivities);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);

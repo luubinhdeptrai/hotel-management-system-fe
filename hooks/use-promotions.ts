@@ -44,7 +44,8 @@ interface UsePromotionsResult {
 }
 
 export function usePromotions(
-  initialParams?: UsePromotionsParams
+  initialParams?: UsePromotionsParams,
+  onActivityCreated?: () => void
 ): UsePromotionsResult {
   const { showSuccess } = useNotification();
 
@@ -153,6 +154,11 @@ export function usePromotions(
         // Refetch to update list
         await fetchPromotions(lastParams);
 
+        // Notify that activity was created
+        if (onActivityCreated) {
+          onActivityCreated();
+        }
+
         return newPromotion;
       } catch (err: unknown) {
         const errorMsg =
@@ -164,7 +170,7 @@ export function usePromotions(
         setLoading(false);
       }
     },
-    [fetchPromotions, lastParams, showSuccess, showError]
+    [fetchPromotions, lastParams, showSuccess, showError, onActivityCreated]
   );
 
   // Update promotion
@@ -193,6 +199,11 @@ export function usePromotions(
           prev.map((p) => (p.id === id ? updatedPromotion : p))
         );
 
+        // Notify that activity was created
+        if (onActivityCreated) {
+          onActivityCreated();
+        }
+
         return updatedPromotion;
       } catch (err: unknown) {
         const errorMsg =
@@ -205,7 +216,7 @@ export function usePromotions(
         setLoading(false);
       }
     },
-    [showSuccess, showError]
+    [showSuccess, showError, onActivityCreated]
   );
 
   // Disable promotion (soft delete)
@@ -296,7 +307,7 @@ export function usePromotions(
     loading,
     error,
 
-    /* Actions */
+    // Actions
     fetchPromotions,
     createPromotion,
     updatePromotion,

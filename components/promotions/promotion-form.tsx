@@ -126,7 +126,7 @@ export function PromotionForm({
       value: promotion ? safeParseNumber(promotion.value) : 0,
       maxDiscount: promotion?.maxDiscount
         ? safeParseNumber(promotion.maxDiscount)
-        : undefined,
+        : 0,
       minBookingAmount: promotion
         ? safeParseNumber(promotion.minBookingAmount)
         : 0,
@@ -134,7 +134,7 @@ export function PromotionForm({
       endDate: promotion
         ? safeParseDate(promotion.endDate)
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      totalQty: promotion?.totalQty || undefined,
+      totalQty: promotion?.totalQty || 0,
       perCustomerLimit: promotion?.perCustomerLimit || 1,
     },
   } as any);
@@ -575,7 +575,7 @@ export function PromotionForm({
           <Button 
             type="submit" 
             disabled={isLoading}
-            className="h-11 px-6 rounded-lg bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 font-semibold text-white shadow-lg hover:shadow-xl transition-all"
+            className="h-11 px-6 rounded-lg bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200"
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditMode ? "Cập Nhật Khuyến Mại" : "Tạo Khuyến Mại"}
