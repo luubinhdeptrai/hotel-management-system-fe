@@ -74,6 +74,11 @@ const serviceManagement = [
     icon: ICONS.UTENSILS,
   },
   {
+    title: "Khuyến Mại",
+    url: "/promotions",
+    icon: ICONS.TAG,
+  },
+  {
     title: "Phụ Thu",
     url: "/surcharges",
     icon: ICONS.SURCHARGE,

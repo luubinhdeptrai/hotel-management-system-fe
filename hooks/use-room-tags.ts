@@ -37,9 +37,9 @@ export function useRoomTags() {
       
       // More specific error messages
       if (err instanceof ApiError) {
-        if (err.code === 404) {
+        if (err.statusCode === 404) {
           setError("Không tìm thấy endpoint API. Vui lòng kiểm tra backend đang chạy.");
-        } else if (err.code === 401) {
+        } else if (err.statusCode === 401) {
           setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
         } else {
           setError(err.message || "Không thể tải danh sách tiện nghi");

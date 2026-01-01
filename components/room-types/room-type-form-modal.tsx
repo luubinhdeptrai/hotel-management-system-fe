@@ -58,7 +58,7 @@ export function RoomTypeFormModal({
           roomTypeName: roomType.roomTypeName,
           price: roomType.price.toString(),
           capacity: roomType.capacity.toString(),
-          amenities: roomType.amenities.join(", "),
+          amenities: (roomType.amenities || []).join(", "),
           imageUrl: roomType.imageUrl || "",
         });
       } else {

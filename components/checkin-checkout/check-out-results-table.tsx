@@ -84,7 +84,7 @@ export function CheckOutResultsTable({
         </TableHeader>
         <TableBody>
           {bookings.map((booking) => {
-            const roomNumbers = booking.bookingRooms
+            const roomNumbers = (booking.bookingRooms || [])
               .map(br => br.room?.roomNumber)
               .filter(Boolean)
               .join(", ");

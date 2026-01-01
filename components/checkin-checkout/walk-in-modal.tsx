@@ -182,8 +182,10 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
         identityCard: customerInfo.identityCard,
         email: customerInfo.email || undefined,
         address: customerInfo.address || undefined,
-        roomAssignments,
-        depositAmount,
+        roomID: singleRoom.roomID || (roomAssignments.length > 0 ? roomAssignments[0].roomID : ""),
+        checkInDate: singleRoom.checkInDate || new Date().toISOString().split('T')[0],
+        checkOutDate: singleRoom.checkOutDate || new Date(Date.now() + 86400000).toISOString().split('T')[0],
+        numberOfGuests: singleRoom.numberOfGuests || 1,
         notes: notes.trim() || undefined,
       };
 

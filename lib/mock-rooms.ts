@@ -316,9 +316,9 @@ export const searchAvailableRooms = (
   checkOutDate: string,
   roomTypeFilter?: string
 ): Room[] => {
-  // Filter rooms that are available (status "Trống" or "Sẵn sàng")
+  // Filter rooms that are available (status "Sẵn sàng")
   let availableRooms = mockRooms.filter((room) => {
-    const isAvailable = room.roomStatus === "Trống" || room.roomStatus === "Sẵn sàng";
+    const isAvailable = room.roomStatus === "Sẵn sàng";
     return isAvailable;
   });
 
