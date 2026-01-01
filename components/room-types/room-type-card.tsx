@@ -84,9 +84,6 @@ export function RoomTypeCard({
             <h3 className="text-2xl font-extrabold text-white drop-shadow-2xl">
               {roomType.roomTypeName}
             </h3>
-            <p className="text-white/95 text-sm font-bold mt-1 drop-shadow-lg">
-              Mã: {roomType.roomTypeID}
-            </p>
           </div>
         </div>
 

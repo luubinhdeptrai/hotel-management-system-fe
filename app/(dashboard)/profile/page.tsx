@@ -297,17 +297,29 @@ export default function ProfilePage() {
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
-          <Card className="border-2 shadow-lg">
-            <CardHeader className="bg-linear-to-r from-slate-50 to-slate-100 border-b-2">
-              <CardTitle className="flex items-center gap-3 text-2xl">
-                <Key className="h-6 w-6 text-blue-600" />
-                Đổi Mật Khẩu
-              </CardTitle>
-              <CardDescription className="font-medium mt-2">
-                Cập nhật mật khẩu để bảo mật tài khoản
-              </CardDescription>
+          <Card className="border-0 shadow-xl bg-white overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-error-50 via-error-50/80 to-warning-50 border-b-2 border-error-100 py-8 px-8">
+              <div className="flex items-center gap-4">
+                <div className="p-4 rounded-2xl bg-error-600/10 border-2 border-error-200">
+                  <Key className="h-8 w-8 text-error-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-3xl font-bold text-gray-900">
+                    Bảo Mật Tài Khoản
+                  </CardTitle>
+                  <CardDescription className="font-semibold text-gray-600 mt-2 text-base">
+                    Cập nhật mật khẩu để bảo vệ tài khoản của bạn
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-10">{/* Security Tab Message */}
+              <div className="mb-6 p-4 rounded-xl bg-info-50 border-2 border-info-200 flex items-start gap-3">
+                <Shield className="h-5 w-5 text-info-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-info-700 font-semibold">
+                  Hãy tạo mật khẩu mạnh với ít nhất 8 ký tự, kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt.
+                </p>
+              </div>
               {passwordMessage && (
                 <Alert
                   variant={passwordMessage.type === "error" ? "destructive" : "default"}
@@ -329,64 +341,83 @@ export default function ProfilePage() {
               )}
 
               <form onSubmit={handleChangePassword} className="space-y-6">
+                {/* Current Password */}
                 <div className="space-y-3">
-                  <Label htmlFor="currentPassword" className="text-base font-semibold text-slate-700">
+                  <Label htmlFor="currentPassword" className="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-error-600"></span>
                     Mật Khẩu Hiện Tại
                   </Label>
-                  <Input
-                    id="currentPassword"
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) =>
-                      setPasswordData({ ...passwordData, currentPassword: e.target.value })
-                    }
-                    className="h-12 text-base border-2 border-slate-200 rounded-xl hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    disabled={passwordLoading}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) =>
+                        setPasswordData({ ...passwordData, currentPassword: e.target.value })
+                      }
+                      placeholder="Nhập mật khẩu hiện tại"
+                      className="h-12 text-base border-2 border-gray-300 rounded-lg hover:border-gray-400 focus:border-error-500 focus:ring-2 focus:ring-error-200 bg-white transition-all shadow-sm"
+                      disabled={passwordLoading}
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="newPassword" className="text-base font-semibold text-slate-700">
+                {/* New Password */}
+                <div className="space-y-3 pt-4 border-t border-gray-100">
+                  <Label htmlFor="newPassword" className="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-error-600"></span>
                     Mật Khẩu Mới
                   </Label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) =>
-                      setPasswordData({ ...passwordData, newPassword: e.target.value })
-                    }
-                    className="h-12 text-base border-2 border-slate-200 rounded-xl hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    disabled={passwordLoading}
-                    required
-                    minLength={8}
-                  />
-                  <p className="text-sm text-slate-500">Tối thiểu 8 ký tự</p>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) =>
+                        setPasswordData({ ...passwordData, newPassword: e.target.value })
+                      }
+                      placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                      className="h-12 text-base border-2 border-gray-300 rounded-lg hover:border-gray-400 focus:border-error-500 focus:ring-2 focus:ring-error-200 bg-white transition-all shadow-sm"
+                      disabled={passwordLoading}
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600 font-semibold flex items-center gap-1.5">
+                    <span className="text-error-600">●</span>
+                    Tối thiểu 8 ký tự
+                  </p>
                 </div>
 
+                {/* Confirm Password */}
                 <div className="space-y-3">
-                  <Label htmlFor="confirmPassword" className="text-base font-semibold text-slate-700">
-                    Xác Nhận Mật Khẩu Mới
+                  <Label htmlFor="confirmPassword" className="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-error-600"></span>
+                    Xác Nhận Mật Khẩu
                   </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) =>
-                      setPasswordData({ ...passwordData, confirmPassword: e.target.value })
-                    }
-                    className="h-12 text-base border-2 border-slate-200 rounded-xl hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    disabled={passwordLoading}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                      }
+                      placeholder="Nhập lại mật khẩu mới"
+                      className="h-12 text-base border-2 border-gray-300 rounded-lg hover:border-gray-400 focus:border-error-500 focus:ring-2 focus:ring-error-200 bg-white transition-all shadow-sm"
+                      disabled={passwordLoading}
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="pt-4 border-t-2 border-slate-100">
+                {/* Submit Button */}
+                <div className="pt-6 border-t-2 border-gray-100 flex gap-3">
                   <Button
                     type="submit"
                     disabled={passwordLoading}
-                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 font-semibold shadow-md"
+                    className="flex-1 h-12 bg-gradient-to-r from-error-600 to-error-500 hover:from-error-700 hover:to-error-600 font-bold text-white shadow-lg hover:shadow-xl transition-all rounded-lg"
                   >
                     <Key className="h-5 w-5 mr-2" />
                     {passwordLoading ? "Đang cập nhật..." : "Đổi Mật Khẩu"}
