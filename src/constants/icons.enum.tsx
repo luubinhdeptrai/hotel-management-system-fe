@@ -71,6 +71,14 @@ import {
   Play,
   History,
   Split,
+  Building2,
+  ArrowLeft,
+  Tag,
+  Activity,
+  ChevronsLeft,
+  ChevronsRight,
+  Wallet,
+  AlertOctagon,
 } from "lucide-react";
 
 export const ICONS = {
@@ -151,4 +159,15 @@ export const ICONS = {
   SPARKLES: <Sparkles />,
   SPLIT: <Split />,
   CALENDAR_PLUS: <CalendarPlus />,
+  BUILDING: <Building2 />,
+  ARROW_LEFT: <ArrowLeft />,
+  LOADING: <Loader2 />,
+  TAG: <Tag />,
+  ACTIVITY: <Activity />,
+  CHEVRON_DOUBLE_LEFT: <ChevronsLeft />,
+  CHEVRON_DOUBLE_RIGHT: <ChevronsRight />,
+  WALLET: <Wallet />,
+  SERVICE: <Package />,
+  ROOM: <BedDouble />,
+  ERROR: <AlertOctagon />,
 };

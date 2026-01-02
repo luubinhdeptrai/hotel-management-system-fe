@@ -37,7 +37,10 @@ export const customerService = {
       { requiresAuth: true }
     );
 
-    return response.data;
+    const data = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return data;
   },
 
   /**
@@ -49,7 +52,10 @@ export const customerService = {
       `/employee/customers/${customerId}`,
       { requiresAuth: true }
     );
-    return response.data;
+    const data = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return data;
   },
 
   /**
@@ -62,7 +68,10 @@ export const customerService = {
       data,
       { requiresAuth: true }
     );
-    return response.data;
+    const unwrappedData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return unwrappedData;
   },
 
   /**
@@ -78,7 +87,10 @@ export const customerService = {
       data,
       { requiresAuth: true }
     );
-    return response.data;
+    const unwrappedData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return unwrappedData;
   },
 
   /**

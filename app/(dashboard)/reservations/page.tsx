@@ -181,6 +181,96 @@ export default function ReservationsPage() {
         </div>
       </div>
 
+      {/* Modern Recent Bookings Section */}
+      {reservations.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
+              <span className="w-8 h-8 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                {ICONS.CLIPBOARD_LIST}
+              </span>
+              Đặt Phòng Gần Đây
+            </h2>
+          </div>
+
+          {/* Bookings Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {reservations.slice(0, 6).map((reservation) => {
+              const firstDetail = reservation.details[0];
+              const statusColors: Record<string, { bg: string; text: string }> = {
+                'Chờ xác nhận': { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+                'Đã xác nhận': { bg: 'bg-blue-100', text: 'text-blue-700' },
+                'Đã nhận phòng': { bg: 'bg-green-100', text: 'text-green-700' },
+                'Đã trả phòng': { bg: 'bg-purple-100', text: 'text-purple-700' },
+                'Đã hủy': { bg: 'bg-red-100', text: 'text-red-700' },
+              };
+              const statusColor = statusColors[reservation.status] || statusColors['Chờ xác nhận'];
+
+              return (
+                <div
+                  key={reservation.reservationID}
+                  className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
+                  onClick={() => handleViewDetails(reservation)}
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Mã đặt</p>
+                      <p className="text-lg font-extrabold text-blue-600 mt-1">{reservation.reservationID}</p>
+                    </div>
+                    <div className={`${statusColor.bg} ${statusColor.text} px-4 py-2 rounded-lg font-bold text-sm`}>
+                      {reservation.status}
+                    </div>
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                    <p className="text-sm font-bold text-gray-600">Khách hàng</p>
+                    <p className="text-base font-extrabold text-gray-900 mt-1">{reservation.customer.customerName}</p>
+                    <p className="text-xs text-gray-600 mt-1">{reservation.customer.phoneNumber}</p>
+                  </div>
+
+                  {/* Room & Dates */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 text-blue-600">{ICONS.DOOR_OPEN}</span>
+                      <span className="text-sm font-semibold text-gray-700">
+                        {firstDetail.roomName} ({firstDetail.roomTypeName})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 text-green-600">{ICONS.CALENDAR}</span>
+                      <span className="text-sm font-semibold text-gray-700">
+                        {new Date(firstDetail.checkInDate).toLocaleDateString('vi-VN')} - {new Date(firstDetail.checkOutDate).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="border-t border-gray-200 pt-4 flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-600 uppercase">Tổng tiền</span>
+                    <span className="text-xl font-extrabold bg-linear-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(reservation.totalAmount)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {reservations.length > 6 && (
+            <div className="text-center pt-4">
+              <Button
+                variant="outline"
+                className="h-11 px-6 border-2 border-blue-300 text-blue-600 hover:bg-blue-50 font-bold"
+              >
+                Xem tất cả {reservations.length} đặt phòng
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Unified Filter with Tabs - Option B */}
       <UnifiedReservationsFilter
         checkInDate={checkInDate}

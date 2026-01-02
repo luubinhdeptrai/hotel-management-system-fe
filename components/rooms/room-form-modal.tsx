@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,273 +18,325 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Room, RoomType, RoomStatus } from "@/lib/types/room";
+import { Hotel, AlertCircle, Loader2, DoorOpen, Layers, Tag } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { Room, RoomStatus, CreateRoomRequest, UpdateRoomRequest } from "@/lib/types/api";
+import { useRoomTypes } from "@/hooks/use-room-types";
 
 interface RoomFormModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  room?: Room | null;
-  roomTypes: RoomType[];
-  onSave: (room: Partial<Room>) => void;
+  onClose: () => void;
+  onSave: (data: CreateRoomRequest | UpdateRoomRequest) => Promise<void>;
+  editingRoom: Room | null;
 }
+
+const roomStatuses: { value: RoomStatus; label: string }[] = [
+  { value: "AVAILABLE", label: "Sẵn sàng" },
+  { value: "RESERVED", label: "Đã đặt" },
+  { value: "OCCUPIED", label: "Đang sử dụng" },
+  { value: "CLEANING", label: "Đang dọn" },
+  { value: "MAINTENANCE", label: "Bảo trì" },
+  { value: "OUT_OF_SERVICE", label: "Ngừng hoạt động" },
+];
 
 export function RoomFormModal({
   open,
-  onOpenChange,
-  room,
-  roomTypes,
+  onClose,
   onSave,
+  editingRoom,
 }: RoomFormModalProps) {
-  const [formData, setFormData] = useState<{
-    roomID: string;
-    roomName: string;
-    roomTypeID: string;
-    roomStatus: RoomStatus;
-    floor: number;
-  }>({
-    roomID: "",
-    roomName: "",
-    roomTypeID: "",
-    roomStatus: "Sẵn sàng",
+  const { roomTypes, loading: loadingRoomTypes } = useRoomTypes();
+  
+  const [formData, setFormData] = useState({
+    roomNumber: "",
     floor: 1,
+    code: "",
+    roomTypeId: "",
+    status: "AVAILABLE" as RoomStatus,
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
-
-    setTimeout(() => {
-      if (room) {
+    if (open) {
+      if (editingRoom) {
         setFormData({
-          roomID: room.roomID,
-          roomName: room.roomName,
-          roomTypeID: room.roomTypeID,
-          roomStatus: room.roomStatus,
-          floor: room.floor,
+          roomNumber: editingRoom.roomNumber,
+          floor: editingRoom.floor,
+          code: editingRoom.code || "",
+          roomTypeId: editingRoom.roomTypeId,
+          status: editingRoom.status,
         });
       } else {
         setFormData({
-          roomID: "",
-          roomName: "",
-          roomTypeID: roomTypes[0]?.roomTypeID || "",
-          roomStatus: "Sẵn sàng",
+          roomNumber: "",
           floor: 1,
+          code: "",
+          roomTypeId: roomTypes[0]?.roomTypeID || "",
+          status: "AVAILABLE",
         });
       }
       setErrors({});
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+      setSubmitError(null);
+    }
+  }, [open, editingRoom, roomTypes]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.roomID.trim()) {
-      newErrors.roomID = "Mã phòng không được để trống";
+    if (!formData.roomNumber.trim()) {
+      newErrors.roomNumber = "Số phòng là bắt buộc";
+    } else if (formData.roomNumber.trim().length > 50) {
+      newErrors.roomNumber = "Số phòng không được vượt quá 50 ký tự";
     }
-    if (!formData.roomName.trim()) {
-      newErrors.roomName = "Tên phòng không được để trống";
+
+    if (!formData.roomTypeId) {
+      newErrors.roomTypeId = "Vui lòng chọn loại phòng";
     }
-    if (!formData.roomTypeID) {
-      newErrors.roomTypeID = "Vui lòng chọn loại phòng";
-    }
+
     if (formData.floor < 1) {
       newErrors.floor = "Tầng phải lớn hơn 0";
+    }
+
+    if (formData.code && formData.code.length > 50) {
+      newErrors.code = "Mã phòng không được vượt quá 50 ký tự";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validateForm()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
 
-    const selectedRoomType = roomTypes.find(
-      (rt) => rt.roomTypeID === formData.roomTypeID
-    );
+    if (!validateForm()) {
+      return;
+    }
 
-    if (!selectedRoomType) return;
+    setSubmitting(true);
+    try {
+      await onSave({
+        roomNumber: formData.roomNumber.trim(),
+        floor: formData.floor,
+        code: formData.code.trim() || undefined,
+        roomTypeId: formData.roomTypeId,
+        status: formData.status,
+      });
+      onClose();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không thể lưu phòng";
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    const roomData: Partial<Room> = {
-      roomID: formData.roomID,
-      roomName: formData.roomName,
-      roomTypeID: formData.roomTypeID,
-      roomType: selectedRoomType,
-      roomStatus: formData.roomStatus,
-      floor: formData.floor,
-    };
-
-    onSave(roomData);
-    onOpenChange(false);
+  const handleChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-900">
-            {room ? "Chỉnh sửa phòng" : "Thêm phòng mới"}
-          </DialogTitle>
-          <DialogDescription className="text-gray-500">
-            {room ? "Cập nhật thông tin phòng" : "Nhập thông tin cho phòng mới"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          {/* Room Code */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="roomID"
-              className="text-sm font-medium text-gray-700"
-            >
-              Mã phòng <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="roomID"
-              placeholder="Ví dụ: 101, 201A"
-              value={formData.roomID}
-              onChange={(e) =>
-                setFormData({ ...formData, roomID: e.target.value })
-              }
-              disabled={!!room}
-              className={errors.roomID ? "border-red-500" : ""}
-            />
-            {errors.roomID && (
-              <p className="text-xs text-red-500">{errors.roomID}</p>
-            )}
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
+        {/* Header with Gradient */}
+        <div className="relative bg-linear-to-br from-blue-600 via-cyan-600 to-teal-600 px-6 py-8">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
+          <div className="relative flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+              <Hotel className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold text-white">
+                {editingRoom ? "Chỉnh sửa phòng" : "Thêm phòng mới"}
+              </DialogTitle>
+              <DialogDescription className="text-white/90 text-base mt-1">
+                {editingRoom
+                  ? "Cập nhật thông tin phòng"
+                  : "Nhập thông tin để tạo phòng mới"}
+              </DialogDescription>
+            </div>
           </div>
+        </div>
 
-          {/* Room Name */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="roomName"
-              className="text-sm font-medium text-gray-700"
-            >
-              Tên phòng <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="roomName"
-              placeholder="Ví dụ: Phòng 101"
-              value={formData.roomName}
-              onChange={(e) =>
-                setFormData({ ...formData, roomName: e.target.value })
-              }
-              className={errors.roomName ? "border-red-500" : ""}
-            />
-            {errors.roomName && (
-              <p className="text-xs text-red-500">{errors.roomName}</p>
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-6">
+            {submitError && (
+              <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{submitError}</AlertDescription>
+              </Alert>
             )}
-          </div>
 
-          {/* Room Type */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="roomTypeID"
-              className="text-sm font-medium text-gray-700"
-            >
-              Loại phòng <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.roomTypeID}
-              onValueChange={(value) =>
-                setFormData({ ...formData, roomTypeID: value })
-              }
-            >
-              <SelectTrigger
-                className={errors.roomTypeID ? "border-red-500" : ""}
-              >
-                <SelectValue placeholder="Chọn loại phòng" />
-              </SelectTrigger>
-              <SelectContent>
-                {roomTypes.map((type) => (
-                  <SelectItem key={type.roomTypeID} value={type.roomTypeID}>
-                    {type.roomTypeName} -{" "}
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(type.price)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.roomTypeID && (
-              <p className="text-xs text-red-500">{errors.roomTypeID}</p>
-            )}
-          </div>
-
-          {/* Floor */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="floor"
-              className="text-sm font-medium text-gray-700"
-            >
-              Tầng <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="floor"
-              type="number"
-              min="1"
-              value={formData.floor}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  floor: parseInt(e.target.value) || 1,
-                })
-              }
-              className={errors.floor ? "border-red-500" : ""}
-            />
-            {errors.floor && (
-              <p className="text-xs text-red-500">{errors.floor}</p>
-            )}
-          </div>
-
-          {/* Status (only for edit mode) */}
-          {room && (
+            {/* Room Number */}
             <div className="space-y-2">
-              <Label
-                htmlFor="roomStatus"
-                className="text-sm font-medium text-gray-700"
+              <Label htmlFor="roomNumber" className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <DoorOpen className="h-4 w-4 text-blue-600" />
+                Số phòng <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="roomNumber"
+                placeholder="VD: 101, 201A, P302..."
+                value={formData.roomNumber}
+                onChange={(e) => handleChange("roomNumber", e.target.value)}
+                className={`h-12 ${errors.roomNumber ? "border-red-500 focus:ring-red-200" : "focus:ring-blue-200 focus:border-blue-500"}`}
+                maxLength={50}
+              />
+              {errors.roomNumber && (
+                <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.roomNumber}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.roomNumber.length}/50 ký tự
+              </p>
+            </div>
+
+            {/* Floor */}
+            <div className="space-y-2">
+              <Label htmlFor="floor" className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <Layers className="h-4 w-4 text-blue-600" />
+                Tầng <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="floor"
+                type="number"
+                placeholder="Nhập số tầng"
+                value={formData.floor}
+                onChange={(e) => handleChange("floor", parseInt(e.target.value) || 1)}
+                className={`h-12 ${errors.floor ? "border-red-500 focus:ring-red-200" : "focus:ring-blue-200 focus:border-blue-500"}`}
+                min={1}
+              />
+              {errors.floor && (
+                <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.floor}
+                </p>
+              )}
+            </div>
+
+            {/* Code (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="code" className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <Tag className="h-4 w-4 text-blue-600" />
+                Mã phòng <span className="text-gray-400 text-xs font-normal">(Không bắt buộc)</span>
+              </Label>
+              <Input
+                id="code"
+                placeholder="VD: VIP01, EXEC202..."
+                value={formData.code}
+                onChange={(e) => handleChange("code", e.target.value)}
+                className={`h-12 ${errors.code ? "border-red-500 focus:ring-red-200" : "focus:ring-blue-200 focus:border-blue-500"}`}
+                maxLength={50}
+              />
+              {errors.code && (
+                <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.code}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.code.length}/50 ký tự
+              </p>
+            </div>
+
+            {/* Room Type */}
+            <div className="space-y-2">
+              <Label htmlFor="roomType" className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <Hotel className="h-4 w-4 text-blue-600" />
+                Loại phòng <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.roomTypeId}
+                onValueChange={(value) => handleChange("roomTypeId", value)}
               >
+                <SelectTrigger className={`h-12 ${errors.roomTypeId ? "border-red-500" : ""}`}>
+                  <SelectValue placeholder="Chọn loại phòng" />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingRoomTypes ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                      <p className="text-sm mt-2">Đang tải...</p>
+                    </div>
+                  ) : roomTypes.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <p className="text-sm">Chưa có loại phòng nào</p>
+                    </div>
+                  ) : (
+                    roomTypes.map((type) => (
+                      <SelectItem key={type.roomTypeID} value={type.roomTypeID}>
+                        {type.roomTypeName} - {type.price.toLocaleString('vi-VN')} VNĐ/đêm
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.roomTypeId && (
+                <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.roomTypeId}
+                </p>
+              )}
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="status" className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
                 Trạng thái
               </Label>
               <Select
-                value={formData.roomStatus}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    roomStatus: value as RoomStatus,
-                  })
-                }
+                value={formData.status}
+                onValueChange={(value) => handleChange("status", value as RoomStatus)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-12">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Sẵn sàng">Sẵn sàng</SelectItem>
-                  <SelectItem value="Đang thuê">Đang thuê</SelectItem>
-                  <SelectItem value="Bẩn">Bẩn</SelectItem>
-                  <SelectItem value="Đang dọn">Đang dọn</SelectItem>
-                  <SelectItem value="Đang kiểm tra">Đang kiểm tra</SelectItem>
-                  <SelectItem value="Bảo trì">Bảo trì</SelectItem>
-                  <SelectItem value="Đã đặt">Đã đặt</SelectItem>
+                  {roomStatuses.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
-        </div>
+          </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Hủy
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-primary-600 hover:bg-primary-500"
-          >
-            {room ? "Cập nhật" : "Thêm phòng"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="mt-8 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={submitting}
+              className="h-12 px-6"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="h-12 px-8 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  {editingRoom ? "Cập nhật" : "Thêm phòng"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

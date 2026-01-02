@@ -11,18 +11,18 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
-import type { RentalReceipt } from "@/lib/types/checkin-checkout";
+import type { Booking } from "@/lib/types/api";
 
 interface CheckOutResultsTableProps {
-  rentals: RentalReceipt[];
-  onSelectRental: (rental: RentalReceipt) => void;
+  bookings: Booking[];
+  onSelectBooking: (booking: Booking) => void;
 }
 
 export function CheckOutResultsTable({
-  rentals,
-  onSelectRental,
+  bookings,
+  onSelectBooking,
 }: CheckOutResultsTableProps) {
-  if (rentals.length === 0) {
+  if (bookings.length === 0) {
     return (
       <div className="rounded-xl border-2 border-gray-200 bg-white p-12 text-center shadow-sm">
         <div className="flex flex-col items-center gap-4">
@@ -62,23 +62,17 @@ export function CheckOutResultsTable({
         <TableHeader className="bg-linear-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
           <TableRow>
             <TableHead className="font-bold text-gray-900 h-12">
-              Mã phiếu thuê
+              Mã đặt phòng
             </TableHead>
             <TableHead className="font-bold text-gray-900 h-12">Phòng</TableHead>
             <TableHead className="font-bold text-gray-900 h-12">
-              Khách hàng
+              Khách hàng chính
             </TableHead>
             <TableHead className="font-bold text-gray-900 h-12">
               Số điện thoại
             </TableHead>
             <TableHead className="font-bold text-gray-900 h-12">
               Ngày nhận
-            </TableHead>
-            <TableHead className="font-bold text-gray-900 h-12">
-              Ngày trả
-            </TableHead>
-            <TableHead className="font-bold text-gray-900 h-12">
-              Tiền phòng
             </TableHead>
             <TableHead className="font-bold text-gray-900 h-12">
               Trạng thái
@@ -89,60 +83,59 @@ export function CheckOutResultsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rentals.map((rental) => (
-            <TableRow key={rental.receiptID} className="hover:bg-gray-50 border-b border-gray-100 transition-colors">
-              <TableCell className="font-semibold text-primary-600 py-4">
-                {rental.receiptID}
-              </TableCell>
-              <TableCell className="py-4">
-                <div className="flex flex-col">
-                  <span className="font-semibold text-gray-900">
-                    {rental.roomName}
+          {bookings.map((booking) => {
+            const roomNumbers = (booking.bookingRooms || [])
+              .map(br => br.room?.roomNumber)
+              .filter(Boolean)
+              .join(", ");
+
+            return (
+              <TableRow 
+                key={booking.id} 
+                className="hover:bg-gray-50 border-b border-gray-100 transition-colors"
+              >
+                <TableCell className="font-semibold text-primary-600 py-4">
+                  {booking.bookingCode}
+                </TableCell>
+                <TableCell className="py-4">
+                  <span className="text-sm font-medium text-gray-700">
+                    {roomNumbers}
                   </span>
-                  <span className="text-xs text-gray-500 mt-0.5">
-                    {rental.roomTypeName}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell className="py-4">
-                <div className="flex flex-col">
-                  <span className="font-semibold text-gray-900">
-                    {rental.customerName}
-                  </span>
-                  <span className="text-xs text-gray-500 mt-0.5">
-                    CMND: {rental.identityCard}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell className="text-gray-700 font-medium py-4">
-                {rental.phoneNumber}
-              </TableCell>
-              <TableCell className="text-gray-700 font-medium py-4">
-                {formatDate(rental.checkInDate)}
-              </TableCell>
-              <TableCell className="text-gray-700 font-medium py-4">
-                {formatDate(rental.checkOutDate)}
-              </TableCell>
-              <TableCell className="font-bold text-gray-900 py-4">
-                {formatCurrency(rental.roomTotal)}
-              </TableCell>
-              <TableCell className="py-4">
-                <Badge className="bg-info-100 text-info-700 hover:bg-info-100 font-semibold px-3 py-1">
-                  {rental.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right py-4">
-                <Button
-                  onClick={() => onSelectRental(rental)}
-                  size="sm"
-                  className="h-9 px-4 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
-                >
-                  <span className="w-4 h-4 mr-2">{ICONS.DOOR_OPEN}</span>
-                  <span className="ml-1.5">Check-out</span>
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell className="py-4">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900">
+                      {booking.primaryCustomer?.fullName || "N/A"}
+                    </span>
+                    <span className="text-xs text-gray-500 mt-0.5">
+                      ID: {booking.id}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-700 font-medium py-4">
+                  {booking.primaryCustomer?.phone || "N/A"}
+                </TableCell>
+                <TableCell className="text-gray-700 font-medium py-4">
+                  {formatDate(booking.checkInDate)}
+                </TableCell>
+                <TableCell className="py-4">
+                  <Badge className="bg-info-100 text-info-700 hover:bg-info-100 font-semibold px-3 py-1">
+                    {booking.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right py-4">
+                  <Button
+                    onClick={() => onSelectBooking(booking)}
+                    size="sm"
+                    className="h-9 px-4 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                  >
+                    <span className="w-4 h-4 mr-2">{ICONS.DOOR_OPEN}</span>
+                    <span className="ml-1.5">Check-out</span>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

@@ -8,6 +8,7 @@ export { bookingService } from "./booking.service";
 export { customerService } from "./customer.service";
 export { employeeService } from "./employee.service";
 export { roomService } from "./room.service";
+export { roomTagService } from "./roomTag.service";
 export { serviceManagementService } from "./service.service";
 
 // Re-export API utilities

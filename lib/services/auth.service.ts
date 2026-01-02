@@ -44,16 +44,23 @@ export const authService = {
       payload
     );
 
-    const authData = response.data;
+    logger.log("API Response:", response);
+
+    // Handle response that's already unwrapped or wrapped
+    const authData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+
+    logger.log("Auth Data after unwrap:", authData);
 
     // Store tokens and user data
-    if (authData.tokens) {
+    if (authData?.tokens) {
       setTokens(
         authData.tokens.access.token,
         authData.tokens.refresh.token
       );
     }
-    if (authData.employee && typeof window !== "undefined") {
+    if (authData?.employee && typeof window !== "undefined") {
       localStorage.setItem(
         AUTH_STORAGE_KEYS.USER,
         JSON.stringify(authData.employee)
@@ -102,7 +109,10 @@ export const authService = {
         payload
       );
 
-      const tokenData = response.data;
+      // Handle response that's already unwrapped or wrapped
+      const tokenData = (response && typeof response === "object" && "data" in response)
+        ? (response as any).data
+        : response;
 
       // Update stored tokens
       setTokens(
@@ -141,7 +151,10 @@ export const authService = {
       "/employee/profile",
       { requiresAuth: true }
     );
-    return response.data;
+    const userData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return userData;
   },
 
   /**
@@ -154,7 +167,10 @@ export const authService = {
       data,
       { requiresAuth: true }
     );
-    return response.data;
+    const userData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return userData;
   },
 
   /**
@@ -167,7 +183,10 @@ export const authService = {
       "/employee/auth/forgot-password",
       payload
     );
-    return response.data;
+    const forgotData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return forgotData;
   },
 
   /**

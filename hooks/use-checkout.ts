@@ -1,127 +1,73 @@
 import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import type { PaymentMethod } from "@/lib/types/payment";
+import type { Booking, BookingRoom } from "@/lib/types/api";
 import type {
-  RentalReceipt,
-  CheckoutSummary,
   AddServiceFormData,
   AddPenaltyFormData,
+  CheckOutFormData,
 } from "@/lib/types/checkin-checkout";
 import type { AddSurchargeFormData } from "@/components/checkin-checkout/add-surcharge-modal";
-import {
-  searchActiveRentals,
-  getCheckoutSummary,
-  mockServices,
-} from "@/lib/mock-checkin-checkout";
+import { bookingService } from "@/lib/services/booking.service";
 
 export function useCheckOut() {
   const [query, setQuery] = useState("");
-  // Initialize with all active rentals on first render
-  const [results, setResults] = useState<RentalReceipt[]>(() =>
-    searchActiveRentals("")
-  );
-  const [selectedCheckout, setSelectedCheckout] =
-    useState<CheckoutSummary | null>(null);
+  const [results, setResults] = useState<Booking[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedBookingRooms, setSelectedBookingRooms] = useState<BookingRoom[]>([]);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [showAddPenaltyModal, setShowAddPenaltyModal] = useState(false);
   const [showAddSurchargeModal, setShowAddSurchargeModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = (searchQuery: string) => {
+  const handleSearch = async (searchQuery: string) => {
     setQuery(searchQuery);
-    const searchResults = searchActiveRentals(searchQuery);
-    setResults(searchResults);
-  };
-
-  const handleSelectRental = (rental: RentalReceipt) => {
-    const summary = getCheckoutSummary(rental.receiptID);
-    if (summary) {
-      setSelectedCheckout(summary);
+    setIsLoading(true);
+    try {
+      // Call backend API to search checked-in bookings
+      const searchResults = await bookingService.searchBookings(searchQuery);
+      // Filter for CHECKED_IN bookings only (ready for check-out)
+      const checkedInBookings = searchResults.filter(b => b.status === 'CHECKED_IN');
+      setResults(checkedInBookings);
+    } catch (error) {
+      logger.error("Search failed:", error);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleSelectBooking = (booking: Booking) => {
+    setSelectedBooking(booking);
+    // Get booking rooms that are OCCUPIED (not yet checked out)
+    const occupiedRooms = (booking.bookingRooms || []).filter(br => br.room?.status === 'OCCUPIED');
+    setSelectedBookingRooms(occupiedRooms);
+  };
+
   const handleBackToSearch = () => {
-    setSelectedCheckout(null);
+    setSelectedBooking(null);
+    setSelectedBookingRooms([]);
   };
 
   const handleAddService = (data: AddServiceFormData): string => {
-    if (!selectedCheckout) return "";
-
-    // In real app, this would call an API
+    if (!selectedBooking) return "";
     logger.log("Add service:", data);
-
-    const service = mockServices.find((s) => s.serviceID === data.serviceID);
-    if (!service) return "";
-
-    // Add service to checkout summary
-    const newService = {
-      detailID: `SD${Date.now()}`,
-      serviceID: data.serviceID,
-      serviceName: service.serviceName,
-      quantity: data.quantity,
-      price: service.price,
-      total: service.price * data.quantity,
-      dateUsed: new Date().toISOString().split("T")[0],
-    };
-
-    setSelectedCheckout({
-      ...selectedCheckout,
-      services: [...selectedCheckout.services, newService],
-      servicesTotal: selectedCheckout.servicesTotal + newService.total,
-      grandTotal: selectedCheckout.grandTotal + newService.total,
-    });
-
-    return service.serviceName;
+    // TODO: Implement service addition to booking
+    return "";
   };
 
   const handleAddPenalty = (data: AddPenaltyFormData): boolean => {
-    if (!selectedCheckout) return false;
-
-    // In real app, this would call an API
+    if (!selectedBooking) return false;
     logger.log("Add penalty:", data);
-
-    const newPenalty = {
-      penaltyID: `PEN${Date.now()}`,
-      description: data.description,
-      amount: data.amount,
-      dateIssued: new Date().toISOString().split("T")[0],
-    };
-
-    setSelectedCheckout({
-      ...selectedCheckout,
-      penalties: [...selectedCheckout.penalties, newPenalty],
-      penaltiesTotal: selectedCheckout.penaltiesTotal + newPenalty.amount,
-      grandTotal: selectedCheckout.grandTotal + newPenalty.amount,
-    });
-
+    // TODO: Implement penalty addition to booking
     return true;
   };
 
   const handleAddSurcharge = (data: AddSurchargeFormData): boolean => {
-    if (!selectedCheckout) return false;
-
-    // In real app, this would call an API
+    if (!selectedBooking) return false;
     logger.log("Add surcharge:", data);
-
-    const newSurcharge = {
-      surchargeID: `SUR${Date.now()}`,
-      surchargeName: data.surchargeName,
-      rate: data.rate,
-      amount: data.amount,
-      description: data.description,
-      dateApplied: new Date().toISOString().split("T")[0],
-    };
-
-    const currentSurchargesTotal = selectedCheckout.surchargesTotal || 0;
-    const newSurchargesArray = selectedCheckout.surcharges || [];
-
-    setSelectedCheckout({
-      ...selectedCheckout,
-      surcharges: [...newSurchargesArray, newSurcharge],
-      surchargesTotal: currentSurchargesTotal + newSurcharge.amount,
-      grandTotal: selectedCheckout.grandTotal + newSurcharge.amount,
-    });
-
+    // TODO: Implement surcharge addition to booking
     return true;
   };
 
@@ -130,31 +76,54 @@ export function useCheckOut() {
     setShowPaymentModal(true);
   };
 
-  const handleConfirmPayment = (method: PaymentMethod): string => {
-    if (!selectedCheckout) return "";
+  const handleConfirmPayment = async (method: PaymentMethod): Promise<string> => {
+    if (!selectedBooking || selectedBookingRooms.length === 0) return "";
 
-    logger.log("Confirm payment with method:", method);
+    setIsLoading(true);
+    try {
+      logger.log("Confirm payment with method:", method);
 
-    const roomName = selectedCheckout.receipt.roomName;
-    // Remove from results and reset selected checkout
-    setResults((prev) =>
-      prev.filter((r) => r.receiptID !== selectedCheckout.receiptID)
-    );
-    setSelectedCheckout(null);
-    setShowPaymentModal(false);
-    return roomName;
+      const checkoutData: CheckOutFormData = {
+        bookingRoomIds: selectedBookingRooms.map(br => br.id),
+        notes: `Checked out with payment method: ${method}`
+      };
+
+      // Call real backend API
+      const response = await bookingService.checkOut(checkoutData);
+      
+      logger.log("Check-out successful:", response);
+
+      const roomName = selectedBookingRooms.map(br => br.room?.roomNumber).join(", ");
+      
+      // Remove from results and reset selected checkout
+      setResults((prev) =>
+        prev.filter((b) => b.id !== selectedBooking.id)
+      );
+      setSelectedBooking(null);
+      setSelectedBookingRooms([]);
+      setShowPaymentModal(false);
+      
+      return roomName;
+    } catch (error) {
+      logger.error("Check-out failed:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
     query,
     results,
-    selectedCheckout,
+    selectedBooking,
+    selectedBookingRooms,
     showAddServiceModal,
     showAddPenaltyModal,
     showAddSurchargeModal,
     showPaymentModal,
+    isLoading,
     handleSearch,
-    handleSelectRental,
+    handleSelectBooking,
     handleBackToSearch,
     handleAddService,
     handleAddPenalty,

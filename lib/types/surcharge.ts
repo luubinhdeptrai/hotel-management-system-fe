@@ -6,6 +6,7 @@ export interface SurchargeItem {
   surchargeName: string;
   price: number;
   description?: string;
+  imageUrl?: string;
   isActive: boolean;
   isOpenPrice?: boolean; // Allow open price entry
   createdAt: Date;
@@ -16,6 +17,7 @@ export interface SurchargeFormData {
   surchargeName: string;
   price: number;
   description?: string;
+  imageUrl?: string;
   isOpenPrice?: boolean;
 }
 

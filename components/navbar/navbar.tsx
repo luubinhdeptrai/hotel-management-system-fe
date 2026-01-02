@@ -24,7 +24,6 @@ import Link from "next/link";
 export function Navbar() {
   const user = getCurrentUser();
   const [searchOpen, setSearchOpen] = React.useState(false);
-  const [profileOpen, setProfileOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
   return (
@@ -69,12 +68,11 @@ export function Navbar() {
                   Tài khoản của tôi
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-primary-100" />
-                <DropdownMenuItem
-                  onClick={() => setProfileOpen(true)}
-                  className="cursor-pointer hover:bg-primary-50 focus:bg-primary-50 focus:text-primary-700"
-                >
-                  <span className="w-4 h-4 mr-2">{ICONS.USER}</span>
-                  Xem Profile
+                <DropdownMenuItem asChild className="cursor-pointer hover:bg-primary-50 focus:bg-primary-50 focus:text-primary-700">
+                  <Link href="/profile">
+                    <span className="w-4 h-4 mr-2">{ICONS.USER}</span>
+                    Xem Profile
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer hover:bg-primary-50 focus:bg-primary-50 focus:text-primary-700">
                   <span className="w-4 h-4 mr-2">{ICONS.SETTINGS}</span>
@@ -121,39 +119,6 @@ export function Navbar() {
               ) : (
                 <p>Nhập từ khóa để tìm kiếm...</p>
               )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Profile Dialog */}
-      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-white border-primary-200">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <span className="w-6 h-6 text-primary-600">{ICONS.USER}</span>
-              Thông tin Profile
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-linear-to-br from-primary-50 to-primary-100/30 border border-primary-200">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary-600 to-primary-500 text-white shadow-lg">
-                <span className="w-8 h-8">{ICONS.USER}</span>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900">{user?.role || "User"}</h3>
-                <p className="text-sm text-gray-600">Nhân viên khách sạn</p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="rounded-lg border border-gray-200 p-3">
-                <p className="text-xs text-gray-500 mb-1">Chức vụ</p>
-                <p className="text-sm font-semibold text-gray-900">{user?.role || "N/A"}</p>
-              </div>
-              <div className="rounded-lg border border-gray-200 p-3">
-                <p className="text-xs text-gray-500 mb-1">Trạng thái</p>
-                <p className="text-sm font-semibold text-success-600">Đang hoạt động</p>
-              </div>
             </div>
           </div>
         </DialogContent>

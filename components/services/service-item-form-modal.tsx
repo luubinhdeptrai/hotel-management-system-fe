@@ -55,6 +55,7 @@ export function ServiceItemFormModal({
           price: service.price,
           unit: service.unit,
           description: service.description || "",
+          imageUrl: service.imageUrl || "",
         }
       : {
           serviceName: "",
@@ -63,6 +64,7 @@ export function ServiceItemFormModal({
           price: 0,
           unit: "",
           description: "",
+          imageUrl: "",
         };
 
   const [formData, setFormData] = useState<ServiceItemFormData>(initialData);
@@ -79,6 +81,7 @@ export function ServiceItemFormModal({
           price: service.price,
           unit: service.unit,
           description: service.description || "",
+          imageUrl: service.imageUrl || "",
         });
       } else {
         setFormData({
@@ -88,6 +91,7 @@ export function ServiceItemFormModal({
           price: 0,
           unit: "",
           description: "",
+          imageUrl: "",
         });
       }
       setErrors({});
@@ -140,6 +144,7 @@ export function ServiceItemFormModal({
       price: 0,
       unit: "",
       description: "",
+      imageUrl: "",
     });
     setErrors({});
     onClose();
@@ -312,6 +317,22 @@ export function ServiceItemFormModal({
               placeholder="Mô tả chi tiết về dịch vụ..."
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">URL Hình ảnh</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) =>
+                setFormData({ ...formData, imageUrl: e.target.value })
+              }
+              placeholder="https://example.com/service.jpg"
+            />
+            <p className="text-xs text-gray-500">
+              Nhập đường dẫn URL của hình ảnh dịch vụ (không bắt buộc)
+            </p>
           </div>
 
           <DialogFooter className="gap-3">

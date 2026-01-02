@@ -33,6 +33,7 @@ const getInitialFormData = (
       penaltyName: penalty.penaltyName,
       price: penalty.price,
       description: penalty.description || "",
+      imageUrl: penalty.imageUrl || "",
       isOpenPrice: penalty.isOpenPrice || false,
     };
   }
@@ -40,6 +41,7 @@ const getInitialFormData = (
     penaltyName: "",
     price: 0,
     description: "",
+    imageUrl: "",
     isOpenPrice: false,
   };
 };
@@ -205,6 +207,22 @@ export function PenaltyFormModal({
               rows={4}
               className="resize-none focus:ring-error-500"
             />
+          </div>
+
+          {/* URL Hình ảnh */}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl" className="text-sm font-semibold text-gray-700">URL Hình ảnh</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) => handleInputChange("imageUrl", e.target.value)}
+              placeholder="https://example.com/penalty.jpg"
+              className="h-11 focus:ring-error-500"
+            />
+            <p className="text-xs text-gray-500">
+              Nhập đường dẫn URL của hình ảnh phí phạt (không bắt buộc)
+            </p>
           </div>
 
           <DialogFooter className="gap-2 mt-6">

@@ -29,6 +29,23 @@ import {
 import { RoomType } from "@/lib/types/room";
 import { checkRoomAvailability } from "@/lib/mock-reservations";
 
+interface ReservationDetail {
+  roomTypeID?: string;
+  roomTypeId?: string;
+  roomTypeName?: string;
+  roomType?: {
+    roomTypeID?: string;
+    id?: string;
+    roomTypeName?: string;
+    name?: string;
+  };
+  pricePerNight?: number;
+  price?: number;
+  checkInDate?: string;
+  checkOutDate?: string;
+  numberOfGuests?: number;
+}
+
 interface ReservationFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -98,17 +115,37 @@ export function ReservationFormModal({
           };
 
           // Group details by room type with their dates
-          const groupedRooms = reservation.details.reduce((acc, detail) => {
-            const key = `${detail.roomTypeID}_${detail.checkInDate}_${detail.checkOutDate}`;
+          // Normalize possible field names coming from different sources (roomTypeID vs roomTypeId vs nested roomType)
+          const groupedRooms = reservation.details.reduce((acc, detail: ReservationDetail) => {
+            const roomTypeID =
+              detail.roomTypeID ||
+              detail.roomTypeId ||
+              detail.roomType?.roomTypeID ||
+              detail.roomType?.id ||
+              "";
+
+            const roomTypeName =
+              detail.roomTypeName ||
+              detail.roomType?.roomTypeName ||
+              detail.roomType?.name ||
+              "";
+
+            const pricePerNight =
+              detail.pricePerNight ?? detail.price ?? 0;
+
+            const checkIn = detail.checkInDate || "";
+            const checkOut = detail.checkOutDate || "";
+
+            const key = `${roomTypeID}_${checkIn}_${checkOut}`;
             if (!acc[key]) {
               acc[key] = {
-                roomTypeID: detail.roomTypeID,
-                roomTypeName: detail.roomTypeName,
+                roomTypeID,
+                roomTypeName,
                 quantity: 0,
-                numberOfGuests: detail.numberOfGuests,
-                pricePerNight: detail.pricePerNight,
-                checkInDate: detail.checkInDate,
-                checkOutDate: detail.checkOutDate,
+                numberOfGuests: detail.numberOfGuests || 1,
+                pricePerNight,
+                checkInDate: checkIn,
+                checkOutDate: checkOut,
               };
             }
             acc[key].quantity += 1;
@@ -117,7 +154,16 @@ export function ReservationFormModal({
 
           if (!cancelled) {
             setFormData(newFormData);
-            setRoomSelections(Object.values(groupedRooms));
+            const roomSelectionsList = Object.values(groupedRooms);
+            setRoomSelections(roomSelectionsList);
+            // Pre-select first room type when editing
+            if (roomSelectionsList.length > 0) {
+              setSelectedRoomType(roomSelectionsList[0].roomTypeID);
+              setSelectedCheckInDate(roomSelectionsList[0].checkInDate);
+              setSelectedCheckOutDate(roomSelectionsList[0].checkOutDate);
+              setQuantity(roomSelectionsList[0].quantity);
+              setGuestsPerRoom(roomSelectionsList[0].numberOfGuests);
+            }
           }
         } else {
           // Reset form for create mode
@@ -135,6 +181,11 @@ export function ReservationFormModal({
               notes: "",
             });
             setRoomSelections([]);
+            setSelectedRoomType("");
+            setSelectedCheckInDate("");
+            setSelectedCheckOutDate("");
+            setQuantity(1);
+            setGuestsPerRoom(1);
           }
         }
 
@@ -322,7 +373,7 @@ export function ReservationFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-[950px] w-[98vw] md:w-[90vw] lg:w-[90vw] max-h-[98vh] overflow-hidden flex flex-col bg-linear-to-br from-white via-gray-50 to-white mx-auto">
+      <DialogContent className="max-w-[950px]! w-[98vw] md:w-[90vw] lg:w-[90vw] max-h-[98vh] overflow-hidden flex flex-col bg-linear-to-br from-white via-gray-50 to-white mx-auto">
         <DialogHeader className="border-b-2 border-gray-200 pb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -686,10 +737,12 @@ export function ReservationFormModal({
                   id="depositAmount"
                   type="number"
                   min="0"
-                  value={formData.depositAmount}
-                  onChange={(e) =>
-                    handleChange("depositAmount", parseInt(e.target.value) || 0)
-                  }
+                  value={formData.depositAmount === 0 ? "" : formData.depositAmount}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleChange("depositAmount", value === "" ? 0 : parseInt(value) || 0);
+                  }}
+                  placeholder="Nhập tiền cọc"
                   className={`h-11 mt-2 border-2 rounded-lg font-medium ${errors.depositAmount ? "border-red-600" : "border-gray-300"}`}
                 />
                 {errors.depositAmount && (

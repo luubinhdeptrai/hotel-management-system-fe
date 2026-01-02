@@ -54,8 +54,9 @@ export function formatPrice(price: number): string {
 export function getTemplateDescription(
   template: (typeof ROOM_TYPE_TEMPLATES)[0]
 ): string {
-  const amenitiesPreview = template.amenities.slice(0, 3).join(", ");
-  return template.amenities.length > 3
+  const amenitiesList = template.amenities || [];
+  const amenitiesPreview = amenitiesList.slice(0, 3).join(", ");
+  return amenitiesList.length > 3
     ? `${amenitiesPreview}...`
     : amenitiesPreview;
 }

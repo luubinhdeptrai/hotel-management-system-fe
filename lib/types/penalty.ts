@@ -6,6 +6,7 @@ export interface PenaltyItem {
   penaltyName: string;
   price: number;
   description?: string;
+  imageUrl?: string;
   isActive: boolean;
   isOpenPrice?: boolean; // Allow open price entry (e.g., damage with variable cost)
   createdAt: Date;
@@ -16,6 +17,7 @@ export interface PenaltyFormData {
   penaltyName: string;
   price: number;
   description?: string;
+  imageUrl?: string;
   isOpenPrice?: boolean;
 }
 

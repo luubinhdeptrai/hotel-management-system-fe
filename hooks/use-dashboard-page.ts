@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { User } from "@/lib/types/auth";
+import type { Employee } from "@/lib/types/api";
 import {
   getMockArrivals,
   getMockDashboardStats,
@@ -9,12 +9,12 @@ import {
   type DashboardStats,
   type RoomStatusData,
 } from "@/lib/mock-dashboard";
-import { getCurrentUser, mockLogout } from "@/lib/mock-auth";
+import { authService } from "@/lib/services/auth.service";
 import type { Arrival } from "@/components/dashboard/arrivals-table";
 import type { Departure } from "@/components/dashboard/departures-table";
 
 interface UseDashboardPageResult {
-  user: User | null;
+  user: Employee | null;
   stats: DashboardStats;
   roomStatusData: RoomStatusData[];
   arrivals: Arrival[];
@@ -28,7 +28,7 @@ interface UseDashboardPageResult {
 
 export function useDashboardPage(): UseDashboardPageResult {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(() => getCurrentUser());
+  const [user, setUser] = useState<Employee | null>(() => authService.getStoredUser());
 
   const stats = useMemo(() => getMockDashboardStats(), []);
   const roomStatusData = useMemo(() => getMockRoomStatusData(), []);
@@ -56,7 +56,7 @@ export function useDashboardPage(): UseDashboardPageResult {
   }, [router, user]);
 
   const handleLogout = useCallback(() => {
-    mockLogout();
+    authService.logout();
     setUser(null);
     router.push("/login");
   }, [router]);

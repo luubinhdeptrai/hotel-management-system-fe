@@ -21,7 +21,10 @@ export interface RoomType {
   roomTypeName: string;
   price: number;
   capacity: number;
-  amenities: string[];
+  amenities?: string[];
+  imageUrl?: string;
+  totalBed?: number;
+  tags?: string[];
 }
 
 // Room

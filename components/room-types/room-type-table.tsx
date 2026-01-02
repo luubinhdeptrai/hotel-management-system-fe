@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { RoomType } from "@/lib/types/room";
+import { RoomType } from "@/hooks/use-room-types";
 import { ICONS } from "@/src/constants/icons.enum";
 import { formatCurrency } from "@/lib/utils";
 
@@ -120,22 +120,28 @@ export function RoomTypeTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {roomType.amenities.slice(0, 3).map((amenity, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="bg-gray-100 text-gray-700 text-xs"
-                      >
-                        {amenity}
-                      </Badge>
-                    ))}
-                    {roomType.amenities.length > 3 && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-gray-100 text-gray-700 text-xs"
-                      >
-                        +{roomType.amenities.length - 3}
-                      </Badge>
+                    {roomType.tagDetails && roomType.tagDetails.length > 0 ? (
+                      <>
+                        {roomType.tagDetails.slice(0, 3).map((tag) => (
+                          <Badge
+                            key={tag.id}
+                            variant="secondary"
+                            className="bg-gray-100 text-gray-700 text-xs"
+                          >
+                            {tag.name}
+                          </Badge>
+                        ))}
+                        {roomType.tagDetails.length > 3 && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-gray-100 text-gray-700 text-xs"
+                          >
+                            +{roomType.tagDetails.length - 3}
+                          </Badge>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-sm text-gray-400 italic">Chưa có</span>
                     )}
                   </div>
                 </TableCell>
@@ -215,7 +221,9 @@ export function RoomTypeTable({
                 <div className="flex justify-between items-start">
                   <span className="text-gray-500">Tiện nghi:</span>
                   <span className="font-medium text-gray-900 text-right">
-                    {deleteConfirm.roomType.amenities.join(", ")}
+                    {deleteConfirm.roomType.tagDetails && deleteConfirm.roomType.tagDetails.length > 0
+                      ? deleteConfirm.roomType.tagDetails.map(tag => tag.name).join(", ")
+                      : "Chưa có"}
                   </span>
                 </div>
               </div>

@@ -75,15 +75,32 @@ export interface CheckoutSummary {
   grandTotal: number;
 }
 
-// Check-in Form Data
+// Check-in Form Data - Updated to match backend structure
 export interface CheckInFormData {
-  reservationID: string;
-  roomID: string; // For single room check-in (backward compatibility)
-  numberOfGuests: number;
+  reservationID: string; // For UI compatibility, maps to bookingId
+  bookingId: string; // Backend bookingId
+  checkInInfo: Array<{
+    bookingRoomId: string;
+    customerIds: string[];
+  }>;
   notes?: string;
 }
 
-// Multi-room Check-in Form Data
+// Backend-compatible Check-In Request
+export interface BackendCheckInRequest {
+  checkInInfo: Array<{
+    bookingRoomId: string;
+    customerIds: string[];
+  }>;
+}
+
+// Check-out Form Data - Updated to match backend structure  
+export interface CheckOutFormData {
+  bookingRoomIds: string[];
+  notes?: string;
+}
+
+// Multi-room Check-in Form Data (Legacy - for backwards compatibility)
 export interface MultiRoomCheckInFormData {
   reservationID: string;
   rooms: {

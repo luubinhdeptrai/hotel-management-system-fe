@@ -20,6 +20,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { ICONS } from "@/src/constants/icons.enum";
 import type { Reservation } from "@/lib/types/reservation";
@@ -144,8 +145,13 @@ export function CheckInModal({
     roomAssignments.forEach((assignment) => {
       const formData: CheckInFormData = {
         reservationID: reservation.reservationID,
-        roomID: assignment.roomID,
-        numberOfGuests: assignment.numberOfGuests,
+        bookingId: reservation.reservationID,
+        checkInInfo: [
+          {
+            bookingRoomId: assignment.detailID,
+            customerIds: [],
+          }
+        ],
         notes: notes.trim() || undefined,
       };
       onConfirm(formData);
@@ -309,7 +315,9 @@ export function CheckInModal({
                         updateRoomAssignment(detail.detailID, "roomID", value)
                       }
                     >
-                      <SelectTrigger className="h-10 border-gray-300 bg-white w-full"></SelectTrigger>
+                      <SelectTrigger className="h-11 border-2 border-gray-300 bg-white w-full font-medium">
+                        <SelectValue placeholder="Chọn phòng" />
+                      </SelectTrigger>
                       <SelectContent>
                         {availableRooms.length === 0 ? (
                           <SelectItem value="no-rooms" disabled>

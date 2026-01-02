@@ -24,6 +24,7 @@ import { ICONS } from "@/src/constants/icons.enum";
 import { mockRooms } from "@/lib/mock-rooms";
 import { mockRoomTypes } from "@/lib/mock-room-types";
 import { NguoioFormModal } from "@/components/nguoio/nguoio-form-modal";
+import type { WalkInFormData } from "@/lib/types/checkin-checkout";
 
 interface WalkInModalProps {
   open: boolean;
@@ -37,20 +38,6 @@ interface RoomAssignment {
   numberOfGuests: number;
   checkInDate: string;
   checkOutDate: string;
-}
-
-export interface WalkInFormData {
-  // Customer info
-  customerName: string;
-  phoneNumber: string;
-  identityCard: string;
-  email?: string;
-  address?: string;
-  // Multiple room selections
-  roomAssignments: RoomAssignment[];
-  // Payment
-  depositAmount: number;
-  notes?: string;
 }
 
 export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps) {
@@ -78,7 +65,6 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [nguoioModalOpen, setNguoioModalOpen] = useState(false);
-  const [registeredGuests, setRegisteredGuests] = useState<any[]>([]);
 
   // Get available rooms (status = "Sẵn sàng") and not already selected
   const getAvailableRooms = () => {
@@ -154,8 +140,9 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
     setRoomAssignments((prev) => prev.filter((a) => a.roomID !== roomID));
   };
 
-  const handleConfirmNguoio = (guests: any[]) => {
-    setRegisteredGuests(guests);
+  const handleConfirmNguoio = () => {
+    // Handle registered guests - placeholder for guest registration logic
+    // Can be expanded in future to integrate guest details with room assignment
   };
 
   const validateForm = (): boolean => {
@@ -195,8 +182,10 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
         identityCard: customerInfo.identityCard,
         email: customerInfo.email || undefined,
         address: customerInfo.address || undefined,
-        roomAssignments,
-        depositAmount,
+        roomID: singleRoom.roomID || (roomAssignments.length > 0 ? roomAssignments[0].roomID : ""),
+        checkInDate: singleRoom.checkInDate || new Date().toISOString().split('T')[0],
+        checkOutDate: singleRoom.checkOutDate || new Date(Date.now() + 86400000).toISOString().split('T')[0],
+        numberOfGuests: singleRoom.numberOfGuests || 1,
         notes: notes.trim() || undefined,
       };
 

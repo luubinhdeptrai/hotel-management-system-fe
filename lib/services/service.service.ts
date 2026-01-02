@@ -43,7 +43,10 @@ export const serviceManagementService = {
       { requiresAuth: true }
     );
 
-    return response.data;
+    const data = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return data;
   },
 
   /**
@@ -55,7 +58,10 @@ export const serviceManagementService = {
       `/employee/services/${serviceId}`,
       { requiresAuth: true }
     );
-    return response.data;
+    const data = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return data;
   },
 
   /**
@@ -68,7 +74,10 @@ export const serviceManagementService = {
       data,
       { requiresAuth: true }
     );
-    return response.data;
+    const unwrappedData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return unwrappedData;
   },
 
   /**
@@ -84,7 +93,10 @@ export const serviceManagementService = {
       data,
       { requiresAuth: true }
     );
-    return response.data;
+    const unwrappedData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    return unwrappedData;
   },
 
   /**

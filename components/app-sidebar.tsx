@@ -47,6 +47,11 @@ const roomManagement = [
     url: "/room-types",
     icon: ICONS.DOOR_OPEN,
   },
+  {
+    title: "Tiện Nghi",
+    url: "/room-tags",
+    icon: ICONS.TAG,
+  },
 ];
 
 const bookingManagement = [
@@ -67,6 +72,11 @@ const serviceManagement = [
     title: "Dịch Vụ",
     url: "/services",
     icon: ICONS.UTENSILS,
+  },
+  {
+    title: "Khuyến Mại",
+    url: "/promotions",
+    icon: ICONS.TAG,
   },
   {
     title: "Phụ Thu",
@@ -107,6 +117,11 @@ const adminManagement = [
     icon: ICONS.USER_COG,
   },
   {
+    title: "Hoạt Động",
+    url: "/activities",
+    icon: ICONS.ACTIVITY,
+  },
+  {
     title: "Báo Cáo",
     url: "/reports",
     icon: ICONS.BAR_CHART,
@@ -143,25 +158,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         data-sidebar-state={state}
         {...props}
       >
-        <SidebarHeader className="border-b border-primary-100 bg-linear-to-br from-primary-50 via-white to-primary-50/30">
-          <div className="flex items-center gap-3 px-4 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-600/20">
-              <span className="text-lg">{ICONS.HOTEL}</span>
+        <SidebarHeader className="border-b border-primary-100 bg-linear-to-br from-primary-700 via-primary-600 to-primary-500 shadow-lg shadow-primary-600/30">
+          <div className="flex items-center gap-3 px-4 py-5 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-lg border border-white/30">
+              <span className="text-xl drop-shadow-lg">{ICONS.HOTEL}</span>
             </div>
             <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-              <span className="text-base font-bold text-gray-900 truncate">
+              <span className="text-sm font-bold text-white drop-shadow-sm">
                 UIT Hotel System
               </span>
-              <span className="text-xs text-gray-600 truncate font-medium">
+              <span className="text-xs text-white/80 font-semibold drop-shadow-sm">
                 Quản lý khách sạn
               </span>
             </div>
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="bg-linear-to-b from-gray-50 to-white scrollbar-hide">
+        <SidebarContent className="bg-gradient-to-b from-gray-50 via-white to-gray-50/50 scrollbar-hide">
           {/* Dashboard */}
-          <SidebarGroup>
+          <SidebarGroup className="py-3">
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => {
@@ -173,14 +188,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <SidebarMenuButton
                             asChild
                             className={cn(
-                              "transition-all duration-200 h-11 text-sm font-medium",
+                              "transition-all duration-300 h-12 text-sm font-semibold mx-1 rounded-xl",
                               isActive
-                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
-                                : "hover:bg-primary-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
+                                ? "bg-gradient-to-r from-primary-600 via-primary-500 to-primary-500 text-white shadow-lg shadow-primary-500/40 hover:shadow-xl hover:shadow-primary-500/50 border-0"
+                                : "hover:bg-primary-100/60 text-gray-700 hover:text-primary-700 hover:shadow-md"
                             )}
                           >
                             <Link href={item.url} className="flex items-center gap-3">
-                              <span className={cn("w-5 h-5", isActive && "drop-shadow-sm")}>{item.icon}</span>
+                              <span className={cn("w-5 h-5", isActive && "drop-shadow-md")}>{item.icon}</span>
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -197,11 +212,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
 
           {/* Room Management */}
-          <SidebarGroup className="bg-linear-to-br from-primary-50/40 via-transparent to-transparent border-t border-b border-primary-100/50 py-2">
-            <SidebarGroupLabel className="text-[11px] font-bold text-primary-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-primary-600"></span>
+          <SidebarGroup className="bg-gradient-to-r from-blue-50/60 to-transparent border-t-2 border-b border-blue-200/50 py-3 mt-2">
+            <SidebarGroupLabel className="text-[10px] font-bold text-blue-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-blue-600 shadow-sm"></div>
               Quản lý Phòng
-              <span className="w-1 h-1 rounded-full bg-primary-600"></span>
+              <div className="w-2 h-2 rounded-full bg-blue-600 shadow-sm"></div>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -214,14 +229,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <SidebarMenuButton
                             asChild
                             className={cn(
-                              "transition-all duration-200 h-11 text-sm font-medium",
+                              "transition-all duration-300 h-11 text-sm font-semibold mx-1 rounded-xl",
                               isActive
-                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
-                                : "hover:bg-primary-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
+                                ? "bg-gradient-to-r from-primary-600 via-primary-500 to-primary-500 text-white shadow-lg shadow-primary-500/40"
+                                : "hover:bg-blue-100/60 text-gray-700 hover:text-blue-700 hover:shadow-md"
                             )}
                           >
                             <Link href={item.url} className="flex items-center gap-3">
-                              <span className={cn("w-5 h-5", isActive && "drop-shadow-sm")}>{item.icon}</span>
+                              <span className={cn("w-5 h-5", isActive && "drop-shadow-md")}>{item.icon}</span>
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -238,11 +253,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
 
           {/* Booking Management */}
-          <SidebarGroup className="bg-linear-to-br from-success-50/40 via-transparent to-transparent border-t border-b border-success-100/50 py-2">
-            <SidebarGroupLabel className="text-[11px] font-bold text-success-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-success-600"></span>
+          <SidebarGroup className="bg-gradient-to-r from-emerald-50/60 to-transparent border-t-2 border-b border-emerald-200/50 py-3 mt-2">
+            <SidebarGroupLabel className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-600 shadow-sm"></div>
               Booking & Check-in/out
-              <span className="w-1 h-1 rounded-full bg-success-600"></span>
+              <div className="w-2 h-2 rounded-full bg-emerald-600 shadow-sm"></div>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -255,14 +270,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <SidebarMenuButton
                             asChild
                             className={cn(
-                              "transition-all duration-200 h-11 text-sm font-medium",
+                              "transition-all duration-300 h-11 text-sm font-semibold mx-1 rounded-xl",
                               isActive
-                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
-                                : "hover:bg-success-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
+                                ? "bg-gradient-to-r from-primary-600 via-primary-500 to-primary-500 text-white shadow-lg shadow-primary-500/40"
+                                : "hover:bg-emerald-100/60 text-gray-700 hover:text-emerald-700 hover:shadow-md"
                             )}
                           >
                             <Link href={item.url} className="flex items-center gap-3">
-                              <span className={cn("w-5 h-5", isActive && "drop-shadow-sm")}>{item.icon}</span>
+                              <span className={cn("w-5 h-5", isActive && "drop-shadow-md")}>{item.icon}</span>
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -279,11 +294,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
 
           {/* Service & Payment */}
-          <SidebarGroup className="bg-linear-to-br from-error-50/40 via-transparent to-transparent border-t border-b border-error-100/50 py-2">
-            <SidebarGroupLabel className="text-[11px] font-bold text-error-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-error-600"></span>
+          <SidebarGroup className="bg-gradient-to-r from-rose-50/60 to-transparent border-t-2 border-b border-rose-200/50 py-3 mt-2">
+            <SidebarGroupLabel className="text-[10px] font-bold text-rose-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-rose-600 shadow-sm"></div>
               Dịch Vụ & Thanh Toán
-              <span className="w-1 h-1 rounded-full bg-error-600"></span>
+              <div className="w-2 h-2 rounded-full bg-rose-600 shadow-sm"></div>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -296,14 +311,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <SidebarMenuButton
                             asChild
                             className={cn(
-                              "transition-all duration-200 h-11 text-sm font-medium",
+                              "transition-all duration-300 h-11 text-sm font-semibold mx-1 rounded-xl",
                               isActive
-                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
-                                : "hover:bg-error-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
+                                ? "bg-gradient-to-r from-primary-600 via-primary-500 to-primary-500 text-white shadow-lg shadow-primary-500/40"
+                                : "hover:bg-rose-100/60 text-gray-700 hover:text-rose-700 hover:shadow-md"
                             )}
                           >
                             <Link href={item.url} className="flex items-center gap-3">
-                              <span className={cn("w-5 h-5", isActive && "drop-shadow-sm")}>{item.icon}</span>
+                              <span className={cn("w-5 h-5", isActive && "drop-shadow-md")}>{item.icon}</span>
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -320,11 +335,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
 
           {/* Operational Management - Moved to top with accent styling */}
-          <SidebarGroup className="bg-linear-to-br from-warning-50/40 via-transparent to-transparent border-t border-b border-warning-100/50 py-2">
-            <SidebarGroupLabel className="text-[11px] font-bold text-warning-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-warning-600"></span>
+          <SidebarGroup className="bg-gradient-to-r from-amber-50/60 to-transparent border-t-2 border-b border-amber-200/50 py-3 mt-2">
+            <SidebarGroupLabel className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-amber-600 shadow-sm"></div>
               Vận hành
-              <span className="w-1 h-1 rounded-full bg-warning-600"></span>
+              <div className="w-2 h-2 rounded-full bg-amber-600 shadow-sm"></div>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -337,14 +352,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <SidebarMenuButton
                             asChild
                             className={cn(
-                              "transition-all duration-200 h-11 text-sm font-medium",
+                              "transition-all duration-300 h-11 text-sm font-semibold mx-1 rounded-xl",
                               isActive
-                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
-                                : "hover:bg-warning-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
+                                ? "bg-gradient-to-r from-primary-600 via-primary-500 to-primary-500 text-white shadow-lg shadow-primary-500/40"
+                                : "hover:bg-amber-100/60 text-gray-700 hover:text-amber-700 hover:shadow-md"
                             )}
                           >
                             <Link href={item.url} className="flex items-center gap-3">
-                              <span className={cn("w-5 h-5", isActive && "drop-shadow-sm")}>{item.icon}</span>
+                              <span className={cn("w-5 h-5", isActive && "drop-shadow-md")}>{item.icon}</span>
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -361,11 +376,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
 
           {/* Admin - Moved below Operational */}
-          <SidebarGroup className="bg-linear-to-br from-info-50/40 via-transparent to-transparent border-t border-b border-info-100/50 py-2">
-            <SidebarGroupLabel className="text-[11px] font-bold text-info-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-info-600"></span>
+          <SidebarGroup className="bg-gradient-to-r from-purple-50/60 to-transparent border-t-2 border-b border-purple-200/50 py-3 mt-2">
+            <SidebarGroupLabel className="text-[10px] font-bold text-purple-700 uppercase tracking-widest px-4 py-2 flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-purple-600 shadow-sm"></div>
               Quản Trị
-              <span className="w-1 h-1 rounded-full bg-info-600"></span>
+              <div className="w-2 h-2 rounded-full bg-purple-600 shadow-sm"></div>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -378,14 +393,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <SidebarMenuButton
                             asChild
                             className={cn(
-                              "transition-all duration-200 h-11 text-sm font-medium",
+                              "transition-all duration-300 h-11 text-sm font-semibold mx-1 rounded-xl",
                               isActive
-                                ? "bg-linear-to-r from-primary-600 to-primary-500 text-white border-l-4 border-primary-700 hover:from-primary-700 hover:to-primary-600 shadow-md"
-                                : "hover:bg-info-50 hover:text-primary-700 text-gray-700 hover:border-l-4 hover:border-primary-300"
+                                ? "bg-gradient-to-r from-primary-600 via-primary-500 to-primary-500 text-white shadow-lg shadow-primary-500/40"
+                                : "hover:bg-purple-100/60 text-gray-700 hover:text-purple-700 hover:shadow-md"
                             )}
                           >
                             <Link href={item.url} className="flex items-center gap-3">
-                              <span className={cn("w-5 h-5", isActive && "drop-shadow-sm")}>{item.icon}</span>
+                              <span className={cn("w-5 h-5", isActive && "drop-shadow-md")}>{item.icon}</span>
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -402,28 +417,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-primary-100 bg-linear-to-br from-error-50/50 via-white to-white">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-11 hover:bg-error-50 hover:text-error-600 transition-all duration-200 text-gray-700 font-medium hover:border-l-4 hover:border-error-400"
-                  >
-                    <Link href="/logout" className="flex items-center gap-3">
-                      <span className="w-5 h-5">{ICONS.LOGOUT}</span>
-                      <span>Đăng Xuất</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-gray-900 text-white border-gray-700">
-                  Đăng Xuất
-                </TooltipContent>
-              </Tooltip>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
+        
         <SidebarRail />
       </Sidebar>
     </TooltipProvider>

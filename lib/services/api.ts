@@ -129,6 +129,11 @@ export async function apiFetch<T>(
       throw error;
     }
     // Network or other errors
+    console.error("API Network Error:", {
+      endpoint,
+      url,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw new ApiError(0, "Network error. Please check your connection.");
   }
 }

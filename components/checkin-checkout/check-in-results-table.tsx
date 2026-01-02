@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
-import type { Reservation } from "@/lib/types/reservation";
+import type { Booking } from "@/lib/types/api";
 
 interface CheckInResultsTableProps {
-  reservations: Reservation[];
-  onCheckIn: (reservation: Reservation) => void;
+  reservations: Booking[];
+  onCheckIn: (booking: Booking) => void;
 }
 
 export function CheckInResultsTable({
@@ -65,7 +65,7 @@ export function CheckInResultsTable({
               Mã đặt phòng
             </TableHead>
             <TableHead className="font-bold text-gray-900 h-12">
-              Khách hàng
+              Khách hàng chính
             </TableHead>
             <TableHead className="font-bold text-gray-900 h-12">
               Số điện thoại
@@ -77,9 +77,6 @@ export function CheckInResultsTable({
               Số phòng
             </TableHead>
             <TableHead className="font-bold text-gray-900 h-12">
-              Tổng tiền
-            </TableHead>
-            <TableHead className="font-bold text-gray-900 h-12">
               Trạng thái
             </TableHead>
             <TableHead className="text-right font-bold text-gray-900 h-12">
@@ -88,69 +85,55 @@ export function CheckInResultsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {reservations.map((reservation) => {
-            const firstDetail = reservation.details[0];
+          {reservations.map((booking) => {
+            const roomNumbers = (booking.bookingRooms || [])
+              .map(br => br.room?.roomNumber)
+              .filter(Boolean)
+              .join(", ");
+
             return (
               <TableRow
-                key={reservation.reservationID}
+                key={booking.id}
                 className="hover:bg-gray-50 border-b border-gray-100 transition-colors"
               >
                 <TableCell className="font-semibold text-primary-600 py-4">
-                  {reservation.reservationID}
+                  {booking.bookingCode}
                 </TableCell>
                 <TableCell className="py-4">
                   <div className="flex flex-col">
                     <span className="font-semibold text-gray-900">
-                      {reservation.customer.customerName}
+                      {booking.primaryCustomer?.fullName || "N/A"}
                     </span>
                     <span className="text-xs text-gray-500 mt-0.5">
-                      CMND: {reservation.customer.identityCard}
+                      ID: {booking.id}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell className="text-gray-700 font-medium py-4">
-                  {reservation.customer.phoneNumber}
+                  {booking.primaryCustomer?.phone || "N/A"}
                 </TableCell>
                 <TableCell className="text-gray-700 font-medium py-4">
-                  {formatDate(firstDetail.checkInDate)}
+                  {formatDate(booking.checkInDate)}
                 </TableCell>
                 <TableCell className="py-4">
-                  <div className="flex flex-col gap-1">
-                    {reservation.details.map((detail) => (
-                      <span
-                        key={detail.detailID}
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        {detail.roomName} ({detail.roomTypeName})
-                      </span>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell className="font-bold text-gray-900 py-4">
-                  {formatCurrency(reservation.totalAmount)}
+                  <span className="text-sm font-medium text-gray-700">
+                    {roomNumbers}
+                  </span>
                 </TableCell>
                 <TableCell className="py-4">
-                  {reservation.status === "Đã đặt" ? (
-                    <Badge className="bg-info-100 text-info-700 hover:bg-info-100 font-semibold px-3 py-1">
-                      Chưa nhận
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-success-100 text-success-700 hover:bg-success-100 font-semibold px-3 py-1">
-                      {reservation.status}
-                    </Badge>
-                  )}
+                  <Badge className="bg-info-100 text-info-700 hover:bg-info-100 font-semibold px-3 py-1">
+                    {booking.status}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right py-4">
-                  {reservation.status === "Đã đặt" && (
-                    <Button
-                      onClick={() => onCheckIn(reservation)}
-                      size="sm"
-                      className="h-9 px-4 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
-                    >
-                      {ICONS.CHECK}
-                      <span className="ml-1.5">Check-in</span>
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => onCheckIn(booking)}
+                    size="sm"
+                    className="h-9 px-4 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                  >
+                    {ICONS.CHECK}
+                    <span className="ml-1.5">Check-in</span>
+                  </Button>
                 </TableCell>
               </TableRow>
             );

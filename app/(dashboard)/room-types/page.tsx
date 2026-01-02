@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ICONS } from "@/src/constants/icons.enum";
-import { RoomTypeFormModal } from "@/components/room-types/room-type-form-modal";
+import { RoomTypeFormModal } from "@/components/room-types/room-type-form-modal-v2";
 import { RoomTypeGrid } from "@/components/room-types/room-type-grid";
 import { StatsCards } from "@/components/room-types/stats-cards";
 import { SearchAndFilterSection } from "@/components/room-types/search-and-filter-section";
@@ -19,6 +19,7 @@ export default function RoomTypesPage() {
   const {
     roomTypes,
     allRoomTypes,
+    roomTags,
     loading,
     modalOpen,
     editingRoomType,
@@ -170,6 +171,7 @@ export default function RoomTypesPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         roomType={editingRoomType}
+        roomTags={roomTags}
         onSave={handleSave}
       />
     </div>

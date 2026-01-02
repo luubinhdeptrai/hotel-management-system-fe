@@ -6,6 +6,7 @@ import {
   ServiceItem,
   ServiceCategoryFormData,
   ServiceItemFormData,
+  ServiceGroup,
 } from "@/lib/types/service";
 import { mockServiceCategories } from "@/lib/mock-services";
 import { serviceManagementService } from "@/lib/services";

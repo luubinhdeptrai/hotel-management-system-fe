@@ -37,11 +37,13 @@ export function RoomTypeFormModal({
     price: string;
     capacity: string;
     amenities: string;
+    imageUrl: string;
   }>({
     roomTypeName: "",
     price: "",
     capacity: "",
     amenities: "",
+    imageUrl: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,7 +58,8 @@ export function RoomTypeFormModal({
           roomTypeName: roomType.roomTypeName,
           price: roomType.price.toString(),
           capacity: roomType.capacity.toString(),
-          amenities: roomType.amenities.join(", "),
+          amenities: (roomType.amenities || []).join(", "),
+          imageUrl: roomType.imageUrl || "",
         });
       } else {
         setFormData({
@@ -64,6 +67,7 @@ export function RoomTypeFormModal({
           price: "",
           capacity: "",
           amenities: "",
+          imageUrl: "",
         });
       }
       setErrors({});
@@ -108,6 +112,7 @@ export function RoomTypeFormModal({
           .split(/[,\n]+/)
           .map((item) => item.trim())
           .filter((item) => item.length > 0),
+        imageUrl: formData.imageUrl.trim() || undefined,
       };
 
       if (roomType) {
@@ -257,6 +262,29 @@ export function RoomTypeFormModal({
                 {errors.amenities}
               </p>
             )}
+          </div>
+
+          {/* URL Hình ảnh */}
+          <div className="grid gap-2">
+            <Label
+              htmlFor="imageUrl"
+              className="text-sm font-medium text-gray-700"
+            >
+              URL Hình ảnh
+            </Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) =>
+                setFormData({ ...formData, imageUrl: e.target.value })
+              }
+              placeholder="VD: https://example.com/room.jpg"
+              className={`h-10 border-gray-300 focus:ring-primary-blue-500`}
+            />
+            <p className="text-xs text-gray-500">
+              Nhập đường dẫn URL của hình ảnh loại phòng (không bắt buộc)
+            </p>
           </div>
 
           {/* Submit error */}

@@ -1,5 +1,5 @@
 import { logger } from "@/lib/utils/logger";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   mockReservations,
   convertReservationsToEvents,
@@ -12,12 +12,83 @@ import {
 } from "@/lib/types/reservation";
 import { Room } from "@/lib/types/room";
 import { searchAvailableRooms } from "@/lib/mock-rooms";
+import { bookingService } from "@/lib/services/booking.service";
+import type { CreateBookingRequest, Booking } from "@/lib/types/api";
 
 type ViewMode = "calendar" | "list";
 
+/**
+ * Convert Booking entity to Reservation format for UI compatibility
+ */
+function convertBookingToReservation(booking: Booking): Reservation {
+  const checkInDate = new Date(booking.checkInDate);
+  const checkOutDate = new Date(booking.checkOutDate);
+  const numberOfNights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Map booking status to reservation status
+  const statusMap: Record<string, ReservationStatus> = {
+    'PENDING': 'Chờ xác nhận',
+    'CONFIRMED': 'Đã xác nhận',
+    'CHECKED_IN': 'Đã nhận phòng',
+    'CHECKED_OUT': 'Đã trả phòng',
+    'CANCELLED': 'Đã hủy',
+  };
+  
+  return {
+    reservationID: booking.id,
+    customerID: booking.primaryCustomerId,
+    customer: {
+      customerID: booking.primaryCustomerId,
+      customerName: booking.primaryCustomer?.fullName || "Unknown",
+      phoneNumber: booking.primaryCustomer?.phone || "",
+      email: booking.primaryCustomer?.email,
+      identityCard: booking.primaryCustomer?.idNumber || "",
+      address: booking.primaryCustomer?.address || "",
+    },
+    reservationDate: booking.createdAt,
+    totalRooms: booking.bookingRooms?.length || 1,
+    details: (booking.bookingRooms || []).map((br) => ({
+      detailID: br.id,
+      reservationID: booking.id,
+      roomID: br.roomId,
+      roomName: br.room?.roomNumber || "Room",
+      roomTypeID: br.roomTypeId,
+      roomTypeName: br.roomType?.name || "Standard",
+      checkInDate: checkInDate.toISOString().split('T')[0],
+      checkOutDate: checkOutDate.toISOString().split('T')[0],
+      status: statusMap[booking.status] || 'Chờ xác nhận',
+      numberOfGuests: Math.ceil(booking.totalGuests / (booking.bookingRooms?.length || 1)),
+      pricePerNight: parseInt(booking.totalAmount || "0") / numberOfNights / (booking.bookingRooms?.length || 1),
+    })),
+    totalAmount: parseInt(booking.totalAmount || "0"),
+    depositAmount: parseInt(booking.depositRequired || "0"),
+    status: statusMap[booking.status] || 'Chờ xác nhận',
+  };
+}
+
 export function useReservations() {
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
-  const [reservations, setReservations] = useState(mockReservations);
+  const [reservations, setReservations] = useState<Reservation[]>(mockReservations);
+
+  // Load bookings from backend on mount
+  useEffect(() => {
+    const loadBookings = async () => {
+      try {
+        const bookings = await bookingService.getAllBookings();
+        if (bookings && bookings.length > 0) {
+          const converted = bookings.map(convertBookingToReservation);
+          setReservations(converted);
+          logger.log("Loaded bookings from backend:", converted);
+        }
+      } catch (error) {
+        logger.error("Failed to load bookings:", error);
+        // Fallback to mock data
+        setReservations(mockReservations);
+      }
+    };
+
+    loadBookings();
+  }, []);
 
   // Filters
   const [checkInDate, setCheckInDate] = useState("");
@@ -173,7 +244,7 @@ export function useReservations() {
   };
 
   // Handle save reservation
-  const handleSaveReservation = (data: ReservationFormData) => {
+  const handleSaveReservation = async (data: ReservationFormData) => {
     if (formMode === "create") {
       // Create new reservation with multi-room support
       const roomSelections = data.roomSelections || [];
@@ -183,66 +254,88 @@ export function useReservations() {
         return;
       }
 
-      // Calculate total rooms and amount
-      const totalRooms = roomSelections.reduce(
-        (sum, sel) => sum + sel.quantity,
-        0
-      );
-      const checkIn = new Date(data.checkInDate);
-      const checkOut = new Date(data.checkOutDate);
-      const nights = Math.ceil(
-        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      const totalAmount = roomSelections.reduce((sum, sel) => {
-        return sum + sel.pricePerNight * sel.quantity * nights;
-      }, 0);
-
-      // Create details for each room
-      let detailCounter = 1;
-      const details = roomSelections.flatMap((selection) => {
-        return Array.from({ length: selection.quantity }, (_, index) => ({
-          detailID: `CTD${String(reservations.length + 1).padStart(
-            3,
-            "0"
-          )}_${detailCounter++}`,
-          reservationID: `DP${String(reservations.length + 1).padStart(
-            3,
-            "0"
-          )}`,
-          roomID: `P${selection.roomTypeID}_${index + 1}`, // Mock room ID
-          roomName: `${selection.roomTypeName} ${index + 1}`,
-          roomTypeID: selection.roomTypeID,
-          roomTypeName: selection.roomTypeName,
+      try {
+        // Transform to backend-compatible CreateBookingRequest
+        const createBookingRequest: CreateBookingRequest = {
+          rooms: roomSelections.map(sel => ({
+            roomTypeId: sel.roomTypeID,
+            count: sel.quantity
+          })),
           checkInDate: data.checkInDate,
           checkOutDate: data.checkOutDate,
-          status: "Đã đặt" as ReservationStatus,
-          numberOfGuests: selection.numberOfGuests,
-          pricePerNight: selection.pricePerNight,
-        }));
-      });
+          totalGuests: roomSelections.reduce((sum, sel) => sum + sel.numberOfGuests, 0)
+        };
 
-      const newReservation: Reservation = {
-        reservationID: `DP${String(reservations.length + 1).padStart(3, "0")}`,
-        customerID: `KH${String(reservations.length + 1).padStart(3, "0")}`,
-        customer: {
+        // Call real backend API
+        const response = await bookingService.createBooking(createBookingRequest);
+        
+        logger.log("Booking created successfully:", response);
+
+        // Update local state with mock data for now (in real app, fetch from backend)
+        // Calculate total rooms and amount
+        const totalRooms = roomSelections.reduce(
+          (sum, sel) => sum + sel.quantity,
+          0
+        );
+        const checkIn = new Date(data.checkInDate);
+        const checkOut = new Date(data.checkOutDate);
+        const nights = Math.ceil(
+          (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        const totalAmount = roomSelections.reduce((sum, sel) => {
+          return sum + sel.pricePerNight * sel.quantity * nights;
+        }, 0);
+
+        // Create details for each room
+        let detailCounter = 1;
+        const details = roomSelections.flatMap((selection) => {
+          return Array.from({ length: selection.quantity }, (_, index) => ({
+            detailID: `CTD${String(reservations.length + 1).padStart(
+              3,
+              "0"
+            )}_${detailCounter++}`,
+            reservationID: response.bookingCode || `DP${String(reservations.length + 1).padStart(
+              3,
+              "0"
+            )}`,
+            roomID: `P${selection.roomTypeID}_${index + 1}`, // Mock room ID
+            roomName: `${selection.roomTypeName} ${index + 1}`,
+            roomTypeID: selection.roomTypeID,
+            roomTypeName: selection.roomTypeName,
+            checkInDate: data.checkInDate,
+            checkOutDate: data.checkOutDate,
+            status: "Đã đặt" as ReservationStatus,
+            numberOfGuests: selection.numberOfGuests,
+            pricePerNight: selection.pricePerNight,
+          }));
+        });
+
+        const newReservation: Reservation = {
+          reservationID: response.bookingCode || `DP${String(reservations.length + 1).padStart(3, "0")}`,
           customerID: `KH${String(reservations.length + 1).padStart(3, "0")}`,
-          customerName: data.customerName,
-          phoneNumber: data.phoneNumber,
-          email: data.email,
-          identityCard: data.identityCard,
-          address: data.address,
-        },
-        reservationDate: new Date().toISOString().split("T")[0],
-        totalRooms,
-        totalAmount,
-        depositAmount: data.depositAmount,
-        notes: data.notes,
-        status: "Đã đặt",
-        details,
-      };
+          customer: {
+            customerID: `KH${String(reservations.length + 1).padStart(3, "0")}`,
+            customerName: data.customerName,
+            phoneNumber: data.phoneNumber,
+            email: data.email,
+            identityCard: data.identityCard,
+            address: data.address,
+          },
+          reservationDate: new Date().toISOString().split("T")[0],
+          totalRooms,
+          totalAmount,
+          depositAmount: data.depositAmount,
+          notes: data.notes,
+          status: "Đã đặt",
+          details,
+        };
 
-      setReservations((prev) => [...prev, newReservation]);
+        setReservations((prev) => [...prev, newReservation]);
+      } catch (error) {
+        logger.error("Failed to create booking:", error);
+        throw error;
+      }
     } else if (selectedReservation) {
       // Update existing reservation
       setReservations((prev) =>

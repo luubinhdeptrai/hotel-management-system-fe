@@ -33,6 +33,7 @@ const getInitialFormData = (
       surchargeName: surcharge.surchargeName,
       price: surcharge.price,
       description: surcharge.description || "",
+      imageUrl: surcharge.imageUrl || "",
       isOpenPrice: surcharge.isOpenPrice || false,
     };
   }
@@ -40,6 +41,7 @@ const getInitialFormData = (
     surchargeName: "",
     price: 0,
     description: "",
+    imageUrl: "",
     isOpenPrice: false,
   };
 };
@@ -209,6 +211,22 @@ export function SurchargeFormModal({
               rows={4}
               className="resize-none focus:ring-warning-500"
             />
+          </div>
+
+          {/* URL Hình ảnh */}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl" className="text-sm font-semibold text-gray-700">URL Hình ảnh</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) => handleInputChange("imageUrl", e.target.value)}
+              placeholder="https://example.com/surcharge.jpg"
+              className="h-11 focus:ring-warning-500"
+            />
+            <p className="text-xs text-gray-500">
+              Nhập đường dẫn URL của hình ảnh phụ thu (không bắt buộc)
+            </p>
           </div>
 
           <DialogFooter className="gap-2 mt-6">

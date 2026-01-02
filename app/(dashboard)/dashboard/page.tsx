@@ -55,7 +55,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h2 className="text-3xl font-extrabold">
-                Chào mừng, {user?.fullName}!
+                Chào mừng, {user?.name}!
               </h2>
               <p className="text-primary-100 mt-1">
                 Tổng quan về tình hình hoạt động của khách sạn

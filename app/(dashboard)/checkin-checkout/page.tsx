@@ -3,11 +3,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckInSearch } from "@/components/checkin-checkout/check-in-search";
 import { CheckInResultsTable } from "@/components/checkin-checkout/check-in-results-table";
-import { CheckInModal } from "@/components/checkin-checkout/check-in-modal";
+import { ModernCheckInModal } from "@/components/checkin-checkout/modern-check-in-modal";
 import { WalkInModal } from "@/components/checkin-checkout/walk-in-modal";
 import { CheckOutSearch } from "@/components/checkin-checkout/check-out-search";
 import { CheckOutResultsTable } from "@/components/checkin-checkout/check-out-results-table";
-import { CheckOutDetails } from "@/components/checkin-checkout/check-out-details";
+import { ModernCheckOutDetails } from "@/components/checkin-checkout/modern-check-out-details";
 import { AddServiceModal } from "@/components/checkin-checkout/add-service-modal";
 import { AddPenaltyModal } from "@/components/checkin-checkout/add-penalty-modal";
 import { AddSurchargeModal } from "@/components/checkin-checkout/add-surcharge-modal";
@@ -18,6 +18,7 @@ import { useCheckIn } from "@/hooks/use-checkin";
 import { useCheckOut } from "@/hooks/use-checkout";
 import { useNotification } from "@/hooks/use-notification";
 import { mockServices } from "@/lib/mock-checkin-checkout";
+import type { Booking } from "@/lib/types/api";
 
 export default function CheckinCheckoutPage() {
   // Custom hooks for business logic
@@ -26,13 +27,17 @@ export default function CheckinCheckoutPage() {
   const notification = useNotification();
 
   // Check-in handlers
-  const handleCheckInConfirm = (
+  const handleCheckInConfirm = async (
     data: Parameters<typeof checkIn.handleConfirmCheckIn>[0]
   ) => {
-    const customerName = checkIn.handleConfirmCheckIn(data);
-    notification.showSuccess(
-      `Đã check-in thành công cho khách ${customerName}!`
-    );
+    try {
+      const customerName = await checkIn.handleConfirmCheckIn(data);
+      notification.showSuccess(
+        `Check-in successful for ${customerName || "guest"}!`
+      );
+    } catch {
+      notification.showSuccess("Check-in failed. Please try again.");
+    }
   };
 
   // Check-out handlers
@@ -97,8 +102,8 @@ export default function CheckinCheckoutPage() {
 
       {/* Success Message */}
       {notification.message && (
-        <Alert className="bg-success-100 border-2 border-success-600 shadow-md">
-          <div className="text-success-600">{ICONS.CHECK}</div>
+        <Alert className="bg-success-100 border-2 border-success-600 shadow-md flex items-center gap-4">
+          <div className="text-success-600 shrink-0">{ICONS.CHECK}</div>
           <AlertDescription className="text-success-700 font-semibold">
             {notification.message}
           </AlertDescription>
@@ -134,40 +139,46 @@ export default function CheckinCheckoutPage() {
 
           <CheckInResultsTable
             reservations={checkIn.results}
-            onCheckIn={checkIn.handleSelectReservation}
+            onCheckIn={checkIn.handleSelectBooking}
           />
         </TabsContent>
 
         {/* Check-out Tab */}
         <TabsContent value="checkout" className="space-y-6">
-          {!checkOut.selectedCheckout ? (
+          {!checkOut.selectedBooking ? (
             <>
               <CheckOutSearch onSearch={checkOut.handleSearch} />
 
               <CheckOutResultsTable
-                rentals={checkOut.results}
-                onSelectRental={checkOut.handleSelectRental}
+                bookings={checkOut.results}
+                onSelectBooking={checkOut.handleSelectBooking}
               />
             </>
           ) : (
-            <CheckOutDetails
-              summary={checkOut.selectedCheckout}
+            <ModernCheckOutDetails
+              booking={checkOut.selectedBooking}
+              bookingRooms={checkOut.selectedBookingRooms}
               onAddService={() => checkOut.setShowAddServiceModal(true)}
               onAddPenalty={() => checkOut.setShowAddPenaltyModal(true)}
               onAddSurcharge={() => checkOut.setShowAddSurchargeModal(true)}
               onCompleteCheckout={handleCompleteCheckout}
               onBack={checkOut.handleBackToSearch}
+              onConfirmPayment={checkOut.handleConfirmPayment}
+              showPaymentModal={checkOut.showPaymentModal}
+              setShowPaymentModal={checkOut.setShowPaymentModal}
+              isLoading={checkOut.isLoading}
             />
           )}
         </TabsContent>
       </Tabs>
 
       {/* Modals */}
-      <CheckInModal
+      <ModernCheckInModal
         open={checkIn.showModal}
         onOpenChange={checkIn.setShowModal}
-        reservation={checkIn.selectedReservation}
+        booking={checkIn.selectedBooking as Booking | null}
         onConfirm={handleCheckInConfirm}
+        isLoading={checkIn.isLoading}
       />
 
       <WalkInModal
@@ -201,7 +212,7 @@ export default function CheckinCheckoutPage() {
       <PaymentModal
         open={checkOut.showPaymentModal}
         onOpenChange={checkOut.setShowPaymentModal}
-        summary={checkOut.selectedCheckout}
+        summary={null}
         onConfirm={handleConfirmPayment}
       />
     </div>

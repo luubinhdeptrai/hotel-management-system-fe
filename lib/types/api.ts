@@ -163,6 +163,7 @@ export interface Customer {
   updatedAt: string;
   _count?: {
     bookings: number;
+    customerPromotions: number;
   };
 }
 
@@ -202,12 +203,32 @@ export type RoomStatus =
   | "MAINTENANCE"
   | "OUT_OF_SERVICE";
 
+export interface RoomTag {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    roomTypeTags: number;
+  };
+}
+
+export interface RoomTypeTag {
+  id: string;
+  name: string;
+  roomTypeId: string;
+  roomTagId: string;
+  roomTag: RoomTag;
+}
+
 export interface RoomType {
   id: string;
   name: string;
   capacity: number;
+  totalBed: number;
   pricePerNight: string;
-  amenities?: Record<string, unknown>;
+  roomTypeTags?: RoomTypeTag[];
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -220,6 +241,7 @@ export interface Room {
   id: string;
   roomNumber: string;
   floor: number;
+  code: string;
   status: RoomStatus;
   roomTypeId: string;
   roomType?: RoomType;
@@ -233,6 +255,7 @@ export interface Room {
 export interface CreateRoomRequest {
   roomNumber: string;
   floor: number;
+  code?: string;
   roomTypeId: string;
   status?: RoomStatus;
 }
@@ -240,6 +263,7 @@ export interface CreateRoomRequest {
 export interface UpdateRoomRequest {
   roomNumber?: string;
   floor?: number;
+  code?: string;
   roomTypeId?: string;
   status?: RoomStatus;
 }
@@ -258,15 +282,17 @@ export interface GetRoomsParams {
 export interface CreateRoomTypeRequest {
   name: string;
   capacity: number;
+  totalBed: number;
   pricePerNight: number;
-  amenities?: Record<string, unknown>;
+  tagIds?: string[];
 }
 
 export interface UpdateRoomTypeRequest {
   name?: string;
   capacity?: number;
+  totalBed?: number;
   pricePerNight?: number;
-  amenities?: Record<string, unknown>;
+  tagIds?: string[];
 }
 
 export interface GetRoomTypesParams {
@@ -348,6 +374,15 @@ export type PaymentMethod =
   | "BANK_TRANSFER"
   | "E_WALLET";
 
+// ============================================================================
+// Booking Related Types
+// ============================================================================
+
+export interface RoomRequest {
+  roomTypeId: string;
+  count: number;
+}
+
 export interface CreateBookingRequest {
   rooms: Array<{
     roomTypeId: string;
@@ -365,13 +400,17 @@ export interface CreateBookingResponse {
   totalAmount: number;
 }
 
+// Check-in Request - matches backend CheckInPayload
 export interface CheckInRequest {
-  bookingId: string;
-  bookingRoomId: string;
-  guests: Array<{
-    customerId: string;
-    isPrimary?: boolean;
+  checkInInfo: Array<{
+    bookingRoomId: string;
+    customerIds: string[];
   }>;
+}
+
+// Check-out Request - matches backend CheckOutPayload
+export interface CheckOutRequest {
+  bookingRoomIds: string[];
 }
 
 export interface CreateTransactionRequest {
@@ -382,4 +421,49 @@ export interface CreateTransactionRequest {
   bookingRoomId?: string;
   transactionRef?: string;
   description?: string;
+}
+
+// Booking Room - represents individual room within a booking
+export interface BookingRoom {
+  id: string;
+  bookingId: string;
+  roomId: string;
+  roomTypeId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  pricePerNight: string;
+  subtotalRoom: string;
+  totalAmount: string;
+  balance: string;
+  status: BookingStatus;
+  actualCheckIn?: string;
+  actualCheckOut?: string;
+  room?: Room;
+  roomType?: RoomType;
+  booking?: Booking;
+  bookingCustomers?: Array<{
+    bookingId: string;
+    customerId: string;
+    bookingRoomId: string;
+    isPrimary: boolean;
+    customer: Customer;
+  }>;
+}
+
+// Booking - main booking entity
+export interface Booking {
+  id: string;
+  bookingCode: string;
+  status: BookingStatus;
+  primaryCustomerId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  totalGuests: number;
+  totalAmount: string;
+  depositRequired: string;
+  balance: string;
+  createdAt: string;
+  updatedAt: string;
+  primaryCustomer?: Customer;
+  bookingRooms?: BookingRoom[];
 }
