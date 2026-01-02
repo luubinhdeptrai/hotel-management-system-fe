@@ -90,6 +90,7 @@ export interface PostPaymentFormData {
   paymentMethod: "CASH" | "CARD" | "TRANSFER";
   reference?: string; // Card/transfer reference number
   notes?: string;
+  mode?: "PAYMENT" | "DEPOSIT"; // Payment mode
 }
 
 // Payment method labels

@@ -1,21 +1,52 @@
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect, useMemo } from "react";
-import { RoomType } from "@/lib/types/room";
-import {
-  getRoomTypes,
-  createRoomType,
-  updateRoomType,
-  deleteRoomType,
-  checkRoomTypeInUse,
-} from "@/lib/mock-room-types";
-import { mockRooms } from "@/lib/mock-rooms";
+import { roomService, roomTagService } from "@/lib/services";
+import { getAccessToken } from "@/lib/services/api";
+import type { 
+  RoomType as ApiRoomType, 
+  Room as ApiRoom,
+  RoomTag as ApiRoomTag,
+  CreateRoomTypeRequest,
+  UpdateRoomTypeRequest
+} from "@/lib/types/api";
+import { ApiError } from "@/lib/services/api";
+
+// Local RoomType for UI compatibility (temporary - should migrate to API types)
+export interface RoomType {
+  roomTypeID: string;
+  roomTypeName: string;
+  capacity: number;
+  totalBed: number;
+  price: number;
+  tags: string[]; // Array of tag IDs
+  tagDetails?: ApiRoomTag[]; // Full tag objects
+}
+
+// Map API RoomType to local RoomType format
+function mapApiToRoomType(apiType: ApiRoomType): RoomType {
+  const tagIds = apiType.roomTypeTags?.map(rtt => rtt.roomTagId) || [];
+  const tagDetails = apiType.roomTypeTags?.map(rtt => rtt.roomTag) || [];
+
+  return {
+    roomTypeID: apiType.id,
+    roomTypeName: apiType.name,
+    capacity: apiType.capacity,
+    totalBed: apiType.totalBed,
+    price: parseFloat(apiType.pricePerNight),
+    tags: tagIds,
+    tagDetails: tagDetails,
+  };
+}
 
 export function useRoomTypes() {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [roomTags, setRoomTags] = useState<ApiRoomTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRoomType, setEditingRoomType] = useState<RoomType | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rooms, setRooms] = useState<ApiRoom[]>([]);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,19 +55,58 @@ export function useRoomTypes() {
 
   useEffect(() => {
     loadRoomTypes();
+    loadRoomTags();
+    loadRooms();
   }, []);
 
   const loadRoomTypes = async () => {
     try {
+      if (!getAccessToken()) {
+        setError("Vui lòng đăng nhập để tiếp tục");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      const data = await getRoomTypes();
-      setRoomTypes(data);
+      const result = await roomService.getRoomTypes({
+        page: 1,
+        limit: 100,
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+      setRoomTypes(result.data.map(mapApiToRoomType));
       setError(null);
     } catch (err) {
-      console.error("Error loading room types:", err);
-      setError("Không thể tải danh sách loại phòng");
+      const message = err instanceof ApiError ? err.message : "Không thể tải danh sách loại phòng";
+      logger.error("Error loading room types:", err);
+      setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRoomTags = async () => {
+    try {
+      if (!getAccessToken()) return;
+
+      const tags = await roomTagService.getRoomTags();
+      setRoomTags(tags);
+    } catch (err) {
+      logger.error("Error loading room tags:", err);
+    }
+  };
+
+  const loadRooms = async () => {
+    try {
+      if (!getAccessToken()) return;
+
+      const result = await roomService.getRooms({
+        page: 1,
+        limit: 100,
+      });
+      setRooms(result.data);
+    } catch (err) {
+      logger.error("Error loading rooms:", err);
     }
   };
 
@@ -82,28 +152,45 @@ export function useRoomTypes() {
     try {
       if (editingRoomType) {
         // Update existing room type
-        await updateRoomType(editingRoomType.roomTypeID, roomTypeData);
+        const updateData: UpdateRoomTypeRequest = {
+          name: roomTypeData.roomTypeName,
+          capacity: roomTypeData.capacity,
+          totalBed: roomTypeData.totalBed,
+          pricePerNight: roomTypeData.price,
+          tagIds: roomTypeData.tags,
+        };
+        const updated = await roomService.updateRoomType(editingRoomType.roomTypeID, updateData);
+        setRoomTypes(prev => prev.map(rt => 
+          rt.roomTypeID === editingRoomType.roomTypeID ? mapApiToRoomType(updated) : rt
+        ));
       } else {
         // Create new room type
-        await createRoomType(roomTypeData as Omit<RoomType, "roomTypeID">);
+        const createData: CreateRoomTypeRequest = {
+          name: roomTypeData.roomTypeName!,
+          capacity: roomTypeData.capacity!,
+          totalBed: roomTypeData.totalBed!,
+          pricePerNight: roomTypeData.price!,
+          tagIds: roomTypeData.tags,
+        };
+        const created = await roomService.createRoomType(createData);
+        setRoomTypes(prev => [...prev, mapApiToRoomType(created)]);
       }
-      await loadRoomTypes();
       setModalOpen(false);
       setEditingRoomType(null);
+      setError(null);
     } catch (err) {
-      throw new Error(
-        err instanceof Error ? err.message : "Không thể lưu loại phòng"
-      );
+      const message = err instanceof ApiError ? err.message : "Không thể lưu loại phòng";
+      throw new Error(message);
     }
   };
 
   const handleDelete = async (roomTypeID: string) => {
     // Check if room type is in use
-    const inUse = checkRoomTypeInUse(roomTypeID);
-
-    if (inUse) {
+    const roomsUsingType = rooms.filter(r => r.roomTypeId === roomTypeID);
+    
+    if (roomsUsingType.length > 0) {
       setError(
-        "Không thể xóa loại phòng đang được sử dụng. Bạn chỉ có thể chỉnh sửa thông tin."
+        `Không thể xóa loại phòng này vì đang có ${roomsUsingType.length} phòng sử dụng`
       );
       setTimeout(() => setError(null), 5000);
       return;
@@ -111,12 +198,14 @@ export function useRoomTypes() {
 
     try {
       setIsDeleting(roomTypeID);
-      await deleteRoomType(roomTypeID);
-      await loadRoomTypes();
+      await roomService.deleteRoomType(roomTypeID);
+      setRoomTypes(prev => prev.filter((rt) => rt.roomTypeID !== roomTypeID));
       setError(null);
     } catch (err) {
-      console.error("Error deleting room type:", err);
-      setError(err instanceof Error ? err.message : "Không thể xóa loại phòng");
+      logger.error("Error deleting room type:", err);
+      const message = err instanceof ApiError ? err.message : 
+        (err instanceof Error ? err.message : "Không thể xóa loại phòng");
+      setError(message);
       setTimeout(() => setError(null), 5000);
     } finally {
       setIsDeleting(null);
@@ -152,17 +241,18 @@ export function useRoomTypes() {
   };
 
   // Calculate total rooms
-  const totalRooms = mockRooms.length;
+  const totalRooms = rooms.length;
 
   // Calculate most popular room type (based on number of rooms using that type)
   const mostPopularRoomType = useMemo(() => {
-    if (mockRooms.length === 0) return null;
+    if (rooms.length === 0) return null;
 
     const roomTypeCounts: Record<string, { name: string; count: number }> = {};
 
-    mockRooms.forEach((room) => {
-      const typeId = room.roomTypeID;
-      const typeName = room.roomType?.roomTypeName || typeId;
+    rooms.forEach((room) => {
+      const typeId = room.roomTypeId;
+      const roomType = roomTypes.find(rt => rt.roomTypeID === typeId);
+      const typeName = roomType?.roomTypeName || typeId;
 
       if (!roomTypeCounts[typeId]) {
         roomTypeCounts[typeId] = { name: typeName, count: 0 };
@@ -182,11 +272,12 @@ export function useRoomTypes() {
     });
 
     return popularType;
-  }, []);
+  }, [rooms, roomTypes]);
 
   return {
     roomTypes: filteredRoomTypes,
     allRoomTypes: roomTypes, // Unfiltered for stats
+    roomTags, // Available room tags for selection
     loading,
     modalOpen,
     editingRoomType,

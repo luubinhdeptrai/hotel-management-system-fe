@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -35,11 +37,13 @@ export function RoomTypeFormModal({
     price: string;
     capacity: string;
     amenities: string;
+    imageUrl: string;
   }>({
     roomTypeName: "",
     price: "",
     capacity: "",
     amenities: "",
+    imageUrl: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -48,22 +52,26 @@ export function RoomTypeFormModal({
   useEffect(() => {
     if (!open) return;
 
-    if (roomType) {
-      setFormData({
-        roomTypeName: roomType.roomTypeName,
-        price: roomType.price.toString(),
-        capacity: roomType.capacity.toString(),
-        amenities: roomType.amenities.join(", "),
-      });
-    } else {
-      setFormData({
-        roomTypeName: "",
-        price: "",
-        capacity: "",
-        amenities: "",
-      });
-    }
-    setErrors({});
+    setTimeout(() => {
+      if (roomType) {
+        setFormData({
+          roomTypeName: roomType.roomTypeName,
+          price: roomType.price.toString(),
+          capacity: roomType.capacity.toString(),
+          amenities: (roomType.amenities || []).join(", "),
+          imageUrl: roomType.imageUrl || "",
+        });
+      } else {
+        setFormData({
+          roomTypeName: "",
+          price: "",
+          capacity: "",
+          amenities: "",
+          imageUrl: "",
+        });
+      }
+      setErrors({});
+    }, 0);
   }, [open, roomType]);
 
   const validateForm = () => {
@@ -104,6 +112,7 @@ export function RoomTypeFormModal({
           .split(/[,\n]+/)
           .map((item) => item.trim())
           .filter((item) => item.length > 0),
+        imageUrl: formData.imageUrl.trim() || undefined,
       };
 
       if (roomType) {
@@ -113,7 +122,7 @@ export function RoomTypeFormModal({
       await onSave(roomTypeData);
       onOpenChange(false);
     } catch (error) {
-      console.error("Error saving room type:", error);
+      logger.error("Error saving room type:", error);
       setErrors({
         submit: error instanceof Error ? error.message : "Có lỗi xảy ra",
       });
@@ -253,6 +262,29 @@ export function RoomTypeFormModal({
                 {errors.amenities}
               </p>
             )}
+          </div>
+
+          {/* URL Hình ảnh */}
+          <div className="grid gap-2">
+            <Label
+              htmlFor="imageUrl"
+              className="text-sm font-medium text-gray-700"
+            >
+              URL Hình ảnh
+            </Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) =>
+                setFormData({ ...formData, imageUrl: e.target.value })
+              }
+              placeholder="VD: https://example.com/room.jpg"
+              className={`h-10 border-gray-300 focus:ring-primary-blue-500`}
+            />
+            <p className="text-xs text-gray-500">
+              Nhập đường dẫn URL của hình ảnh loại phòng (không bắt buộc)
+            </p>
           </div>
 
           {/* Submit error */}

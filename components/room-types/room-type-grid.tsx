@@ -1,6 +1,6 @@
 "use client";
 
-import { RoomType } from "@/lib/types/room";
+import { RoomType } from "@/hooks/use-room-types";
 import { RoomTypeCard } from "./room-type-card";
 import { ICONS } from "@/src/constants/icons.enum";
 

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 import { Role } from "@/lib/types/employee";
 
 export function useRoleManagement(
@@ -21,9 +22,9 @@ export function useRoleManagement(
       );
 
       // In a real implementation, this would update the backend
-      console.log(`Updated role ${roleId} with permissions:`, permissionIds);
+      logger.log(`Updated role ${roleId} with permissions:`, permissionIds);
     } catch (error) {
-      console.error("Error updating role permissions:", error);
+      logger.error("Error updating role permissions:", error);
       throw error;
     }
   };

@@ -1,7 +1,6 @@
 "use client";
 
 import { usePenaltyPage } from "@/hooks/use-penalty-page";
-import { PageHeader } from "@/components/services/page-header";
 import { NotificationBanner } from "@/components/services/notification-banner";
 import { PenaltyGrid } from "@/components/penalties/penalty-grid";
 import { PenaltyFormModal } from "@/components/penalties/penalty-form-modal";
@@ -23,12 +22,6 @@ export default function PenaltiesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <PageHeader
-        title="Quản lý Phí Phạt"
-        description="Quản lý các khoản phí phạt như hư hỏng thiết bị, mất đồ, vi phạm quy định..."
-      />
-
       {/* Notification */}
       {notification && (
         <NotificationBanner

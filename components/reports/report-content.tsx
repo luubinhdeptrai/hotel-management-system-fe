@@ -1,12 +1,12 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { RevenueByDayReport } from "./revenue-by-day-report";
 import { RevenueByMonthReport } from "./revenue-by-month-report";
 import { OccupancyRateReport } from "./occupancy-rate-report";
 import { RoomAvailabilityReport } from "./room-availability-report";
 import { CustomerListReport } from "./customer-list-report";
 import { ServiceRevenueReport } from "./service-revenue-report";
+import { ICONS } from "@/src/constants/icons.enum";
 import type {
   ReportType,
   RevenueByDayData,
@@ -43,9 +43,14 @@ export function ReportContent({
 }: ReportContentProps) {
   if (isLoading) {
     return (
-      <Card className="p-8 text-center">
-        <p className="text-gray-500">Đang tải dữ liệu...</p>
-      </Card>
+      <div className="flex items-center justify-center py-16 rounded-2xl bg-linear-to-br from-gray-50 to-white border-2 border-gray-100 shadow-md">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary-500 to-primary-600 flex items-center justify-center animate-spin">
+            <span className="w-6 h-6 text-white">{ICONS.LOADER}</span>
+          </div>
+          <p className="text-gray-600 font-semibold">Đang tải dữ liệu...</p>
+        </div>
+      </div>
     );
   }
 
@@ -86,9 +91,9 @@ export function ReportContent({
 
     default:
       return (
-        <Card className="p-8 text-center">
-          <p className="text-gray-500">Vui lòng chọn loại báo cáo</p>
-        </Card>
+        <div className="py-16 px-8 text-center rounded-2xl bg-linear-to-br from-gray-50 to-white border-2 border-gray-100 shadow-md">
+          <p className="text-gray-600 font-semibold">Vui lòng chọn loại báo cáo</p>
+        </div>
       );
   }
 }

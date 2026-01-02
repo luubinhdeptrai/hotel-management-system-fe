@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -25,6 +27,7 @@ import type { Reservation } from "@/lib/types/reservation";
 import type { CheckInFormData } from "@/lib/types/checkin-checkout";
 import { mockRooms } from "@/lib/mock-rooms";
 import type { Room } from "@/lib/types/room";
+import { NguoioFormModal } from "@/components/nguoio/nguoio-form-modal";
 
 interface CheckInModalProps {
   open: boolean;
@@ -48,6 +51,7 @@ export function CheckInModal({
   // State for multiple room assignments
   const [roomAssignments, setRoomAssignments] = useState<RoomAssignment[]>([]);
   const [notes, setNotes] = useState("");
+  const [nguoioModalOpen, setNguoioModalOpen] = useState(false);
 
   // Get available rooms for a specific detail (grouped by room type)
   const getAvailableRoomsForDetail = (
@@ -89,21 +93,26 @@ export function CheckInModal({
   // Initialize room assignments when reservation changes or modal opens
   // This useEffect is intentional - we need to reset form state based on props
   useEffect(() => {
-    if (reservation && open) {
-      const initialAssignments: RoomAssignment[] = reservation.details.map(
-        (detail) => ({
-          detailID: detail.detailID,
-          roomID: detail.roomID,
-          numberOfGuests: detail.numberOfGuests,
-        })
-      );
-      setRoomAssignments(initialAssignments);
-      setNotes("");
-    } else if (!open) {
+    if (!open) {
       // Reset state when modal closes
       setRoomAssignments([]);
       setNotes("");
+      return;
     }
+
+    setTimeout(() => {
+      if (reservation) {
+        const initialAssignments: RoomAssignment[] = reservation.details.map(
+          (detail) => ({
+            detailID: detail.detailID,
+            roomID: detail.roomID,
+            numberOfGuests: detail.numberOfGuests,
+          })
+        );
+        setRoomAssignments(initialAssignments);
+        setNotes("");
+      }
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservation?.reservationID, open]);
 
@@ -136,8 +145,13 @@ export function CheckInModal({
     roomAssignments.forEach((assignment) => {
       const formData: CheckInFormData = {
         reservationID: reservation.reservationID,
-        roomID: assignment.roomID,
-        numberOfGuests: assignment.numberOfGuests,
+        bookingId: reservation.reservationID,
+        checkInInfo: [
+          {
+            bookingRoomId: assignment.detailID,
+            customerIds: [],
+          }
+        ],
         notes: notes.trim() || undefined,
       };
       onConfirm(formData);
@@ -181,7 +195,7 @@ export function CheckInModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         {/* ... Header ... */}
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-900">
@@ -301,7 +315,9 @@ export function CheckInModal({
                         updateRoomAssignment(detail.detailID, "roomID", value)
                       }
                     >
-                      <SelectTrigger className="h-10 border-gray-300 bg-white w-full"></SelectTrigger>
+                      <SelectTrigger className="h-11 border-2 border-gray-300 bg-white w-full font-medium">
+                        <SelectValue placeholder="Chọn phòng" />
+                      </SelectTrigger>
                       <SelectContent>
                         {availableRooms.length === 0 ? (
                           <SelectItem value="no-rooms" disabled>
@@ -381,24 +397,46 @@ export function CheckInModal({
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="flex-row gap-2 border-t border-gray-200 pt-4">
+          <Button
+            onClick={() => setNguoioModalOpen(true)}
+            variant="outline"
+            className="h-11 bg-linear-to-r from-info-500 to-info-600 hover:from-info-600 hover:to-info-700 text-white border-0 font-semibold shadow-md"
+          >
+            <span className="w-5 h-5">{ICONS.USERS}</span>
+            <span className="ml-0">Đăng ký lưu trú</span>
+          </Button>
+          <div className="flex-1" />
           <Button
             onClick={() => onOpenChange(false)}
             variant="outline"
-            className="h-10"
+            className="h-11 font-semibold"
           >
-            {ICONS.CLOSE}
+            <span className="w-5 h-5">{ICONS.CLOSE}</span>
             <span className="ml-2">Hủy</span>
           </Button>
           <Button
             onClick={handleConfirm}
-            className="h-10 bg-primary-600 hover:bg-primary-500 text-white"
+            className="h-11 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-semibold shadow-md"
           >
-            {ICONS.CHECK}
+            <span className="w-5 h-5">{ICONS.CHECK}</span>
             <span className="ml-2">Xác nhận Check-in</span>
           </Button>
         </DialogFooter>
       </DialogContent>
+      
+      {/* NGUOIO Form Modal */}
+      <NguoioFormModal
+        open={nguoioModalOpen}
+        onOpenChange={setNguoioModalOpen}
+        onSubmit={(guests) => {
+          logger.log("Registered guests:", guests);
+          // BACKEND INTEGRATION: Call POST /api/residents with guest data for police reporting
+        }}
+        roomNumber={reservation?.details[0]?.roomName || ""}
+        checkInDate={reservation?.details[0]?.checkInDate || ""}
+        checkOutDate={reservation?.details[0]?.checkOutDate || ""}
+      />
     </Dialog>
   );
 }

@@ -21,12 +21,12 @@ export function StaffGrid({
 }: StaffGridProps) {
   if (employees.length === 0) {
     return (
-      <div className="text-center py-16 bg-gray-50 rounded-xl">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-          <span className="w-8 h-8 text-gray-400">{ICONS.USERS}</span>
+      <div className="text-center py-20 bg-linear-to-br from-gray-50 to-white rounded-2xl border-2 border-dashed border-gray-200">
+        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-linear-to-br from-info-100 to-info-200 flex items-center justify-center shadow-inner">
+          <span className="w-10 h-10 text-info-600">{ICONS.USERS}</span>
         </div>
-        <p className="text-gray-500 text-lg">Không tìm thấy nhân viên phù hợp</p>
-        <p className="text-gray-400 text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+        <p className="text-gray-700 text-lg font-semibold">Không tìm thấy nhân viên phù hợp</p>
+        <p className="text-gray-500 text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
       </div>
     );
   }

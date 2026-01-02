@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { RoomType } from "@/lib/types/room";
+import { RoomType } from "@/hooks/use-room-types";
 import { ICONS } from "@/src/constants/icons.enum";
 import { formatCurrency } from "@/lib/utils";
 
@@ -84,15 +84,12 @@ export function RoomTypeCard({
             <h3 className="text-2xl font-extrabold text-white drop-shadow-2xl">
               {roomType.roomTypeName}
             </h3>
-            <p className="text-white/95 text-sm font-bold mt-1 drop-shadow-lg">
-              Mã: {roomType.roomTypeID}
-            </p>
           </div>
         </div>
 
         {/* Content Section */}
         <div className="p-6">
-          {/* Capacity */}
+          {/* Capacity and Beds */}
           <div className="flex items-center gap-3 mb-5">
             <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
               <span className="w-5 h-5 text-primary-600">{ICONS.USERS}</span>
@@ -102,33 +99,39 @@ export function RoomTypeCard({
             <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
               <span className="w-5 h-5 text-primary-600">{ICONS.BED_DOUBLE}</span>
               <span className="font-bold text-sm">
-                {roomType.capacity <= 2 ? "1 giường" : `${Math.ceil(roomType.capacity / 2)} giường`}
+                {roomType.totalBed} giường
               </span>
             </div>
           </div>
 
-          {/* Amenities */}
+          {/* Amenities/Tags */}
           <div className="mb-6">
             <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">
               Tiện nghi
             </p>
             <div className="flex flex-wrap gap-2">
-              {roomType.amenities.slice(0, 4).map((amenity, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="bg-primary-50 text-primary-700 text-xs font-bold px-3 py-1.5 rounded-full border-2 border-primary-200"
-                >
-                  {amenity}
-                </Badge>
-              ))}
-              {roomType.amenities.length > 4 && (
-                <Badge
-                  variant="secondary"
-                  className="bg-linear-to-r from-primary-100 to-blue-100 text-primary-700 text-xs font-extrabold px-3 py-1.5 rounded-full border-2 border-primary-300"
-                >
-                  +{roomType.amenities.length - 4} khác
-                </Badge>
+              {roomType.tagDetails && roomType.tagDetails.length > 0 ? (
+                <>
+                  {roomType.tagDetails.slice(0, 4).map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      variant="secondary"
+                      className="bg-primary-50 text-primary-700 text-xs font-bold px-3 py-1.5 rounded-full border-2 border-primary-200"
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
+                  {roomType.tagDetails.length > 4 && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-linear-to-r from-primary-100 to-blue-100 text-primary-700 text-xs font-extrabold px-3 py-1.5 rounded-full border-2 border-primary-300"
+                    >
+                      +{roomType.tagDetails.length - 4} khác
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <span className="text-sm text-gray-500 italic">Chưa có tiện nghi</span>
               )}
             </div>
           </div>

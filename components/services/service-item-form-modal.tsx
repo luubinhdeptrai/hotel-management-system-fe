@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ export function ServiceItemFormModal({
           price: service.price,
           unit: service.unit,
           description: service.description || "",
+          imageUrl: service.imageUrl || "",
         }
       : {
           serviceName: "",
@@ -63,10 +64,39 @@ export function ServiceItemFormModal({
           price: 0,
           unit: "",
           description: "",
+          imageUrl: "",
         };
 
   const [formData, setFormData] = useState<ServiceItemFormData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Load data when modal opens or service changes
+  useEffect(() => {
+    if (isOpen) {
+      if (service && mode === "edit") {
+        setFormData({
+          serviceName: service.serviceName,
+          categoryID: service.categoryID,
+          serviceGroup: service.serviceGroup,
+          price: service.price,
+          unit: service.unit,
+          description: service.description || "",
+          imageUrl: service.imageUrl || "",
+        });
+      } else {
+        setFormData({
+          serviceName: "",
+          categoryID: "",
+          serviceGroup: "F&B" as ServiceGroup,
+          price: 0,
+          unit: "",
+          description: "",
+          imageUrl: "",
+        });
+      }
+      setErrors({});
+    }
+  }, [isOpen, service, mode]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -114,6 +144,7 @@ export function ServiceItemFormModal({
       price: 0,
       unit: "",
       description: "",
+      imageUrl: "",
     });
     setErrors({});
     onClose();
@@ -130,10 +161,10 @@ export function ServiceItemFormModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
             {mode === "create" ? "Thêm dịch vụ mới" : "Chỉnh sửa dịch vụ"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-base">
             {mode === "create"
               ? "Nhập thông tin dịch vụ mới"
               : "Cập nhật thông tin dịch vụ"}
@@ -288,21 +319,37 @@ export function ServiceItemFormModal({
             />
           </div>
 
-          <DialogFooter>
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">URL Hình ảnh</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) =>
+                setFormData({ ...formData, imageUrl: e.target.value })
+              }
+              placeholder="https://example.com/service.jpg"
+            />
+            <p className="text-xs text-gray-500">
+              Nhập đường dẫn URL của hình ảnh dịch vụ (không bắt buộc)
+            </p>
+          </div>
+
+          <DialogFooter className="gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="mr-2"
+              className="h-11 px-6 border-2 font-bold"
             >
               Hủy
             </Button>
             <Button
               type="submit"
-              className="bg-primary-600 hover:bg-primary-500"
+              className="h-11 px-6 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 font-bold shadow-lg"
             >
-              {ICONS.SAVE}
-              <span className="ml-2">
+              <div className="w-4 h-4 mr-2 flex items-center justify-center">{ICONS.SAVE}</div>
+              <span>
                 {mode === "create" ? "Thêm mới" : "Cập nhật"}
               </span>
             </Button>
@@ -312,3 +359,4 @@ export function ServiceItemFormModal({
     </Dialog>
   );
 }
+

@@ -45,12 +45,19 @@ export function ReportFilters({
   ];
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-2">
-          <Label htmlFor="report-type">Loại báo cáo</Label>
+    <div className="space-y-4 rounded-2xl border-2 border-gray-100 bg-white shadow-lg p-6">
+      {/* Filters Row */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-5">
+        {/* Report Type */}
+        <div className="space-y-2 lg:col-span-2">
+          <Label htmlFor="report-type" className="text-sm font-semibold text-gray-700">
+            Loại báo cáo
+          </Label>
           <Select value={reportType} onValueChange={onReportTypeChange}>
-            <SelectTrigger id="report-type">
+            <SelectTrigger 
+              id="report-type"
+              className="h-11 border-2 border-gray-200 rounded-lg font-medium focus:ring-primary-500"
+            >
               <SelectValue placeholder="Chọn loại báo cáo" />
             </SelectTrigger>
             <SelectContent>
@@ -63,55 +70,61 @@ export function ReportFilters({
           </Select>
         </div>
 
+        {/* Start Date */}
         <div className="space-y-2">
-          <Label htmlFor="start-date">Từ ngày</Label>
+          <Label htmlFor="start-date" className="text-sm font-semibold text-gray-700">
+            Từ ngày
+          </Label>
           <input
             id="start-date"
             type="date"
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue-500"
+            className="h-11 w-full rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
 
+        {/* End Date */}
         <div className="space-y-2">
-          <Label htmlFor="end-date">Đến ngày</Label>
+          <Label htmlFor="end-date" className="text-sm font-semibold text-gray-700">
+            Đến ngày
+          </Label>
           <input
             id="end-date"
             type="date"
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue-500"
+            className="h-11 w-full rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
 
+        {/* Generate Report Button */}
         <div className="flex items-end">
           <Button
             onClick={onGenerateReport}
-            className="h-10 w-full bg-primary-blue-600 hover:bg-primary-blue-700"
+            className="h-11 w-full bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg flex items-center justify-center gap-2"
           >
-            <div className="mr-2 h-4 w-4">{ICONS.BAR_CHART}</div>
-            Xem Báo Cáo
+            <span className="w-5 h-5">{ICONS.BAR_CHART}</span>
+            <span>Xem</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+      {/* Export Buttons Row */}
+      <div className="flex flex-wrap gap-3 border-t-2 border-gray-100 pt-4">
         <Button
           onClick={onExportPdf}
-          variant="outline"
-          className="h-10 border-gray-300"
+          className="h-11 px-6 bg-linear-to-r from-error-500 to-error-600 hover:from-error-600 hover:to-error-700 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg flex items-center gap-2"
         >
-          <div className="mr-2 h-4 w-4">{ICONS.DOWNLOAD}</div>
-          Xuất PDF
+          <span className="w-5 h-5">{ICONS.DOWNLOAD}</span>
+          <span>Xuất PDF</span>
         </Button>
         <Button
           onClick={onExportExcel}
-          variant="outline"
-          className="h-10 border-gray-300"
+          className="h-11 px-6 bg-linear-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg flex items-center gap-2"
         >
-          <div className="mr-2 h-4 w-4">{ICONS.DOWNLOAD}</div>
-          Xuất Excel
+          <span className="w-5 h-5">{ICONS.DOWNLOAD}</span>
+          <span>Xuất Excel</span>
         </Button>
       </div>
     </div>

@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,47 +13,56 @@ export interface KPICardProps {
     value: string;
     isPositive: boolean;
   };
+  bgGradient?: string;
 }
 
 export function KPICard({
   title,
   value,
   icon: Icon,
-  iconBgColor = "bg-primary-blue-100",
-  iconColor = "text-primary-blue-600",
+  iconBgColor = "from-primary-600 to-primary-500",
+  iconColor = "text-white",
   subtitle,
   alert,
   trend,
+  bgGradient = "from-primary-50 to-primary-100/30",
 }: KPICardProps) {
   return (
-    <Card
+    <div
       className={cn(
-        "shadow-sm hover:shadow-md transition-shadow",
-        alert && "border-warning-500 border-2 bg-warning-50"
+        "bg-linear-to-br rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:-translate-y-1 transition-all duration-300 group",
+        bgGradient,
+        alert && "border-warning-500 bg-linear-to-br from-warning-50 to-warning-100/30"
       )}
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium text-gray-700">
-          {title}
-        </CardTitle>
-        <div className={cn("p-2 rounded-lg", iconBgColor)}>
-          <Icon className={cn("h-5 w-5", iconColor)} />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
-        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
-        {trend && (
-          <p
-            className={cn(
-              "text-xs mt-1",
-              trend.isPositive ? "text-success-600" : "text-error-600"
-            )}
-          >
-            {trend.value}
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-gray-600 mb-2">
+            {title}
           </p>
-        )}
-      </CardContent>
-    </Card>
+          <p className="text-3xl font-extrabold text-gray-900">
+            {value}
+          </p>
+          {subtitle && (
+            <p className="text-xs text-gray-500 mt-2">
+              {subtitle}
+            </p>
+          )}
+          {trend && (
+            <p
+              className={cn(
+                "text-xs mt-2 font-semibold",
+                trend.isPositive ? "text-success-600" : "text-error-600"
+              )}
+            >
+              {trend.value}
+            </p>
+          )}
+        </div>
+        <div className={cn("w-12 h-12 bg-linear-to-br rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform", iconBgColor)}>
+          <Icon className={cn("h-6 w-6", iconColor)} />
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -63,22 +65,15 @@ export function AccountFormModal({
   useEffect(() => {
     if (!open) return;
 
-    // Generate default username from employee name
-    const generateUsername = (fullName: string) => {
-      const parts = fullName.toLowerCase().split(" ");
-      if (parts.length >= 2) {
-        return parts[parts.length - 1] + parts[0]; // e.g., "Nguyễn Văn An" -> "annguyen"
-      }
-      return fullName.toLowerCase().replace(/\s/g, "");
-    };
-
-    setFormData({
-      username: generateUsername(employee.fullName),
-      password: "",
-      confirmPassword: "",
-      role: "Lễ tân",
-    });
-    setErrors({});
+    setTimeout(() => {
+      setFormData({
+        username: "",
+        password: "",
+        confirmPassword: "",
+        role: "Lễ tân",
+      });
+      setErrors({});
+    }, 0);
   }, [open, employee]);
 
   const validateForm = () => {
@@ -140,7 +135,7 @@ export function AccountFormModal({
       await onSave(employee.employeeId, accountData);
       onOpenChange(false);
     } catch (error) {
-      console.error("Error creating account:", error);
+      logger.error("Error creating account:", error);
       setErrors({
         submit: "Có lỗi xảy ra khi tạo tài khoản",
       });
@@ -163,15 +158,18 @@ export function AccountFormModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Tạo tài khoản đăng nhập</DialogTitle>
-          <DialogDescription>
-            Tạo tài khoản đăng nhập cho nhân viên{" "}
-            <span className="font-semibold">{employee.fullName}</span>
-          </DialogDescription>
-        </DialogHeader>
+        {/* Gradient Header */}
+        <div className="bg-linear-to-br from-info-600 to-info-500 -m-6 mb-0 p-6 rounded-t-xl">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">Tạo tài khoản đăng nhập</DialogTitle>
+            <DialogDescription className="text-white/90">
+              Tạo tài khoản đăng nhập cho nhân viên{" "}
+              <span className="font-semibold">{employee.fullName}</span>
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-6 pt-4">
           {errors.submit && (
             <Alert variant="destructive">
               <div className="flex items-center gap-2">
@@ -182,56 +180,64 @@ export function AccountFormModal({
           )}
 
           {/* Employee Info */}
-          <div className="p-3 bg-gray-50 rounded-md space-y-1">
+          <div className="p-4 bg-linear-to-r from-info-50 to-info-100/30 rounded-xl border border-info-200 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Mã nhân viên:</span>
-              <span className="font-medium">{employee.employeeId}</span>
+              <span className="text-gray-700 font-medium">Mã nhân viên:</span>
+              <span className="font-semibold text-gray-900">{employee.employeeId}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Chức vụ:</span>
-              <span className="font-medium">{employee.position}</span>
+              <span className="text-gray-700 font-medium">Chức vụ:</span>
+              <span className="font-semibold text-gray-900">{employee.position}</span>
             </div>
           </div>
 
           {/* Username */}
           <div>
-            <Label htmlFor="username">Tên đăng nhập *</Label>
+            <Label htmlFor="username" className="text-gray-700 font-semibold">
+              Tên đăng nhập *
+            </Label>
             <Input
               id="username"
               value={formData.username}
               onChange={(e) => handleChange("username", e.target.value)}
               placeholder="username"
-              className={errors.username ? "border-red-500" : ""}
+              className={`h-11 mt-1.5 ${
+                errors.username ? "border-error-500 focus:ring-error-500" : "focus:ring-info-500"
+              }`}
             />
             {errors.username && (
-              <p className="text-xs text-red-500 mt-1">{errors.username}</p>
+              <p className="text-xs text-error-600 mt-1.5 font-medium">{errors.username}</p>
             )}
           </div>
 
           {/* Password */}
           <div>
-            <Label htmlFor="password">Mật khẩu *</Label>
-            <div className="relative">
+            <Label htmlFor="password" className="text-gray-700 font-semibold">
+              Mật khẩu *
+            </Label>
+            <div className="relative mt-1.5">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => handleChange("password", e.target.value)}
                 placeholder="********"
-                className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                className={`h-11 pr-11 ${
+                  errors.password ? "border-error-500 focus:ring-error-500" : "focus:ring-info-500"
+                }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors w-5 h-5"
               >
                 {showPassword ? ICONS.EYE_OFF : ICONS.EYE}
               </button>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+              <p className="text-xs text-error-600 mt-1.5 font-medium">{errors.password}</p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1.5">
               Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số
               và ký tự đặc biệt
             </p>
@@ -239,8 +245,10 @@ export function AccountFormModal({
 
           {/* Confirm Password */}
           <div>
-            <Label htmlFor="confirmPassword">Xác nhận mật khẩu *</Label>
-            <div className="relative">
+            <Label htmlFor="confirmPassword" className="text-gray-700 font-semibold">
+              Xác nhận mật khẩu *
+            </Label>
+            <div className="relative mt-1.5">
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
@@ -249,20 +257,20 @@ export function AccountFormModal({
                   handleChange("confirmPassword", e.target.value)
                 }
                 placeholder="********"
-                className={
-                  errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
-                }
+                className={`h-11 pr-11 ${
+                  errors.confirmPassword ? "border-error-500 focus:ring-error-500" : "focus:ring-info-500"
+                }`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors w-5 h-5"
               >
                 {showConfirmPassword ? ICONS.EYE_OFF : ICONS.EYE}
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="text-xs text-error-600 mt-1.5 font-medium">
                 {errors.confirmPassword}
               </p>
             )}
@@ -270,14 +278,18 @@ export function AccountFormModal({
 
           {/* Role */}
           <div>
-            <Label htmlFor="role">Vai trò *</Label>
+            <Label htmlFor="role" className="text-gray-700 font-semibold">
+              Vai trò *
+            </Label>
             <Select
               value={formData.role}
               onValueChange={(value) => handleChange("role", value)}
             >
               <SelectTrigger
                 id="role"
-                className={errors.role ? "border-red-500" : ""}
+                className={`h-11 mt-1.5 ${
+                  errors.role ? "border-error-500 focus:ring-error-500" : "focus:ring-info-500"
+                }`}
               >
                 <SelectValue placeholder="Chọn vai trò" />
               </SelectTrigger>
@@ -290,23 +302,24 @@ export function AccountFormModal({
               </SelectContent>
             </Select>
             {errors.role && (
-              <p className="text-xs text-red-500 mt-1">{errors.role}</p>
+              <p className="text-xs text-error-600 mt-1.5 font-medium">{errors.role}</p>
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="h-11"
             >
               Hủy
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-primary-600 hover:bg-primary-700"
+              className="bg-linear-to-r from-info-500 to-info-600 hover:from-info-600 hover:to-info-700 text-white h-11 px-6 font-semibold shadow-md"
             >
               {isSubmitting ? "Đang tạo..." : "Tạo tài khoản"}
             </Button>

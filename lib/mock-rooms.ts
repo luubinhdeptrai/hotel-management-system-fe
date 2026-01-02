@@ -309,3 +309,30 @@ export const getUniqueRoomTypes = (rooms: Room[]): RoomType[] => {
   });
   return Array.from(uniqueTypes.values());
 };
+
+// Search available rooms by date range and optional room type filter
+export const searchAvailableRooms = (
+  checkInDate: string,
+  checkOutDate: string,
+  roomTypeFilter?: string
+): Room[] => {
+  // Filter rooms that are available (status "Sẵn sàng")
+  let availableRooms = mockRooms.filter((room) => {
+    const isAvailable = room.roomStatus === "Sẵn sàng";
+    return isAvailable;
+  });
+
+  // Apply room type filter if specified (filter by room type name)
+  if (roomTypeFilter && roomTypeFilter !== "Tất cả") {
+    availableRooms = availableRooms.filter((room) => {
+      const roomType = mockRoomTypes.find((rt) => rt.roomTypeID === room.roomTypeID);
+      return roomType?.roomTypeName === roomTypeFilter;
+    });
+  }
+
+  // In real app, would check against reservations database for date conflicts
+  // For now, just return filtered available rooms
+
+  return availableRooms;
+};
+

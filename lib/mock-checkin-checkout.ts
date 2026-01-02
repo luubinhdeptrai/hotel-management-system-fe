@@ -242,9 +242,11 @@ export const mockCheckoutSummary: CheckoutSummary[] = [
       },
     ],
     penalties: [],
+    surcharges: [],
     roomTotal: 1000000,
     servicesTotal: 340000,
     penaltiesTotal: 0,
+    surchargesTotal: 0,
     grandTotal: 1340000,
   },
   {
@@ -287,10 +289,21 @@ export const mockCheckoutSummary: CheckoutSummary[] = [
         dateIssued: "2025-11-17",
       },
     ],
+    surcharges: [
+      {
+        surchargeID: "SC001",
+        surchargeName: "Phụ thu cuối tuần",
+        rate: 10,
+        amount: 225000,
+        description: "Áp dụng cho Thứ 7 & Chủ Nhật",
+        dateApplied: "2025-11-16",
+      },
+    ],
     roomTotal: 2250000,
     servicesTotal: 1500000,
     penaltiesTotal: 200000,
-    grandTotal: 3950000,
+    surchargesTotal: 225000,
+    grandTotal: 4175000,
   },
   {
     receiptID: "REC003",
@@ -316,10 +329,21 @@ export const mockCheckoutSummary: CheckoutSummary[] = [
       },
     ],
     penalties: [],
+    surcharges: [
+      {
+        surchargeID: "SC002",
+        surchargeName: "Phụ thu ngày lễ",
+        rate: 15,
+        amount: 720000,
+        description: "Tết Nguyên Đán 2025",
+        dateApplied: "2025-11-14",
+      },
+    ],
     roomTotal: 4800000,
     servicesTotal: 1500000,
     penaltiesTotal: 0,
-    grandTotal: 6300000,
+    surchargesTotal: 720000,
+    grandTotal: 7020000,
   },
 ];
 

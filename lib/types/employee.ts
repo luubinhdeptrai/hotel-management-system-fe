@@ -11,6 +11,7 @@ export interface Employee {
   dateOfBirth?: Date;
   address?: string;
   identityCard?: string;
+  imageUrl?: string;
   startDate: Date;
   status: EmployeeStatus;
   hasAccount: boolean;
@@ -49,6 +50,7 @@ export interface EmployeeFormData {
   dateOfBirth?: Date;
   address?: string;
   identityCard?: string;
+  imageUrl?: string;
   startDate: Date;
 }
 

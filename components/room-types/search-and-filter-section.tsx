@@ -123,11 +123,11 @@ export function SearchAndFilterSection({
                   {ICONS.DOLLAR_SIGN}
                 </span>
                 <Select value={priceRange} onValueChange={handlePriceChange}>
-                  <SelectTrigger className="h-12 pl-12 pr-4 border-2 border-gray-300 rounded-lg font-bold text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all">
+                  <SelectTrigger className="h-12 pl-12 pr-4 border-2 border-gray-300 rounded-lg font-medium text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all">
                     <SelectValue placeholder="Chọn khoảng giá" />
                   </SelectTrigger>
                   <SelectContent className="z-100 max-w-xs" position="popper" align="start" sideOffset={4}>
-                    <SelectItem value="all" className="font-medium">Tất cả giá</SelectItem>
+                    <SelectItem value="all" className="font-medium"><span>Tất cả giá</span></SelectItem>
                     <SelectItem value="budget" className="font-medium">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-success-500"></span>

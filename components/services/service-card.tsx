@@ -84,70 +84,70 @@ export function ServiceCard({
 
   return (
     <>
-      <div className="group relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-primary-200 transition-all duration-300">
+      <div className="group relative bg-white rounded-2xl shadow-md border-2 border-gray-200 overflow-hidden hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300">
         {/* Image Header */}
-        <div className="relative h-32 overflow-hidden">
+        <div className="relative h-40 overflow-hidden">
           {!imageError ? (
             <Image
               src={imageUrl}
               alt={service.serviceName}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              className="object-cover group-hover:scale-110 transition-transform duration-500"
               onError={() => setImageError(true)}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-primary-50 to-primary-100 flex items-center justify-center">
-              <span className="w-12 h-12 text-primary-300">{categoryIcon}</span>
+            <div className="w-full h-full bg-linear-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+              <div className="w-12 h-12 text-blue-300 flex items-center justify-center">{categoryIcon}</div>
             </div>
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
           
           {/* Status badge */}
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-3 left-3">
             <Badge className={service.isActive 
-              ? "bg-success-500 text-white text-xs" 
-              : "bg-gray-400 text-white text-xs"
+              ? "bg-linear-to-r from-success-600 to-success-500 text-white text-xs font-bold shadow-lg" 
+              : "bg-linear-to-r from-gray-500 to-gray-400 text-white text-xs font-bold shadow-lg"
             }>
               {service.isActive ? "Hoạt động" : "Tạm ngưng"}
             </Badge>
           </div>
 
           {/* Category badge */}
-          <div className="absolute top-2 right-2">
-            <Badge variant="secondary" className="bg-white/90 text-gray-700 text-xs backdrop-blur-sm">
+          <div className="absolute top-3 right-3">
+            <Badge variant="secondary" className="bg-white/95 text-gray-700 text-xs font-bold backdrop-blur-sm shadow-md">
               {categoryName}
             </Badge>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <div className="flex items-start justify-between mb-2">
+        <div className="p-5">
+          <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+              <h3 className="font-bold text-gray-900 truncate text-base group-hover:text-blue-600 transition-colors">
                 {service.serviceName}
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 mt-1 font-medium">
                 Mã: {service.serviceID}
               </p>
             </div>
           </div>
 
           {service.description && (
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+            <p className="text-sm text-gray-600 line-clamp-2 mb-4 leading-relaxed">
               {service.description}
             </p>
           )}
 
           {/* Price and Unit */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-primary-600">
+          <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-100">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
                 {formatCurrency(service.price)}
               </span>
               {service.unit && (
-                <span className="text-sm text-gray-500">/{service.unit}</span>
+                <span className="text-sm text-gray-500 font-medium">/{service.unit}</span>
               )}
             </div>
             {onToggleActive && (
@@ -160,23 +160,23 @@ export function ServiceCard({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-3 border-t border-gray-100">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onEdit(service)}
-              className="flex-1 h-8 text-xs text-primary-600 border-primary-200 hover:bg-primary-50"
+              className="flex-1 h-10 text-sm font-bold text-blue-600 border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all"
             >
-              <span className="w-3.5 h-3.5 mr-1">{ICONS.EDIT}</span>
+              <div className="w-4 h-4 mr-1.5 flex items-center justify-center">{ICONS.EDIT}</div>
               Sửa
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setDeleteConfirm(true)}
-              className="h-8 px-2.5 text-error-600 border-error-200 hover:bg-error-50"
+              className="h-10 px-3 font-bold text-error-600 border-2 border-error-200 hover:bg-error-50 hover:border-error-400 transition-all"
             >
-              <span className="w-3.5 h-3.5">{ICONS.TRASH}</span>
+              <div className="w-4 h-4 flex items-center justify-center">{ICONS.TRASH}</div>
             </Button>
           </div>
         </div>
@@ -184,30 +184,32 @@ export function ServiceCard({
 
       {/* Delete Confirmation */}
       <Dialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle>Xác nhận xóa dịch vụ</DialogTitle>
-            <DialogDescription>
-              Hành động này không thể hoàn tác.
+            <DialogTitle className="text-xl font-bold">Xác nhận xóa dịch vụ</DialogTitle>
+            <DialogDescription className="text-base">
+              Hành động này không thể hoàn tác. Bạn có chắc muốn xóa dịch vụ này không?
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
-                <span className="w-6 h-6 text-primary-500">{categoryIcon}</span>
+            <div className="flex items-center gap-4 p-4 bg-linear-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200">
+              <div className="w-14 h-14 rounded-xl bg-linear-to-br from-blue-100 to-blue-50 flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-7 h-7 text-blue-500 flex items-center justify-center">{categoryIcon}</div>
               </div>
               <div>
-                <p className="font-medium text-gray-900">{service.serviceName}</p>
-                <p className="text-sm text-primary-600">{formatCurrency(service.price)}</p>
+                <p className="font-bold text-gray-900 text-base">{service.serviceName}</p>
+                <p className="text-sm font-bold bg-linear-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                  {formatCurrency(service.price)}
+                </p>
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteConfirm(false)}>
+          <DialogFooter className="gap-3">
+            <Button variant="outline" onClick={() => setDeleteConfirm(false)} className="h-11 px-6 border-2 font-bold">
               Hủy
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Xóa
+            <Button variant="destructive" onClick={handleDeleteConfirm} className="h-11 px-6 font-bold shadow-lg">
+              Xóa dịch vụ
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -215,3 +217,4 @@ export function ServiceCard({
     </>
   );
 }
+

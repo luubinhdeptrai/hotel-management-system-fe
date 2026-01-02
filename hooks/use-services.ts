@@ -1,20 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ServiceCategory,
   ServiceItem,
   ServiceCategoryFormData,
   ServiceItemFormData,
+  ServiceGroup,
 } from "@/lib/types/service";
-import { mockServiceCategories, mockServiceItems } from "@/lib/mock-services";
+import { mockServiceCategories } from "@/lib/mock-services";
+import { serviceManagementService } from "@/lib/services";
+import type { Service as ApiService } from "@/lib/types/api";
+import { ApiError } from "@/lib/services/api";
+
+// Map API Service to local ServiceItem format
+function mapApiToServiceItem(apiService: ApiService, categories: ServiceCategory[]): ServiceItem {
+  // Try to find a matching category or create a default one
+  const category = categories[0] || {
+    categoryID: "CAT001",
+    categoryName: "Dịch vụ chung",
+    description: "",
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  return {
+    serviceID: apiService.id,
+    serviceName: apiService.name,
+    categoryID: category.categoryID,
+    category: category,
+    serviceGroup: "F&B" as ServiceGroup,
+    price: parseFloat(apiService.price),
+    unit: apiService.unit || "lần",
+    description: "",
+    isOpenPrice: false,
+    isActive: apiService.isActive,
+    createdAt: new Date(apiService.createdAt),
+    updatedAt: new Date(apiService.updatedAt),
+  };
+}
 
 export function useServices() {
+  // Note: Categories are not supported by the API, so we keep them as mock data
   const [categories, setCategories] = useState<ServiceCategory[]>(
     mockServiceCategories
   );
-  const [services, setServices] = useState<ServiceItem[]>(mockServiceItems);
+  const [services, setServices] = useState<ServiceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadServices = async () => {
+    try {
+      setIsLoading(true);
+      const result = await serviceManagementService.getServices({
+        page: 1,
+        limit: 100,
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+      setServices(result.data.map(s => mapApiToServiceItem(s, categories)));
+      setError(null);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Không thể tải danh sách dịch vụ";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Category Management
   const addCategory = (data: ServiceCategoryFormData) => {
@@ -94,91 +152,109 @@ export function useServices() {
   };
 
   // Service Management
-  const addService = (data: ServiceItemFormData) => {
-    setIsLoading(true);
+  const addService = async (data: ServiceItemFormData) => {
+    try {
+      setIsLoading(true);
 
-    const category = categories.find(
-      (cat) => cat.categoryID === data.categoryID
-    );
+      const category = categories.find(
+        (cat) => cat.categoryID === data.categoryID
+      );
 
-    if (!category) {
+      if (!category) {
+        throw new Error("Loại dịch vụ không tồn tại");
+      }
+
+      const created = await serviceManagementService.createService({
+        name: data.serviceName,
+        price: data.price,
+        unit: data.unit,
+        isActive: true,
+      });
+
+      const newService = mapApiToServiceItem(created, categories);
+      setServices([...services, newService]);
+      setError(null);
+
+      return newService;
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 
+        (err instanceof Error ? err.message : "Không thể thêm dịch vụ");
+      setError(message);
+      throw err;
+    } finally {
       setIsLoading(false);
-      throw new Error("Loại dịch vụ không tồn tại");
     }
-
-    const newService: ServiceItem = {
-      serviceID: `SRV${String(services.length + 1).padStart(3, "0")}`,
-      serviceName: data.serviceName,
-      categoryID: data.categoryID,
-      category: category,
-      serviceGroup: data.serviceGroup,
-      price: data.price,
-      unit: data.unit,
-      description: data.description,
-      isOpenPrice: data.isOpenPrice,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    setServices([...services, newService]);
-    setIsLoading(false);
-
-    return newService;
   };
 
-  const updateService = (id: string, data: ServiceItemFormData) => {
-    setIsLoading(true);
+  const updateService = async (id: string, data: ServiceItemFormData) => {
+    try {
+      setIsLoading(true);
 
-    const category = categories.find(
-      (cat) => cat.categoryID === data.categoryID
-    );
+      const category = categories.find(
+        (cat) => cat.categoryID === data.categoryID
+      );
 
-    if (!category) {
+      if (!category) {
+        throw new Error("Loại dịch vụ không tồn tại");
+      }
+
+      const updated = await serviceManagementService.updateService(id, {
+        name: data.serviceName,
+        price: data.price,
+        unit: data.unit,
+      });
+
+      setServices(
+        services.map((service) =>
+          service.serviceID === id
+            ? mapApiToServiceItem(updated, categories)
+            : service
+        )
+      );
+      setError(null);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Không thể cập nhật dịch vụ";
+      setError(message);
+      throw err;
+    } finally {
       setIsLoading(false);
-      throw new Error("Loại dịch vụ không tồn tại");
     }
-
-    setServices(
-      services.map((service) =>
-        service.serviceID === id
-          ? {
-              ...service,
-              serviceName: data.serviceName,
-              categoryID: data.categoryID,
-              category: category,
-              serviceGroup: data.serviceGroup,
-              price: data.price,
-              unit: data.unit,
-              description: data.description,
-              isOpenPrice: data.isOpenPrice,
-              updatedAt: new Date(),
-            }
-          : service
-      )
-    );
-
-    setIsLoading(false);
   };
 
-  const softDeleteService = (id: string) => {
-    setIsLoading(true);
-
-    setServices(
-      services.map((service) =>
-        service.serviceID === id
-          ? { ...service, isActive: false, updatedAt: new Date() }
-          : service
-      )
-    );
-
-    setIsLoading(false);
+  const softDeleteService = async (id: string) => {
+    try {
+      setIsLoading(true);
+      await serviceManagementService.updateService(id, { isActive: false });
+      setServices(
+        services.map((service) =>
+          service.serviceID === id
+            ? { ...service, isActive: false, updatedAt: new Date() }
+            : service
+        )
+      );
+      setError(null);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Không thể vô hiệu hóa dịch vụ";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const deleteService = (id: string) => {
-    setIsLoading(true);
-    setServices(services.filter((service) => service.serviceID !== id));
-    setIsLoading(false);
+  const deleteService = async (id: string) => {
+    try {
+      setIsLoading(true);
+      await serviceManagementService.deleteService(id);
+      setServices(services.filter((service) => service.serviceID !== id));
+      setError(null);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Không thể xóa dịch vụ";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getServicesByCategory = (categoryID: string): ServiceItem[] => {
@@ -197,6 +273,7 @@ export function useServices() {
     categories,
     services,
     isLoading,
+    error,
     addCategory,
     updateCategory,
     softDeleteCategory,

@@ -92,6 +92,9 @@ export interface RoomTypeSelection {
   quantity: number; // Number of rooms of this type
   numberOfGuests: number; // Guests per room
   pricePerNight: number;
+  checkInDate: string; // NEW: Each room selection can have its own check-in date
+  checkOutDate: string; // NEW: Each room selection can have its own check-out date
+  roomID?: string; // NEW: Optional - specific room selected by user
 }
 
 // Reservation Form Data

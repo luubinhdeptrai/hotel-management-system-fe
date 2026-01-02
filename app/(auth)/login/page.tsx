@@ -1,5 +1,7 @@
 "use client";
 
+
+import { logger } from "@/lib/utils/logger";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Hotel } from "lucide-react";
@@ -9,17 +11,17 @@ import { ApiError } from "@/lib/services/api";
 import { mockLogin } from "@/lib/mock-auth";
 
 // Toggle this to use mock login during development when backend is unavailable
-const USE_MOCK_AUTH = true;
+const USE_MOCK_AUTH = false;
 
 interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
 export default function LoginPage() {
   const router = useRouter();
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    email: "",
+    username: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +37,7 @@ export default function LoginPage() {
       if (USE_MOCK_AUTH) {
         // Use mock login for development
         const response = await mockLogin({
-          username: credentials.email,
+          username: credentials.username,
           password: credentials.password,
         });
 
@@ -47,11 +49,11 @@ export default function LoginPage() {
       } else {
         // Use real API
         const response = await authService.login(
-          credentials.email,
+          credentials.username,
           credentials.password
         );
 
-        console.log("Login response:", response);
+        logger.log("Login response:", response);
 
         // If we reach here without error, login was successful
         // authService.login() throws on failure
@@ -60,7 +62,7 @@ export default function LoginPage() {
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.statusCode === 401) {
-          setErrorMessage("Email hoặc mật khẩu không đúng");
+          setErrorMessage("Tên đăng nhập hoặc mật khẩu không đúng");
         } else if (error.statusCode === 0) {
           setErrorMessage(
             "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng."
@@ -73,7 +75,7 @@ export default function LoginPage() {
       } else {
         setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại sau.");
       }
-      console.error("Login error:", error);
+      logger.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -125,29 +127,29 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Email Field */}
+              {/* Username Field */}
               <div className="space-y-2">
                 <label
-                  htmlFor="email"
+                  htmlFor="username"
                   className="block text-sm font-medium text-neutral-950 tracking-[-0.1504px]"
                 >
-                  Email
+                  Tên đăng nhập
                 </label>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
                   required
-                  value={credentials.email}
+                  value={credentials.username}
                   onChange={(e) =>
                     setCredentials({
                       ...credentials,
-                      email: e.target.value,
+                      username: e.target.value,
                     })
                   }
                   className="h-9 bg-[#f3f3f5] border-transparent rounded-lg px-3 py-1 text-sm tracking-[-0.1504px] placeholder:text-[#717182]"
-                  placeholder="Nhập email"
+                  placeholder="Nhập tên đăng nhập"
                   disabled={isLoading}
                 />
               </div>

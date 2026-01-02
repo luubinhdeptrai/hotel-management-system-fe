@@ -98,33 +98,33 @@ export function ReservationList({
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-2 border-gray-200 shadow-lg">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader className="bg-gray-50">
-            <TableRow>
-              <TableHead className="font-semibold text-gray-700">
+          <TableHeader className="bg-linear-to-r from-gray-50 to-gray-100">
+            <TableRow className="border-b-2">
+              <TableHead className="font-extrabold text-gray-900">
                 Mã đặt phòng
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="font-extrabold text-gray-900">
                 Khách hàng
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="font-extrabold text-gray-900">
                 Ngày đặt
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="font-extrabold text-gray-900">
                 Ngày đến/đi
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="font-extrabold text-gray-900">
                 Số phòng
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="font-extrabold text-gray-900 text-right">
                 Tổng tiền
               </TableHead>
-              <TableHead className="font-semibold text-gray-700">
+              <TableHead className="font-extrabold text-gray-900 text-center">
                 Trạng thái
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 text-right">
+              <TableHead className="font-extrabold text-gray-900 text-right">
                 Thao tác
               </TableHead>
             </TableRow>
@@ -134,58 +134,72 @@ export function ReservationList({
               <TableRow>
                 <TableCell
                   colSpan={8}
-                  className="text-center py-8 text-gray-500"
+                  className="text-center py-16"
                 >
-                  Không tìm thấy đặt phòng nào
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-gray-400 text-2xl">{ICONS.CALENDAR}</span>
+                    </div>
+                    <p className="text-gray-500 font-semibold text-base">
+                      Không tìm thấy đặt phòng nào
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
-              reservations.map((reservation) => {
+              reservations.map((reservation, index) => {
                 const firstDetail = reservation.details[0];
                 const statusColor = STATUS_COLORS[reservation.status];
 
                 return (
                   <TableRow
                     key={reservation.reservationID}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className={`hover:bg-blue-50 cursor-pointer transition-all hover:shadow-md ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                    }`}
                     onClick={() => onViewDetails?.(reservation)}
                   >
-                    <TableCell className="font-medium text-gray-900">
-                      {reservation.reservationID}
+                    <TableCell className="font-bold text-gray-900 text-base">
+                      #{reservation.reservationID}
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-bold text-gray-900 text-base">
                           {reservation.customer.customerName}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-600 font-medium">
                           {reservation.customer.phoneNumber}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-700">
+                    <TableCell className="text-gray-700 font-semibold">
                       {formatDate(reservation.reservationDate)}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div className="text-gray-900">
-                          {formatDate(firstDetail.checkInDate)}
+                        <div className="flex items-center gap-2">
+                          <span className="w-4 h-4 text-success-600">{ICONS.CALENDAR}</span>
+                          <span className="text-gray-900 font-bold">{formatDate(firstDetail.checkInDate)}</span>
                         </div>
-                        <div className="text-gray-500">
-                          {formatDate(firstDetail.checkOutDate)}
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="w-4 h-4 text-error-600">{ICONS.CALENDAR_CHECK}</span>
+                          <span className="text-gray-600 font-semibold">{formatDate(firstDetail.checkOutDate)}</span>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-700">
-                      {reservation.totalRooms} phòng
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="w-4 h-4 text-primary-600">{ICONS.BED_DOUBLE}</span>
+                        <span className="text-gray-700 font-bold">{reservation.totalRooms} phòng</span>
+                      </div>
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900">
+                    <TableCell className="font-extrabold text-primary-600 text-base text-right">
                       {formatCurrency(reservation.totalAmount)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <Badge
                         className={cn(
-                          "border",
+                          "border-2 font-bold text-sm px-3 py-1",
                           statusColor.bg,
                           statusColor.text,
                           statusColor.border
@@ -204,9 +218,9 @@ export function ReservationList({
                             variant="outline"
                             size="sm"
                             onClick={() => onEdit?.(reservation)}
-                            className="hover:bg-primary-50"
+                            className="h-9 px-4 bg-blue-50 border-2 border-blue-300 text-blue-700 font-bold hover:bg-blue-600 hover:text-white hover:border-blue-700 hover:scale-110 transition-all shadow-sm"
                           >
-                            <span className="mr-1">{ICONS.EDIT}</span>
+                            <span className="w-4 h-4 mr-1.5">{ICONS.EDIT}</span>
                             Sửa
                           </Button>
                         )}
@@ -215,9 +229,9 @@ export function ReservationList({
                             variant="outline"
                             size="sm"
                             onClick={() => onCancel?.(reservation)}
-                            className="hover:bg-red-50 text-red-600 border-red-300"
+                            className="h-9 px-4 bg-error-50 border-2 border-error-300 text-error-700 font-bold hover:bg-error-600 hover:text-white hover:border-error-700 hover:scale-110 transition-all shadow-sm"
                           >
-                            <span className="mr-1">{ICONS.X_CIRCLE}</span>
+                            <span className="w-4 h-4 mr-1.5">{ICONS.X_CIRCLE}</span>
                             Hủy
                           </Button>
                         )}

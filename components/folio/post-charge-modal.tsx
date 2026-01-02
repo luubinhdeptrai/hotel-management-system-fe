@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +22,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { TransactionType, PostChargeFormData } from "@/lib/types/folio";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/types/folio";
+import { useServices } from "@/hooks/use-services";
+import { usePenaltyPage } from "@/hooks/use-penalty-page";
+import { useSurchargePage } from "@/hooks/use-surcharge-page";
 
 interface PostChargeModalProps {
   isOpen: boolean;
@@ -43,8 +46,66 @@ export function PostChargeModal({
   onSubmit,
 }: PostChargeModalProps) {
   const [type, setType] = useState<TransactionType>("SERVICE");
+  const [selectedItemId, setSelectedItemId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [isCustomAmount, setIsCustomAmount] = useState(false);
+
+  // Load data from hooks
+  const { getActiveServices } = useServices();
+  const { penalties } = usePenaltyPage();
+  const { surcharges } = useSurchargePage();
+
+  // Get active items based on selected type
+  const activeServices = getActiveServices();
+  const activePenalties = penalties.filter(p => p.isActive);
+  const activeSurcharges = surcharges.filter(s => s.isActive);
+
+  // Handle type change - reset form
+  const handleTypeChange = (newType: TransactionType) => {
+    setType(newType);
+    setSelectedItemId("");
+    setDescription("");
+    setAmount("");
+    setIsCustomAmount(false);
+  };
+
+  // Handle item selection - auto-fill description and amount
+  const handleItemSelect = (itemId: string) => {
+    setSelectedItemId(itemId);
+
+    if (type === "SERVICE") {
+      const selectedItem = activeServices.find(s => s.serviceID === itemId);
+      if (selectedItem) {
+        setDescription(selectedItem.serviceName);
+        setAmount(selectedItem.price.toString());
+      }
+    } else if (type === "PENALTY") {
+      const selectedItem = activePenalties.find(p => p.penaltyID === itemId);
+      if (selectedItem) {
+        setDescription(selectedItem.penaltyName);
+        if (selectedItem.isOpenPrice) {
+          setIsCustomAmount(true);
+          setAmount("");
+        } else {
+          setAmount(selectedItem.price.toString());
+          setIsCustomAmount(false);
+        }
+      }
+    } else if (type === "SURCHARGE") {
+      const selectedItem = activeSurcharges.find(s => s.surchargeID === itemId);
+      if (selectedItem) {
+        setDescription(selectedItem.surchargeName);
+        if (selectedItem.isOpenPrice) {
+          setIsCustomAmount(true);
+          setAmount("");
+        } else {
+          setAmount(selectedItem.price.toString());
+          setIsCustomAmount(false);
+        }
+      }
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,17 +122,24 @@ export function PostChargeModal({
 
     // Reset form
     setType("SERVICE");
+    setSelectedItemId("");
     setDescription("");
     setAmount("");
+    setIsCustomAmount(false);
     onClose();
   };
 
   const handleClose = () => {
     setType("SERVICE");
+    setSelectedItemId("");
     setDescription("");
     setAmount("");
+    setIsCustomAmount(false);
     onClose();
   };
+
+  // Check if current type needs item selection
+  const needsItemSelection = ["SERVICE", "SURCHARGE", "PENALTY"].includes(type);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -88,7 +156,7 @@ export function PostChargeModal({
             <Label htmlFor="charge-type">Loại phí</Label>
             <Select
               value={type}
-              onValueChange={(value) => setType(value as TransactionType)}
+              onValueChange={handleTypeChange}
             >
               <SelectTrigger id="charge-type">
                 <SelectValue placeholder="Chọn loại phí" />
@@ -102,6 +170,64 @@ export function PostChargeModal({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Show item selection dropdown for SERVICE/SURCHARGE/PENALTY */}
+          {needsItemSelection && (
+            <div className="space-y-2">
+              <Label htmlFor="item-select">
+                {type === "SERVICE" && "Chọn dịch vụ"}
+                {type === "SURCHARGE" && "Chọn phụ thu"}
+                {type === "PENALTY" && "Chọn phí phạt"}
+              </Label>
+              <Select
+                value={selectedItemId}
+                onValueChange={handleItemSelect}
+              >
+                <SelectTrigger id="item-select">
+                  <SelectValue placeholder={
+                    type === "SERVICE" ? "Chọn dịch vụ từ danh sách" :
+                    type === "SURCHARGE" ? "Chọn phụ thu từ danh sách" :
+                    "Chọn phí phạt từ danh sách"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {type === "SERVICE" && activeServices.map((service) => (
+                    <SelectItem key={service.serviceID} value={service.serviceID}>
+                      {service.serviceName} - {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(service.price)}
+                    </SelectItem>
+                  ))}
+                  {type === "SURCHARGE" && activeSurcharges.map((surcharge) => (
+                    <SelectItem key={surcharge.surchargeID} value={surcharge.surchargeID}>
+                      {surcharge.surchargeName} - {surcharge.isOpenPrice ? "(Giá tự nhập)" : new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(surcharge.price)}
+                    </SelectItem>
+                  ))}
+                  {type === "PENALTY" && activePenalties.map((penalty) => (
+                    <SelectItem key={penalty.penaltyID} value={penalty.penaltyID}>
+                      {penalty.penaltyName} - {penalty.isOpenPrice ? "(Giá tự nhập)" : new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(penalty.price)}
+                    </SelectItem>
+                  ))}
+                  {type === "SERVICE" && activeServices.length === 0 && (
+                    <SelectItem value="_empty" disabled>Chưa có dịch vụ nào</SelectItem>
+                  )}
+                  {type === "SURCHARGE" && activeSurcharges.length === 0 && (
+                    <SelectItem value="_empty" disabled>Chưa có phụ thu nào</SelectItem>
+                  )}
+                  {type === "PENALTY" && activePenalties.length === 0 && (
+                    <SelectItem value="_empty" disabled>Chưa có phí phạt nào</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Mô tả</Label>
@@ -126,7 +252,13 @@ export function PostChargeModal({
               min="0"
               step="1000"
               required
+              disabled={!isCustomAmount && needsItemSelection && !!selectedItemId}
             />
+            {isCustomAmount && (
+              <p className="text-xs text-amber-600">
+                Mục này cho phép nhập giá tùy chỉnh
+              </p>
+            )}
           </div>
 
           <DialogFooter>

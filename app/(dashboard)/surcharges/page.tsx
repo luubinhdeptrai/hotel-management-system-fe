@@ -1,7 +1,6 @@
 "use client";
 
 import { useSurchargePage } from "@/hooks/use-surcharge-page";
-import { PageHeader } from "@/components/services/page-header";
 import { NotificationBanner } from "@/components/services/notification-banner";
 import { SurchargeGrid } from "@/components/surcharges/surcharge-grid";
 import { SurchargeFormModal } from "@/components/surcharges/surcharge-form-modal";
@@ -23,12 +22,6 @@ export default function SurchargesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <PageHeader
-        title="Quản lý Phụ Thu"
-        description="Quản lý các khoản phụ thu như check-in sớm, check-out muộn, người thêm, thú cưng..."
-      />
-
       {/* Notification */}
       {notification && (
         <NotificationBanner

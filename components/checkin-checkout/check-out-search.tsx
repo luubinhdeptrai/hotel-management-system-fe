@@ -23,26 +23,29 @@ export function CheckOutSearch({ onSearch }: CheckOutSearchProps) {
   };
 
   return (
-    <div className="flex gap-2">
-      <div className="relative flex-1">
-        <Input
-          placeholder="Tìm theo mã phòng hoặc mã phiếu thuê..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
-          className="h-10 border-gray-300 focus:ring-primary-500"
-        />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-          {ICONS.SEARCH}
+    <div className="bg-linear-to-br from-white via-gray-50 to-white rounded-2xl border-2 border-gray-200 p-8 shadow-lg">
+      <div className="flex gap-4">
+        <div className="relative flex-1">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400">
+            {ICONS.SEARCH}
+          </div>
+          <Input
+            placeholder="Tìm theo mã phòng hoặc mã phiếu thuê..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="h-14 pl-12 pr-4 border-2 border-gray-300 rounded-xl font-semibold text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all shadow-sm"
+          />
         </div>
+        <Button
+          onClick={handleSearch}
+          className="h-14 px-8 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+        >
+          <span className="w-5 h-5">{ICONS.SEARCH}</span>
+          <span className="ml-2">Tìm kiếm</span>
+        </Button>
       </div>
-      <Button
-        onClick={handleSearch}
-        className="h-10 bg-primary-600 hover:bg-primary-500 text-white rounded-md"
-      >
-        {ICONS.SEARCH}
-        <span className="ml-2">Tìm kiếm</span>
-      </Button>
     </div>
   );
 }
+

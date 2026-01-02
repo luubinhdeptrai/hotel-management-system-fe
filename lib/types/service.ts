@@ -31,6 +31,7 @@ export interface ServiceItem {
   price: number;
   unit: string;
   description?: string;
+  imageUrl?: string;
   isActive: boolean;
   isOpenPrice?: boolean; // NEW: For PHUTHU/PHAT - allow open price entry
   createdAt: Date;
@@ -50,6 +51,7 @@ export interface ServiceItemFormData {
   price: number;
   unit: string;
   description?: string;
+  imageUrl?: string;
   isOpenPrice?: boolean; // NEW
 }
 
