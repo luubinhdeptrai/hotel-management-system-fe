@@ -535,3 +535,352 @@ Content-Type: application/json
 ```json
 { "code": 409, "message": "Room is not available for the selected dates" }
 ```
+
+---
+
+# Services Management Endpoints
+
+API endpoints required by the frontend services page but **not present in swagger.json**.
+
+**Base URL:** `http://localhost:3000/v1`
+
+---
+
+## 9. GET /employee/services
+
+**Purpose:** List all services with pagination and filtering.
+
+### Request
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | integer | No | Page number (default: 1) |
+| limit | integer | No | Items per page (default: 10, max: 100) |
+| search | string | No | Search by service name |
+| isActive | boolean | No | Filter by active status |
+| minPrice | number | No | Filter services with price >= minPrice |
+| maxPrice | number | No | Filter services with price <= maxPrice |
+| sortBy | string | No | name, price, unit, isActive, createdAt, updatedAt |
+| sortOrder | string | No | asc, desc |
+
+**Example:**
+
+```
+GET /employee/services?page=1&limit=10&isActive=true&sortBy=name&sortOrder=asc
+```
+
+### Response
+
+**Headers:**
+
+```
+Content-Type: application/json
+```
+
+**Status 200 - Success:**
+
+```json
+{
+  "data": {
+    "data": [
+      {
+        "id": "service_id",
+        "name": "Minibar - Nước suối",
+        "price": "15000",
+        "unit": "chai",
+        "isActive": true,
+        "createdAt": "2025-01-01T10:00:00Z",
+        "updatedAt": "2025-01-01T10:00:00Z",
+        "_count": {
+          "serviceUsages": 5
+        }
+      }
+    ],
+    "total": 50,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+**Status 401 - Unauthorized:**
+
+```json
+{ "code": 401, "message": "Please authenticate" }
+```
+
+---
+
+## 10. GET /employee/services/{serviceId}
+
+**Purpose:** Get service details by ID.
+
+### Request
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| serviceId | string | Yes | Service ID |
+
+**Example:**
+
+```
+GET /employee/services/service_id_123
+```
+
+### Response
+
+**Headers:**
+
+```
+Content-Type: application/json
+```
+
+**Status 200 - Success:**
+
+```json
+{
+  "data": {
+    "id": "service_id_123",
+    "name": "Massage toàn thân",
+    "price": "500000",
+    "unit": "60 phút",
+    "isActive": true,
+    "createdAt": "2025-01-01T10:00:00Z",
+    "updatedAt": "2025-01-01T10:00:00Z",
+    "_count": {
+      "serviceUsages": 10
+    }
+  }
+}
+```
+
+**Status 404 - Not Found:**
+
+```json
+{ "code": 404, "message": "Service not found" }
+```
+
+---
+
+## 11. POST /employee/services
+
+**Purpose:** Create a new service.
+
+### Request
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Body:**
+
+```json
+{
+  "name": "Giặt ủi áo sơ mi",
+  "price": 30000,
+  "unit": "cái",
+  "isActive": true
+}
+```
+
+**Body Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | Yes | Service name |
+| price | number | Yes | Service price |
+| unit | string | No | Unit of measurement (default: "lần") |
+| isActive | boolean | No | Active status (default: true) |
+
+### Response
+
+**Headers:**
+
+```
+Content-Type: application/json
+```
+
+**Status 201 - Created:**
+
+```json
+{
+  "data": {
+    "id": "service_id_new",
+    "name": "Giặt ủi áo sơ mi",
+    "price": "30000",
+    "unit": "cái",
+    "isActive": true,
+    "createdAt": "2025-01-02T10:00:00Z",
+    "updatedAt": "2025-01-02T10:00:00Z"
+  }
+}
+```
+
+**Status 400 - Validation Error:**
+
+```json
+{
+  "code": 400,
+  "message": "Validation error",
+  "errors": [{ "field": "name", "message": "Service name is required" }]
+}
+```
+
+---
+
+## 12. PUT /employee/services/{serviceId}
+
+**Purpose:** Update an existing service.
+
+### Request
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| serviceId | string | Yes | Service ID |
+
+**Body:**
+
+```json
+{
+  "name": "Giặt ủi áo sơ mi (cập nhật)",
+  "price": 35000,
+  "unit": "cái",
+  "isActive": true
+}
+```
+
+**Body Parameters (all optional):**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| name | string | Service name |
+| price | number | Service price |
+| unit | string | Unit of measurement |
+| isActive | boolean | Active status |
+
+### Response
+
+**Headers:**
+
+```
+Content-Type: application/json
+```
+
+**Status 200 - Success:**
+
+```json
+{
+  "data": {
+    "id": "service_id",
+    "name": "Giặt ủi áo sơ mi (cập nhật)",
+    "price": "35000",
+    "unit": "cái",
+    "isActive": true,
+    "createdAt": "2025-01-01T10:00:00Z",
+    "updatedAt": "2025-01-02T11:00:00Z"
+  }
+}
+```
+
+**Status 400 - Validation Error:**
+
+```json
+{
+  "code": 400,
+  "message": "Validation error",
+  "errors": [{ "field": "price", "message": "Price must be a positive number" }]
+}
+```
+
+**Status 404 - Not Found:**
+
+```json
+{ "code": 404, "message": "Service not found" }
+```
+
+---
+
+## 13. DELETE /employee/services/{serviceId}
+
+**Purpose:** Delete a service.
+
+### Request
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| serviceId | string | Yes | Service ID |
+
+**Example:**
+
+```
+DELETE /employee/services/service_id_123
+```
+
+### Response
+
+**Headers:**
+
+```
+Content-Type: application/json
+```
+
+**Status 204 - No Content:**
+
+_(Empty response body)_
+
+**Status 400 - Bad Request:**
+
+```json
+{ "code": 400, "message": "Cannot delete service with existing usage records" }
+```
+
+**Status 404 - Not Found:**
+
+```json
+{ "code": 404, "message": "Service not found" }
+```
+
+---
+
+# Services Summary Table
+
+| Endpoint                         | Method | Priority | Status                    |
+| -------------------------------- | ------ | -------- | ------------------------- |
+| `/employee/services`             | GET    | HIGH     | Missing from swagger.json |
+| `/employee/services/{serviceId}` | GET    | MEDIUM   | Missing from swagger.json |
+| `/employee/services`             | POST   | HIGH     | Missing from swagger.json |
+| `/employee/services/{serviceId}` | PUT    | HIGH     | Missing from swagger.json |
+| `/employee/services/{serviceId}` | DELETE | MEDIUM   | Missing from swagger.json |
