@@ -104,11 +104,31 @@ export default function CheckinCheckoutPage() {
         </div>
       </div>
 
-      {/* Success Message */}
+      {/* Notification Message */}
       {notification.message && (
-        <Alert className="bg-success-100 border-2 border-success-600 shadow-md flex items-center gap-4">
-          <div className="text-success-600 shrink-0">{ICONS.CHECK}</div>
-          <AlertDescription className="text-success-700 font-semibold">
+        <Alert
+          className={`shadow-md flex items-center gap-4 ${
+            notification.type === "error"
+              ? "bg-red-100 border-2 border-red-600"
+              : "bg-success-100 border-2 border-success-600"
+          }`}
+        >
+          <div
+            className={
+              notification.type === "error"
+                ? "text-red-600 shrink-0"
+                : "text-success-600 shrink-0"
+            }
+          >
+            {notification.type === "error" ? ICONS.ALERT_CIRCLE : ICONS.CHECK}
+          </div>
+          <AlertDescription
+            className={
+              notification.type === "error"
+                ? "text-red-700 font-semibold"
+                : "text-success-700 font-semibold"
+            }
+          >
             {notification.message}
           </AlertDescription>
         </Alert>
@@ -189,16 +209,7 @@ export default function CheckinCheckoutPage() {
         open={checkIn.showWalkInModal}
         onOpenChange={checkIn.setShowWalkInModal}
         onConfirm={async (data) => {
-          try {
-            const result = await checkIn.handleConfirmWalkIn(data);
-            notification.showSuccess(
-              `Đã check-in thành công cho ${result.customerName} vào phòng ${result.roomNumber} (${result.bookingCode})!`
-            );
-          } catch {
-            notification.showSuccess(
-              `Không thể check-in khách vãng lai ${data.customerName}. Vui lòng thử lại.`
-            );
-          }
+          notification.showError("Tính năng đang được phát triển!");
         }}
       />
 
