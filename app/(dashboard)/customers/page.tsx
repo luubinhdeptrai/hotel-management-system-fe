@@ -45,6 +45,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
+import { BookingDetailsModal } from "@/components/customers/booking-details-modal";
 import { customerService } from "@/lib/services/customer.service";
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from "@/lib/types/api";
 import { toast } from "sonner";
@@ -463,34 +464,11 @@ export default function CustomersPage() {
       </Dialog>
 
       {/* Bookings Details Modal */}
-      <Dialog open={bookingsDialogOpen} onOpenChange={setBookingsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Booking của {selectedCustomerForBookings?.fullName}</DialogTitle>
-            <DialogDescription>
-              Danh sách tất cả booking của khách hàng
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            {selectedCustomerForBookings?._count?.bookings ? (
-              <div className="text-sm space-y-2">
-                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 block w-full text-center py-2">
-                  {selectedCustomerForBookings._count?.bookings} booking
-                </Badge>
-                <p className="text-gray-600 text-center py-4">
-                  ℹ️ Xem chi tiết booking tại trang quản lý booking
-                </p>
-              </div>
-            ) : (
-              <div className="text-center py-6 text-gray-500">
-                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Chưa có booking nào</p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BookingDetailsModal
+        open={bookingsDialogOpen}
+        onOpenChange={setBookingsDialogOpen}
+        customer={selectedCustomerForBookings}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
