@@ -478,14 +478,14 @@ export default function CustomersPage() {
             <AlertDialogDescription>
               Bạn có chắc chắn muốn xóa khách hàng <strong>{deletingCustomer?.fullName}</strong>?
               Hành động này không thể hoàn tác.
-              {deletingCustomer && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    ⚠️ Lưu ý: Không thể xóa nếu khách hàng có lịch sử đặt phòng trong hệ thống.
-                  </p>
-                </div>
-              )}
             </AlertDialogDescription>
+            {deletingCustomer && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ Lưu ý: Không thể xóa nếu khách hàng có lịch sử đặt phòng trong hệ thống.
+                </p>
+              </div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
