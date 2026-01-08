@@ -113,11 +113,12 @@ export function ReservationFormModal({
         if (reservation && mode === "edit") {
           // Determine if deposit was already confirmed based on status
           // Status "Đã xác nhận" or higher means deposit was confirmed
+          // Note: "Đã đặt" = booked but deposit NOT confirmed yet (pending)
+          // Note: "Chờ xác nhận" = waiting for confirmation (deposit not confirmed)
           const isDepositConfirmed =
             reservation.status === "Đã xác nhận" ||
             reservation.status === "Đã nhận phòng" ||
             reservation.status === "Đã trả phòng" ||
-            reservation.status === "Đã đặt" ||
             reservation.status === "Đã nhận" ||
             (reservation.paidDeposit !== undefined &&
               reservation.paidDeposit > 0);
@@ -126,12 +127,15 @@ export function ReservationFormModal({
           setWasDepositAlreadyConfirmed(isDepositConfirmed);
 
           // prepare form data from reservation
+          // Extract customer data with fallbacks for optional fields
+          const customer = reservation.customer;
+
           const newFormData: ReservationFormData = {
-            customerName: reservation.customer.customerName || "",
-            phoneNumber: reservation.customer.phoneNumber || "",
-            email: reservation.customer.email || "",
-            identityCard: reservation.customer.identityCard || "",
-            address: reservation.customer.address || "",
+            customerName: customer?.customerName || "",
+            phoneNumber: customer?.phoneNumber || "",
+            email: customer?.email || "",
+            identityCard: customer?.identityCard || "",
+            address: customer?.address || "",
             checkInDate: reservation.details[0]?.checkInDate || "",
             checkOutDate: reservation.details[0]?.checkOutDate || "",
             roomSelections: [],
@@ -302,6 +306,16 @@ export function ReservationFormModal({
 
     if (!formData.identityCard.trim()) {
       newErrors.identityCard = "Vui lòng nhập số CMND/CCCD";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Vui lòng nhập email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Email không hợp lệ";
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = "Vui lòng nhập địa chỉ";
     }
 
     // Remove global date validation - dates are now per room selection
@@ -559,7 +573,7 @@ export function ReservationFormModal({
                   htmlFor="email"
                   className="text-sm font-bold text-gray-700 uppercase tracking-wide"
                 >
-                  Email
+                  Email <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   id="email"
@@ -567,8 +581,15 @@ export function ReservationFormModal({
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="example@email.com"
-                  className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${
+                    errors.email ? "border-red-600" : "border-gray-300"
+                  }`}
                 />
+                {errors.email && (
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
               <div className="md:col-span-2">
@@ -576,15 +597,22 @@ export function ReservationFormModal({
                   htmlFor="address"
                   className="text-sm font-bold text-gray-700 uppercase tracking-wide"
                 >
-                  Địa chỉ
+                  Địa chỉ <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   id="address"
                   value={formData.address}
                   onChange={(e) => handleChange("address", e.target.value)}
                   placeholder="123 Lê Lợi, Q.1, TP.HCM"
-                  className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
+                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${
+                    errors.address ? "border-red-600" : "border-gray-300"
+                  }`}
                 />
+                {errors.address && (
+                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
+                    {errors.address}
+                  </p>
+                )}
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ import {
 import { Room } from "@/lib/types/room";
 import { bookingService } from "@/lib/services/booking.service";
 import { transactionService } from "@/lib/services/transaction.service";
+import { customerService } from "@/lib/services/customer.service";
 import type { CreateBookingRequest, Booking } from "@/lib/types/api";
 
 type ViewMode = "calendar" | "list";
@@ -562,6 +563,33 @@ export function useReservations() {
           selectedReservation.status === "Đã đặt" ||
           selectedReservation.status === "Đã nhận phòng" ||
           selectedReservation.status === "Đã nhận";
+
+        // Update customer information first (if changed)
+        try {
+          const customer = selectedReservation.customer;
+          // Check if customer data has changed
+          const hasCustomerChanged =
+            customer.customerName !== data.customerName ||
+            customer.phoneNumber !== data.phoneNumber ||
+            customer.email !== data.email ||
+            customer.identityCard !== data.identityCard ||
+            customer.address !== data.address;
+
+          if (hasCustomerChanged && customer.customerID) {
+            logger.log("Updating customer information:", customer.customerID);
+            await customerService.updateCustomer(customer.customerID, {
+              fullName: data.customerName,
+              email: data.email,
+              idNumber: data.identityCard,
+              address: data.address,
+            });
+            logger.log("Customer information updated successfully");
+          }
+        } catch (customerError) {
+          logger.error("Failed to update customer information:", customerError);
+          // Continue with booking update even if customer update fails
+          // The error will be logged but won't block the reservation update
+        }
 
         // Call update API (without status - status changes via transaction API)
         await bookingService.updateBooking(selectedReservation.reservationID, {
