@@ -1,5 +1,5 @@
 import { logger } from "@/lib/utils/logger";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { PaymentMethod } from "@/lib/types/payment";
 import type { Booking, BookingRoom } from "@/lib/types/api";
 import type {
@@ -28,6 +28,29 @@ export function useCheckOut() {
   const [serviceUsages, setServiceUsages] = useState<ServiceUsageResponse[]>(
     []
   );
+
+  // Fetch initial bookings on mount
+  const fetchInitialBookings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all bookings without a search query
+      const searchResults = await bookingService.searchBookings("");
+      // Filter for CHECKED_IN bookings only (ready for check-out)
+      const checkedInBookings = searchResults.filter(
+        (b) => b.status === "CHECKED_IN"
+      );
+      setResults(checkedInBookings);
+    } catch (error) {
+      logger.error("Failed to fetch initial bookings:", error);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInitialBookings();
+  }, [fetchInitialBookings]);
 
   const handleSearch = async (searchQuery: string) => {
     setQuery(searchQuery);

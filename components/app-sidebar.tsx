@@ -61,9 +61,14 @@ const bookingManagement = [
     icon: ICONS.CALENDAR,
   },
   {
-    title: "Check-in / Check-out",
-    url: "/checkin-checkout",
-    icon: ICONS.CLIPBOARD_LIST,
+    title: "Check-in",
+    url: "/checkin",
+    icon: ICONS.CALENDAR_CHECK,
+  },
+  {
+    title: "Check-out",
+    url: "/checkout",
+    icon: ICONS.DOOR_OPEN,
   },
 ];
 
@@ -173,11 +178,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                 <Link href={item.url} className="flex items-center gap-3 px-2">
                   <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
-                  <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    {item.title}
+                  </span>
                 </Link>
               </SidebarMenuButton>
             </TooltipTrigger>
-            <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+            <TooltipContent
+              side="right"
+              className="bg-slate-800 text-white border-slate-700"
+            >
               {item.title}
             </TooltipContent>
           </Tooltip>
@@ -230,13 +240,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 : "text-slate-300 hover:text-white hover:bg-slate-800"
                             )}
                           >
-                            <Link href={item.url} className="flex items-center gap-3 px-2">
-                              <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
-                              <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                            <Link
+                              href={item.url}
+                              className="flex items-center gap-3 px-2"
+                            >
+                              <span className="w-5 h-5 flex-shrink-0">
+                                {item.icon}
+                              </span>
+                              <span className="group-data-[collapsible=icon]:hidden">
+                                {item.title}
+                              </span>
                             </Link>
                           </SidebarMenuButton>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+                        <TooltipContent
+                          side="right"
+                          className="bg-slate-800 text-white border-slate-700"
+                        >
                           {item.title}
                         </TooltipContent>
                       </Tooltip>
@@ -253,9 +273,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               Quản lý Phòng
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {renderMenuItems(roomManagement)}
-              </SidebarMenu>
+              <SidebarMenu>{renderMenuItems(roomManagement)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
@@ -265,9 +283,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               Booking & Check-in/out
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {renderMenuItems(bookingManagement)}
-              </SidebarMenu>
+              <SidebarMenu>{renderMenuItems(bookingManagement)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
@@ -277,9 +293,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               Dịch Vụ & Thanh Toán
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {renderMenuItems(serviceManagement)}
-              </SidebarMenu>
+              <SidebarMenu>{renderMenuItems(serviceManagement)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
@@ -301,14 +315,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               Quản Trị
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {renderMenuItems(adminManagement)}
-              </SidebarMenu>
+              <SidebarMenu>{renderMenuItems(adminManagement)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
-        
         <SidebarRail />
       </Sidebar>
     </TooltipProvider>

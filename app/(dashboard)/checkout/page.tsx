@@ -1,10 +1,5 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckInSearch } from "@/components/checkin-checkout/check-in-search";
-import { CheckInResultsTable } from "@/components/checkin-checkout/check-in-results-table";
-import { ModernCheckInModal } from "@/components/checkin-checkout/modern-check-in-modal";
-import { WalkInModal } from "@/components/checkin-checkout/walk-in-modal";
 import { CheckOutSearch } from "@/components/checkin-checkout/check-out-search";
 import { CheckOutResultsTable } from "@/components/checkin-checkout/check-out-results-table";
 import { ModernCheckOutDetails } from "@/components/checkin-checkout/modern-check-out-details";
@@ -14,31 +9,15 @@ import { AddSurchargeModal } from "@/components/checkin-checkout/add-surcharge-m
 import { FinalPaymentModal } from "@/components/checkin-checkout/final-payment-modal";
 import { PaymentModal } from "@/components/payments/payment-modal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { ICONS } from "@/src/constants/icons.enum";
-import { useCheckIn } from "@/hooks/use-checkin";
 import { useCheckOut } from "@/hooks/use-checkout";
 import { useNotification } from "@/hooks/use-notification";
-import type { Booking } from "@/lib/types/api";
 
-export default function CheckinCheckoutPage() {
+export default function CheckOutPage() {
   // Custom hooks for business logic
-  const checkIn = useCheckIn();
   const checkOut = useCheckOut();
   const notification = useNotification();
-
-  // Check-in handlers
-  const handleCheckInConfirm = async (
-    data: Parameters<typeof checkIn.handleConfirmCheckIn>[0]
-  ) => {
-    try {
-      const customerName = await checkIn.handleConfirmCheckIn(data);
-      notification.showSuccess(
-        `Check-in successful for ${customerName || "guest"}!`
-      );
-    } catch {
-      notification.showSuccess("Check-in failed. Please try again.");
-    }
-  };
 
   // Check-out handlers
   const handleAddService = async (
@@ -50,7 +29,7 @@ export default function CheckinCheckoutPage() {
         notification.showSuccess(`Đã thêm dịch vụ ${serviceName}!`);
       }
     } catch {
-      notification.showSuccess("Không thể thêm dịch vụ. Vui lòng thử lại.");
+      notification.showError("Không thể thêm dịch vụ. Vui lòng thử lại.");
     }
   };
 
@@ -91,14 +70,12 @@ export default function CheckinCheckoutPage() {
       <div className="bg-linear-to-r from-primary-600 via-primary-500 to-primary-600 rounded-2xl p-8 shadow-xl">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="w-8 h-8 text-white">{ICONS.CALENDAR_CHECK}</span>
+            <span className="w-8 h-8 text-white">{ICONS.DOOR_OPEN}</span>
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold text-white">
-              Check-in / Check-out
-            </h1>
+            <h1 className="text-3xl font-extrabold text-white">Check-out</h1>
             <p className="text-sm text-white/90 mt-1 font-medium">
-              Xử lý quy trình check-in và check-out cho khách hàng
+              Xử lý quy trình trả phòng, thanh toán và hoàn tất lưu trú
             </p>
           </div>
         </div>
@@ -134,86 +111,45 @@ export default function CheckinCheckoutPage() {
         </Alert>
       )}
 
-      <Tabs defaultValue="checkin" className="space-y-6">
-        <div className="flex justify-center">
-          <TabsList className="inline-flex h-16 items-center justify-center rounded-2xl bg-linear-to-br from-white via-gray-50 to-white p-1.5 shadow-lg border-2 border-gray-200/50">
-            <TabsTrigger
-              value="checkin"
-              className="gap-3 h-full px-8 rounded-xl data-[state=active]:bg-linear-to-br data-[state=active]:from-primary-600 data-[state=active]:to-primary-500 data-[state=active]:shadow-lg data-[state=active]:text-white font-bold text-base transition-all hover:scale-105"
-            >
-              <span className="w-5 h-5">{ICONS.CALENDAR_CHECK}</span>
-              Check-in
-            </TabsTrigger>
-            <TabsTrigger
-              value="checkout"
-              className="gap-3 h-full px-8 rounded-xl data-[state=active]:bg-linear-to-br data-[state=active]:from-primary-600 data-[state=active]:to-primary-500 data-[state=active]:shadow-lg data-[state=active]:text-white font-bold text-base transition-all hover:scale-105"
-            >
-              <span className="w-5 h-5">{ICONS.DOOR_OPEN}</span>
-              Check-out
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Check-out Content */}
+      <div className="space-y-6">
+        {!checkOut.selectedBooking ? (
+          <>
+            <CheckOutSearch onSearch={checkOut.handleSearch} />
 
-        {/* Check-in Tab */}
-        <TabsContent value="checkin" className="space-y-6">
-          <CheckInSearch
-            onSearch={checkIn.handleSearch}
-            onWalkIn={checkIn.handleWalkIn}
-          />
-
-          <CheckInResultsTable
-            reservations={checkIn.results}
-            onCheckIn={checkIn.handleSelectBooking}
-          />
-        </TabsContent>
-
-        {/* Check-out Tab */}
-        <TabsContent value="checkout" className="space-y-6">
-          {!checkOut.selectedBooking ? (
-            <>
-              <CheckOutSearch onSearch={checkOut.handleSearch} />
-
+            {checkOut.isLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-gray-200 shadow-lg">
+                <Spinner className="size-10 text-primary-600" />
+                <p className="mt-4 text-gray-600 font-medium">
+                  Đang tải dữ liệu...
+                </p>
+              </div>
+            ) : (
               <CheckOutResultsTable
                 bookings={checkOut.results}
                 onSelectBooking={checkOut.handleSelectBooking}
               />
-            </>
-          ) : (
-            <ModernCheckOutDetails
-              booking={checkOut.selectedBooking}
-              bookingRooms={checkOut.selectedBookingRooms}
-              onAddService={() => checkOut.setShowAddServiceModal(true)}
-              onAddPenalty={() => checkOut.setShowAddPenaltyModal(true)}
-              onAddSurcharge={() => checkOut.setShowAddSurchargeModal(true)}
-              onCompleteCheckout={handleCompleteCheckout}
-              onViewBill={checkOut.handleViewBill}
-              onBack={checkOut.handleBackToSearch}
-              onConfirmPayment={checkOut.handleConfirmPayment}
-              showPaymentModal={checkOut.showPaymentModal}
-              setShowPaymentModal={checkOut.setShowPaymentModal}
-              isLoading={checkOut.isLoading}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+            )}
+          </>
+        ) : (
+          <ModernCheckOutDetails
+            booking={checkOut.selectedBooking}
+            bookingRooms={checkOut.selectedBookingRooms}
+            onAddService={() => checkOut.setShowAddServiceModal(true)}
+            onAddPenalty={() => checkOut.setShowAddPenaltyModal(true)}
+            onAddSurcharge={() => checkOut.setShowAddSurchargeModal(true)}
+            onCompleteCheckout={handleCompleteCheckout}
+            onViewBill={checkOut.handleViewBill}
+            onBack={checkOut.handleBackToSearch}
+            onConfirmPayment={checkOut.handleConfirmPayment}
+            showPaymentModal={checkOut.showPaymentModal}
+            setShowPaymentModal={checkOut.setShowPaymentModal}
+            isLoading={checkOut.isLoading}
+          />
+        )}
+      </div>
 
       {/* Modals */}
-      <ModernCheckInModal
-        open={checkIn.showModal}
-        onOpenChange={checkIn.setShowModal}
-        booking={checkIn.selectedBooking as Booking | null}
-        onConfirm={handleCheckInConfirm}
-        isLoading={checkIn.isLoading}
-      />
-
-      <WalkInModal
-        open={checkIn.showWalkInModal}
-        onOpenChange={checkIn.setShowWalkInModal}
-        onConfirm={async (data) => {
-          notification.showError("Tính năng đang được phát triển!");
-        }}
-      />
-
       <AddServiceModal
         open={checkOut.showAddServiceModal}
         onOpenChange={checkOut.setShowAddServiceModal}

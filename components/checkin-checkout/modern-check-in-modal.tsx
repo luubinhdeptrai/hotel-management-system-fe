@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -45,39 +45,42 @@ export function ModernCheckInModal({
   const [checkInStates, setCheckInStates] = useState<RoomCheckInState[]>([]);
   const [notes, setNotes] = useState("");
   const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set());
+  const [lastInitializedBookingId, setLastInitializedBookingId] = useState<
+    string | null
+  >(null);
+
+  // Initialize state when modal opens with new booking data
+  // Using React's recommended pattern: set state during render based on props
+  // This avoids the cascading renders warning from useEffect
+  if (open && booking?.id && booking.id !== lastInitializedBookingId) {
+    setLastInitializedBookingId(booking.id);
+
+    const initialStates =
+      booking.bookingRooms
+        ?.filter((br) => br.status === "CONFIRMED")
+        .map((br) => ({
+          bookingRoomId: br.id,
+          customerIds: [booking.primaryCustomerId],
+          numberOfGuests: 1,
+        })) || [];
+
+    setCheckInStates(initialStates);
+    setSelectedRooms(new Set(initialStates.map((s) => s.bookingRoomId)));
+  }
 
   // Reset state when modal closes
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    if (!newOpen) {
-      setCheckInStates([]);
-      setNotes("");
-      setSelectedRooms(new Set());
-    }
-    onOpenChange(newOpen);
-  }, [onOpenChange]);
-
-  // Initialize state when modal opens with booking data
-  // Note: Setting multiple states here is intentional - we're initializing derived state
-  // based on booking data and dialog open state. The warning can be ignored as this is
-  // a valid pattern for initialization effects.
-  useEffect(() => {
-    if (!open || !booking?.bookingRooms) {
-      return;
-    }
-
-    const initialStates = booking.bookingRooms
-      .filter((br) => br.status === "CONFIRMED")
-      .map((br) => ({
-        bookingRoomId: br.id,
-        customerIds: [booking.primaryCustomerId],
-        numberOfGuests: 1,
-      }));
-    
-    // Update states together to prevent cascading renders
-    const newSelectedRooms = new Set(initialStates.map((s) => s.bookingRoomId));
-    setCheckInStates(initialStates);
-    setSelectedRooms(newSelectedRooms);
-  }, [booking?.id, booking?.primaryCustomerId, booking?.bookingRooms, open]);
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!newOpen) {
+        setCheckInStates([]);
+        setNotes("");
+        setSelectedRooms(new Set());
+        setLastInitializedBookingId(null);
+      }
+      onOpenChange(newOpen);
+    },
+    [onOpenChange]
+  );
 
   const toggleRoomSelection = (bookingRoomId: string) => {
     setSelectedRooms((prev) => {
@@ -160,11 +163,18 @@ export function ModernCheckInModal({
                 Check-in Confirmation
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-600">
-                Booking Code: <span className="font-mono font-semibold text-blue-600">{booking.bookingCode}</span>
+                Booking Code:{" "}
+                <span className="font-mono font-semibold text-blue-600">
+                  {booking.bookingCode}
+                </span>
               </DialogDescription>
             </div>
-            <Badge variant="default" className="bg-blue-100 text-blue-700 hover:bg-blue-200">
-              {confirmedRooms.length} {confirmedRooms.length === 1 ? "Room" : "Rooms"}
+            <Badge
+              variant="default"
+              className="bg-blue-100 text-blue-700 hover:bg-blue-200"
+            >
+              {confirmedRooms.length}{" "}
+              {confirmedRooms.length === 1 ? "Room" : "Rooms"}
             </Badge>
           </div>
         </DialogHeader>
@@ -179,21 +189,29 @@ export function ModernCheckInModal({
                   <div className="w-10 h-10 rounded-lg bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                     <span className="w-5 h-5 text-white">{ICONS.USER}</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Guest Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Guest Information
+                  </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500 mb-1">Full Name</p>
-                    <p className="font-semibold text-gray-900">{booking.primaryCustomer.fullName}</p>
+                    <p className="font-semibold text-gray-900">
+                      {booking.primaryCustomer.fullName}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500 mb-1">Phone Number</p>
-                    <p className="font-semibold text-gray-900">{booking.primaryCustomer.phone}</p>
+                    <p className="font-semibold text-gray-900">
+                      {booking.primaryCustomer.phone}
+                    </p>
                   </div>
                   {booking.primaryCustomer.email && (
                     <div className="col-span-2">
                       <p className="text-gray-500 mb-1">Email</p>
-                      <p className="font-semibold text-gray-900">{booking.primaryCustomer.email}</p>
+                      <p className="font-semibold text-gray-900">
+                        {booking.primaryCustomer.email}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -206,27 +224,39 @@ export function ModernCheckInModal({
             <CardContent className="p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-lg bg-linear-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                  <span className="w-5 h-5 text-white">{ICONS.CALENDAR_DAYS}</span>
+                  <span className="w-5 h-5 text-white">
+                    {ICONS.CALENDAR_DAYS}
+                  </span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Stay Details</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Stay Details
+                </h3>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500 mb-1">Check-in</p>
-                  <p className="font-semibold text-gray-900">{formatDate(booking.checkInDate)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatDate(booking.checkInDate)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500 mb-1">Check-out</p>
-                  <p className="font-semibold text-gray-900">{formatDate(booking.checkOutDate)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatDate(booking.checkOutDate)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500 mb-1">Total Guests</p>
-                  <p className="font-semibold text-gray-900">{booking.totalGuests} guests</p>
+                  <p className="font-semibold text-gray-900">
+                    {booking.totalGuests} guests
+                  </p>
                 </div>
                 <div className="col-span-3">
                   <Separator className="my-2" />
                   <div className="flex justify-between items-center pt-2">
-                    <span className="text-gray-600 font-medium">Total Amount</span>
+                    <span className="text-gray-600 font-medium">
+                      Total Amount
+                    </span>
                     <span className="text-xl font-bold text-blue-600">
                       {formatCurrency(booking.totalAmount)}
                     </span>
@@ -242,13 +272,17 @@ export function ModernCheckInModal({
               <div className="w-10 h-10 rounded-lg bg-linear-to-br from-amber-500 to-orange-500 flex items-center justify-center">
                 <span className="w-5 h-5 text-white">{ICONS.BUILDING}</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Select Rooms to Check-in</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Select Rooms to Check-in
+              </h3>
             </div>
             <div className="space-y-3">
               {confirmedRooms.map((bookingRoom) => {
                 const isSelected = selectedRooms.has(bookingRoom.id);
-                const state = checkInStates.find(s => s.bookingRoomId === bookingRoom.id);
-                
+                const state = checkInStates.find(
+                  (s) => s.bookingRoomId === bookingRoom.id
+                );
+
                 return (
                   <Card
                     key={bookingRoom.id}
@@ -262,20 +296,26 @@ export function ModernCheckInModal({
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
-                        <div className={cn(
-                          "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                          isSelected
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-gray-300"
-                        )}>
+                        <div
+                          className={cn(
+                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                            isSelected
+                              ? "border-blue-500 bg-blue-500"
+                              : "border-gray-300"
+                          )}
+                        >
                           {isSelected && (
-                            <span className="w-4 h-4 text-white">{ICONS.CHECK}</span>
+                            <span className="w-4 h-4 text-white">
+                              {ICONS.CHECK}
+                            </span>
                           )}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="font-bold text-gray-900">
-                              Room {bookingRoom.room?.roomNumber || bookingRoom.roomId}
+                              Room{" "}
+                              {bookingRoom.room?.roomNumber ||
+                                bookingRoom.roomId}
                             </h4>
                             <Badge variant="outline" className="text-xs">
                               {bookingRoom.roomType?.name || "Room"}
@@ -283,7 +323,9 @@ export function ModernCheckInModal({
                           </div>
                           <div className="grid grid-cols-3 gap-3 text-sm">
                             <div>
-                              <p className="text-gray-500 text-xs">Price/Night</p>
+                              <p className="text-gray-500 text-xs">
+                                Price/Night
+                              </p>
                               <p className="font-semibold text-gray-900">
                                 {formatCurrency(bookingRoom.pricePerNight)}
                               </p>
@@ -296,7 +338,10 @@ export function ModernCheckInModal({
                             </div>
                             {isSelected && state && (
                               <div onClick={(e) => e.stopPropagation()}>
-                                <Label htmlFor={`guests-${bookingRoom.id}`} className="text-xs text-gray-500">
+                                <Label
+                                  htmlFor={`guests-${bookingRoom.id}`}
+                                  className="text-xs text-gray-500"
+                                >
                                   Guests
                                 </Label>
                                 <Input
@@ -304,9 +349,14 @@ export function ModernCheckInModal({
                                   type="number"
                                   min="1"
                                   value={state.numberOfGuests}
-                                  onChange={(e) =>
-                                    updateCustomerCount(bookingRoom.id, parseInt(e.target.value))
-                                  }
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const parsed = parseInt(value, 10);
+                                    updateCustomerCount(
+                                      bookingRoom.id,
+                                      isNaN(parsed) ? 1 : parsed
+                                    );
+                                  }}
                                   className="h-8 text-sm"
                                 />
                               </div>
@@ -323,7 +373,10 @@ export function ModernCheckInModal({
 
           {/* Notes */}
           <div>
-            <Label htmlFor="notes" className="text-sm font-medium text-gray-700 mb-2 block">
+            <Label
+              htmlFor="notes"
+              className="text-sm font-medium text-gray-700 mb-2 block"
+            >
               Additional Notes (Optional)
             </Label>
             <Textarea
@@ -353,7 +406,9 @@ export function ModernCheckInModal({
           >
             {isLoading ? (
               <>
-                <span className="w-4 h-4 mr-2 animate-spin">{ICONS.LOADING}</span>
+                <span className="w-4 h-4 mr-2 animate-spin">
+                  {ICONS.LOADING}
+                </span>
                 Processing...
               </>
             ) : (

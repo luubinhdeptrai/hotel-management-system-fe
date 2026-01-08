@@ -293,10 +293,10 @@ export const bookingService = {
 
   /**
    * Check in guests for a booking (employee)
-   * PATCH /employee/bookings/check-in
+   * POST /employee/bookings/check-in
    */
   async checkIn(data: CheckInRequest): Promise<BookingResponse> {
-    const response = await api.patch<ApiResponse<BookingResponse>>(
+    const response = await api.post<ApiResponse<BookingResponse>>(
       "/employee/bookings/check-in",
       data,
       { requiresAuth: true }
@@ -310,10 +310,10 @@ export const bookingService = {
 
   /**
    * Check out guests for a booking (employee)
-   * PATCH /employee/bookings/check-out
+   * POST /employee/bookings/check-out
    */
   async checkOut(data: CheckOutRequest): Promise<BookingResponse> {
-    const response = await api.patch<ApiResponse<BookingResponse>>(
+    const response = await api.post<ApiResponse<BookingResponse>>(
       "/employee/bookings/check-out",
       data,
       { requiresAuth: true }

@@ -1,5 +1,5 @@
 import { logger } from "@/lib/utils/logger";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Booking } from "@/lib/types/api";
 import type {
   WalkInFormData,
@@ -14,6 +14,29 @@ export function useCheckIn() {
   const [showModal, setShowModal] = useState(false);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch initial bookings on mount
+  const fetchInitialBookings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all bookings without a search query
+      const searchResults = await bookingService.searchBookings("");
+      // Filter for CONFIRMED bookings only (ready for check-in)
+      const confirmedBookings = searchResults.filter(
+        (b) => b.status === "CONFIRMED"
+      );
+      setResults(confirmedBookings);
+    } catch (error) {
+      logger.error("Failed to fetch initial bookings:", error);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInitialBookings();
+  }, [fetchInitialBookings]);
 
   const handleSearch = async (searchQuery: string) => {
     setQuery(searchQuery);
