@@ -63,11 +63,62 @@ export class ApiError extends Error {
 }
 
 // ============================================================================
+// Token Refresh State (to prevent multiple refresh attempts)
+// ============================================================================
+
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
+ * Attempt to refresh the access token using the refresh token
+ */
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    clearTokens();
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/employee/auth/refresh-tokens`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      clearTokens();
+      return false;
+    }
+
+    const data = await response.json();
+    const tokenData = (data && typeof data === "object" && "data" in data)
+      ? (data as any).data
+      : data;
+
+    setTokens(
+      tokenData.tokens.access.token,
+      tokenData.tokens.refresh.token
+    );
+
+    return true;
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+    clearTokens();
+    return false;
+  }
+}
+
+// ============================================================================
 // Base Fetch Wrapper
 // ============================================================================
 
 interface FetchOptions extends RequestInit {
   requiresAuth?: boolean;
+  isRetry?: boolean;
 }
 
 export async function apiFetch<T>(
@@ -76,6 +127,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const {
     requiresAuth = false,
+    isRetry = false,
     headers: customHeaders,
     ...restOptions
   } = options;
@@ -106,6 +158,49 @@ export async function apiFetch<T>(
     // Handle non-JSON responses
     const contentType = response.headers.get("content-type");
     const isJson = contentType?.includes("application/json");
+
+    // If 401 and we haven't already retried, try to refresh token
+    if (response.status === 401 && requiresAuth && !isRetry) {
+      console.log("Access token expired, attempting to refresh...");
+
+      // If already refreshing, wait for that refresh to complete
+      if (isRefreshing && refreshPromise) {
+        const refreshed = await refreshPromise;
+        if (refreshed) {
+          // Retry the original request with new token
+          return apiFetch<T>(endpoint, { ...options, isRetry: true });
+        } else {
+          // Refresh failed, redirect to login
+          clearTokens();
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
+          throw new ApiError(401, "Session expired. Please login again.");
+        }
+      }
+
+      // Start a new refresh
+      isRefreshing = true;
+      refreshPromise = refreshAccessToken();
+
+      try {
+        const refreshed = await refreshPromise;
+        if (refreshed) {
+          // Retry the original request with new token
+          return apiFetch<T>(endpoint, { ...options, isRetry: true });
+        } else {
+          // Refresh failed, redirect to login
+          clearTokens();
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
+          throw new ApiError(401, "Session expired. Please login again.");
+        }
+      } finally {
+        isRefreshing = false;
+        refreshPromise = null;
+      }
+    }
 
     if (!response.ok) {
       const errorData = isJson

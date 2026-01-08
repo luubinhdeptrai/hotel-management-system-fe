@@ -120,6 +120,11 @@ export interface ReservationFormData {
     | "CREDIT_CARD"
     | "DEBIT_CARD"
     | "BANK_TRANSFER";
+  // Customer selection data for handling existing vs new customers
+  customerSelection?: {
+    useExisting: boolean;
+    customerId?: string; // Only for existing customers
+  };
 }
 
 // Available Room Search

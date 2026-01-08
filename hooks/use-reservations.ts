@@ -24,11 +24,16 @@ function convertReservationsToEvents(
 
   reservations.forEach((reservation) => {
     reservation.details.forEach((detail) => {
+      // Normalize roomName - ensure it's always in consistent format
+      const normalizedRoomName = detail.roomName 
+        ? String(detail.roomName).trim()
+        : `Phòng ${detail.roomID}`;
+      
       events.push({
         id: detail.detailID,
         reservationID: reservation.reservationID,
         roomID: detail.roomID,
-        roomName: detail.roomName,
+        roomName: normalizedRoomName,
         customerName: reservation.customer.customerName,
         start: new Date(detail.checkInDate),
         end: new Date(detail.checkOutDate),
@@ -77,7 +82,7 @@ function convertBookingToReservation(booking: Booking): Reservation {
       detailID: br.id,
       reservationID: booking.id,
       roomID: br.roomId,
-      roomName: br.room?.roomNumber || "Room",
+      roomName: br.room?.roomNumber || `Phòng ${br.roomId}` || "Room",
       roomTypeID: br.roomTypeId,
       roomTypeName: br.roomType?.name || "Standard",
       checkInDate: checkInDate.toISOString().split("T")[0],
@@ -377,21 +382,28 @@ export function useReservations() {
           return date.toISOString();
         };
 
-        // Use same time for both to avoid time-based comparison issues
-        // Backend should compare dates, not datetime
-        const checkInISO = parseToISO(checkInDateStr, 0);
-        const checkOutISO = parseToISO(checkOutDateStr, 23);
+        // Use backend's standard times: check-in at 14:00, check-out at 12:00
+        // This matches backend business rules for standard check-in/check-out times
+        const checkInISO = parseToISO(checkInDateStr, 14);
+        const checkOutISO = parseToISO(checkOutDateStr, 12);
 
         // Transform to backend-compatible CreateBookingRequest
+        // Support both existing customer (customerId) and new customer (customer object)
         const createBookingRequest: CreateBookingRequest = {
-          // Include customer info for new booking (required by backend)
-          customer: {
-            fullName: data.customerName,
-            phone: data.phoneNumber,
-            idNumber: data.identityCard,
-            email: data.email,
-            address: data.address,
-          },
+          // Include customer selection data:
+          // - If useExisting = true: use customerId (backend will lookup)
+          // - If useExisting = false: use customer object (backend will create or merge by phone)
+          ...(data.customerSelection?.useExisting
+            ? { customerId: data.customerSelection.customerId }
+            : {
+                customer: {
+                  fullName: data.customerName,
+                  phone: data.phoneNumber,
+                  idNumber: data.identityCard,
+                  email: data.email,
+                  address: data.address,
+                },
+              }),
           rooms: roomSelections.map((sel) => ({
             roomTypeId: sel.roomTypeID,
             count: sel.quantity,
@@ -472,7 +484,8 @@ export function useReservations() {
           reservationDate: new Date().toISOString().split("T")[0],
           totalRooms,
           totalAmount,
-          depositAmount: data.depositAmount,
+          // Calculate deposit as 30% of backend's total amount
+          depositAmount: Math.round((response.totalAmount || totalAmount) * 0.3),
           notes: data.notes,
           status: data.depositConfirmed ? "Đã xác nhận" : "Đã đặt",
           details,
@@ -483,12 +496,12 @@ export function useReservations() {
         // If deposit was confirmed in the form, create deposit transaction
         if (data.depositConfirmed && data.depositPaymentMethod) {
           try {
-            const bookingId = response.id || newReservation.reservationID;
+            const bookingId = response.bookingId || newReservation.reservationID;
             logger.log("Creating deposit transaction for booking:", bookingId);
 
             await transactionService.createTransaction({
               bookingId,
-              paymentMethod: data.depositPaymentMethod,
+              paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
             });
 
@@ -621,7 +634,7 @@ export function useReservations() {
 
             await transactionService.createTransaction({
               bookingId: selectedReservation.reservationID,
-              paymentMethod: data.depositPaymentMethod,
+              paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
             });
 

@@ -60,6 +60,7 @@ export default function ReservationsPage() {
 
   // Fetch room types from backend API
   const [roomTypes, setRoomTypes] = useState<RoomType[]>(mockRoomTypes);
+  const [showAllReservations, setShowAllReservations] = useState(false);
 
   useEffect(() => {
     const loadRoomTypes = async () => {
@@ -290,7 +291,9 @@ export default function ReservationsPage() {
 
           {/* Bookings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {reservations.slice(0, 6).map((reservation) => {
+            {reservations
+              .slice(0, showAllReservations ? undefined : 6)
+              .map((reservation) => {
               const firstDetail = reservation.details[0];
               const statusColors: Record<string, { bg: string; text: string }> =
                 {
@@ -396,10 +399,13 @@ export default function ReservationsPage() {
           {reservations.length > 6 && (
             <div className="text-center pt-4">
               <Button
+                onClick={() => setShowAllReservations(!showAllReservations)}
                 variant="outline"
                 className="h-11 px-6 border-2 border-blue-300 text-blue-600 hover:bg-blue-50 font-bold"
               >
-                Xem tất cả {reservations.length} đặt phòng
+                {showAllReservations
+                  ? "Ẩn các đặt phòng"
+                  : `Xem tất cả ${reservations.length} đặt phòng`}
               </Button>
             </div>
           )}

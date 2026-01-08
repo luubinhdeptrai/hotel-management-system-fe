@@ -138,10 +138,10 @@ export function ReservationCalendar({
                           }% - 8px)`,
                         }}
                       >
-                        <div className="font-medium truncate">
+                        <div className="font-semibold truncate leading-tight">
                           {event.customerName}
                         </div>
-                        <div className="text-[10px] opacity-75">
+                        <div className="text-[10px] opacity-75 truncate">
                           {event.numberOfGuests} người
                         </div>
                       </button>

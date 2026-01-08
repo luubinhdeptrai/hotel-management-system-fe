@@ -27,9 +27,11 @@ import {
   ReservationFormData,
   Reservation,
   RoomTypeSelection,
+  Customer as ReservationCustomer,
 } from "@/lib/types/reservation";
 import { RoomType } from "@/lib/types/room";
 import { checkRoomAvailability } from "@/lib/mock-reservations";
+import { CustomerSelectionCard, type CustomerSelectionData } from "./customer-selection-card";
 
 interface ReservationDetail {
   roomTypeID?: string;
@@ -98,6 +100,10 @@ export function ReservationFormModal({
   // Track if deposit was already confirmed when modal opened (to disable checkbox)
   const [wasDepositAlreadyConfirmed, setWasDepositAlreadyConfirmed] =
     useState(false);
+
+  // Customer selection state for handling both existing and new customers
+  const [selectedCustomerData, setSelectedCustomerData] =
+    useState<CustomerSelectionData | null>(null);
 
   // Load data when modal opens or reservation changes
   useEffect(() => {
@@ -382,6 +388,30 @@ export function ReservationFormModal({
     }
   };
 
+  // Handle customer selection from CustomerSelectionCard
+  const handleCustomerSelected = (data: CustomerSelectionData) => {
+    setSelectedCustomerData(data);
+    // Update form data with selected customer info
+    setFormData((prev) => ({
+      ...prev,
+      customerName: data.customerName,
+      phoneNumber: data.phoneNumber,
+      email: data.email,
+      identityCard: data.identityCard,
+      address: data.address,
+    }));
+    // Clear customer-related errors
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.customerName;
+      delete newErrors.phoneNumber;
+      delete newErrors.email;
+      delete newErrors.identityCard;
+      delete newErrors.address;
+      return newErrors;
+    });
+  };
+
   // Handle submit
   const handleSubmit = async () => {
     // Clear previous API error
@@ -393,6 +423,13 @@ export function ReservationFormModal({
         const submitData: ReservationFormData = {
           ...formData,
           roomSelections,
+          // Include customer selection data for flexible customer handling
+          customerSelection: selectedCustomerData
+            ? {
+                useExisting: selectedCustomerData.useExisting,
+                customerId: selectedCustomerData.customerId,
+              }
+            : undefined,
         };
 
         setIsSubmitting(true);
@@ -490,132 +527,20 @@ export function ReservationFormModal({
             </Alert>
           )}
 
-          {/* Customer Information */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-5">
-              <span className="w-5 h-5 text-primary-600">{ICONS.USER}</span>
-              <h3 className="text-lg font-extrabold text-gray-900">
-                Thông tin khách hàng
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <Label
-                  htmlFor="customerName"
-                  className="text-sm font-bold text-gray-700 uppercase tracking-wide"
-                >
-                  Tên khách hàng <span className="text-red-600">*</span>
-                </Label>
-                <Input
-                  id="customerName"
-                  value={formData.customerName}
-                  onChange={(e) => handleChange("customerName", e.target.value)}
-                  placeholder="Nguyễn Văn An"
-                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${
-                    errors.customerName ? "border-red-600" : "border-gray-300"
-                  }`}
-                />
-                {errors.customerName && (
-                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
-                    {errors.customerName}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="phoneNumber"
-                  className="text-sm font-bold text-gray-700 uppercase tracking-wide"
-                >
-                  Số điện thoại <span className="text-red-600">*</span>
-                </Label>
-                <Input
-                  id="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={(e) => handleChange("phoneNumber", e.target.value)}
-                  placeholder="0901234567"
-                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${
-                    errors.phoneNumber ? "border-red-600" : "border-gray-300"
-                  }`}
-                />
-                {errors.phoneNumber && (
-                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
-                    {errors.phoneNumber}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="identityCard"
-                  className="text-sm font-bold text-gray-700 uppercase tracking-wide"
-                >
-                  CMND/CCCD <span className="text-red-600">*</span>
-                </Label>
-                <Input
-                  id="identityCard"
-                  value={formData.identityCard}
-                  onChange={(e) => handleChange("identityCard", e.target.value)}
-                  placeholder="079012345678"
-                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${
-                    errors.identityCard ? "border-red-600" : "border-gray-300"
-                  }`}
-                />
-                {errors.identityCard && (
-                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
-                    {errors.identityCard}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-bold text-gray-700 uppercase tracking-wide"
-                >
-                  Email <span className="text-red-600">*</span>
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  placeholder="example@email.com"
-                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${
-                    errors.email ? "border-red-600" : "border-gray-300"
-                  }`}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
-                    {errors.email}
-                  </p>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
-                <Label
-                  htmlFor="address"
-                  className="text-sm font-bold text-gray-700 uppercase tracking-wide"
-                >
-                  Địa chỉ <span className="text-red-600">*</span>
-                </Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => handleChange("address", e.target.value)}
-                  placeholder="123 Lê Lợi, Q.1, TP.HCM"
-                  className={`h-11 mt-2 border-2 rounded-lg font-medium ${
-                    errors.address ? "border-red-600" : "border-gray-300"
-                  }`}
-                />
-                {errors.address && (
-                  <p className="text-sm text-red-600 mt-1.5 font-semibold">
-                    {errors.address}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* Customer Selection Card - Modern Tabs Interface */}
+          <CustomerSelectionCard
+            mode={mode}
+            onCustomerSelected={handleCustomerSelected}
+            initialCustomerId={
+              mode === "edit" && reservation ? reservation.customerID : undefined
+            }
+            initialData={
+              mode === "edit" && reservation
+                ? // @ts-expect-error - Customer types are compatible
+                  reservation.customer
+                : undefined
+            }
+          />
 
           {/* Reservation Details */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
@@ -956,7 +881,10 @@ export function ReservationFormModal({
                   <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
                     <span className="text-gray-600">Tiền cọc (30%):</span>
                     <span className="font-bold text-primary-600 text-lg">
-                      {Math.round(totalAmount * 0.3).toLocaleString("vi-VN")}{" "}
+                      {/* Display deposit amount from formData (backend-calculated) or fallback to 30% */}
+                      {formData.depositAmount > 0
+                        ? formData.depositAmount.toLocaleString("vi-VN")
+                        : Math.round(totalAmount * 0.3).toLocaleString("vi-VN")}{" "}
                       VNĐ
                     </span>
                   </div>
@@ -989,10 +917,8 @@ export function ReservationFormModal({
                     <SelectContent>
                       <SelectItem value="CASH">Tiền mặt</SelectItem>
                       <SelectItem value="CREDIT_CARD">Thẻ tín dụng</SelectItem>
-                      <SelectItem value="DEBIT_CARD">Thẻ ghi nợ</SelectItem>
-                      <SelectItem value="BANK_TRANSFER">
-                        Chuyển khoản
-                      </SelectItem>
+                      <SelectItem value="BANK_TRANSFER">Chuyển khoản</SelectItem>
+                      <SelectItem value="E_WALLET">Ví điện tử</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1027,7 +953,7 @@ export function ReservationFormModal({
                       }`}
                     >
                       {wasDepositAlreadyConfirmed
-                        ? "✅ Đã xác nhận nhận tiền cọc"
+                        ? "Đã xác nhận nhận tiền cọc"
                         : "Xác nhận đã nhận tiền cọc"}
                     </label>
                     <p className="text-xs text-gray-600 mt-1">
@@ -1037,9 +963,12 @@ export function ReservationFormModal({
                         <>
                           Tôi xác nhận khách hàng đã thanh toán số tiền{" "}
                           <span className="font-semibold">
-                            {Math.round(totalAmount * 0.3).toLocaleString(
-                              "vi-VN"
-                            )}{" "}
+                            {/* Use backend-calculated deposit amount or fallback to 30% */}
+                            {formData.depositAmount > 0
+                              ? formData.depositAmount.toLocaleString("vi-VN")
+                              : Math.round(totalAmount * 0.3).toLocaleString(
+                                  "vi-VN"
+                                )}{" "}
                             VNĐ
                           </span>{" "}
                           bằng phương thức đã chọn

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
+import { logger } from "@/lib/utils/logger";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -13,6 +14,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       const isAuthenticated = authService.isAuthenticated();
 
       if (!isAuthenticated) {
+        logger.log("User not authenticated, redirecting to login");
         router.push("/login");
       } else {
         setIsChecking(false);
@@ -20,6 +22,19 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
+
+    // Set up interval to check token expiration every minute
+    // This helps catch token expiration proactively
+    const tokenCheckInterval = setInterval(() => {
+      const isAuthenticated = authService.isAuthenticated();
+      if (!isAuthenticated) {
+        logger.log("Token expired during check, redirecting to login");
+        clearInterval(tokenCheckInterval);
+        router.push("/login");
+      }
+    }, 60000); // Check every 1 minute
+
+    return () => clearInterval(tokenCheckInterval);
   }, [router]);
 
   // Show nothing while checking auth to prevent flash of protected content
