@@ -54,6 +54,66 @@ This document provides a comprehensive guide for implementing the complete hotel
 
 ---
 
+## Frontend UI Guidelines
+
+> **CRITICAL**: The frontend should NEVER have input fields for payment amounts. All payment calculations are handled by the backend.
+
+### Payment UI Rules
+
+1. **No Amount Input Fields**
+
+   - ❌ Do NOT show input fields for deposit amount
+   - ❌ Do NOT show input fields for payment amount
+   - ❌ Do NOT show input fields for refund amount
+   - ✅ Only show calculated amounts as read-only/display text
+
+2. **Payment Method Selection**
+
+   - ✅ Dropdown/radio buttons for payment method (CASH, CREDIT_CARD, etc.)
+   - ✅ Transaction type selection (if applicable)
+   - ✅ Promotion code input (optional)
+
+3. **Display Calculated Amounts**
+   - Show total booking amount (from booking response)
+   - Show required deposit amount (from booking response)
+   - Show remaining balance (from bill endpoint)
+   - All amounts are READ-ONLY, fetched from backend
+
+### Reservation Flow for Hotel Employees
+
+**UI Workflow**:
+
+1. **Create Booking Form**
+
+   - Customer selection/creation
+   - Date selection (check-in/check-out)
+   - Room type and quantity selection
+   - Guest count input
+
+2. **After Booking Creation**
+   - Display booking summary with calculated amounts:
+     - Total Amount: `15,000,000 VND`
+     - Required Deposit (30%): `4,500,000 VND`
+     - Status: `PENDING`
+3. **Deposit Confirmation Checkbox**
+
+   ```
+   ☐ Confirm deposit payment received
+
+   Payment Method: [Dropdown: Cash/Credit Card/Debit Card/Bank Transfer]
+
+   [Confirm Deposit Button] (disabled until checkbox is checked)
+   ```
+
+4. **After Deposit Confirmation**
+   - Call `POST /employee/transactions` with selected payment method
+   - Update booking status to `CONFIRMED`
+   - Show success message with transaction details
+
+**Important**: The employee confirms that payment was received (e.g., customer paid cash at counter), then the system records the transaction. The amount is auto-calculated by the backend.
+
+---
+
 ## I. Reservation
 
 ### Step 1: Check Room Availability
@@ -199,7 +259,16 @@ checkOutDate: 2026-01-15
 
 ---
 
-### Step 4: Pay Deposit
+### Step 4: Confirm Deposit Payment
+
+> **Frontend UI Flow**: After booking creation, display a confirmation checkbox for the employee to confirm that the customer has paid the deposit. No amount input field should be shown.
+
+**UI Components**:
+
+- ☐ Checkbox: "Confirm deposit payment received"
+- Dropdown: Payment method selection
+- Display: Required deposit amount (read-only, from booking response)
+- Button: "Confirm Deposit" (enabled only when checkbox is checked)
 
 **Endpoint**: `POST /employee/transactions`
 
@@ -600,7 +669,17 @@ Create customer records for all guests checking in (if not already in system).
 
 ---
 
-### Step 2: Pay Remaining Balance
+### Step 2: Confirm Final Payment
+
+> **Frontend UI Flow**: After viewing the final bill, display a confirmation checkbox for the employee to confirm that the customer has paid the remaining balance. No amount input field should be shown.
+
+**UI Components**:
+
+- Display: Final bill breakdown (read-only, from `/bill` endpoint)
+- Display: Remaining balance amount (read-only)
+- ☐ Checkbox: "Confirm final payment received"
+- Dropdown: Payment method selection
+- Button: "Confirm Payment" (enabled only when checkbox is checked)
 
 **Endpoint**: `POST /employee/transactions`
 
