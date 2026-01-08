@@ -18,6 +18,7 @@ interface ModernCheckOutDetailsProps {
   onAddPenalty: () => void;
   onAddSurcharge: () => void;
   onCompleteCheckout: () => void;
+  onViewBill: () => void;
   onConfirmPayment: (method: PaymentMethod) => Promise<string>;
   showPaymentModal: boolean;
   setShowPaymentModal: (show: boolean) => void;
@@ -29,6 +30,7 @@ export function ModernCheckOutDetails({
   bookingRooms,
   onBack,
   onCompleteCheckout,
+  onViewBill,
   isLoading = false,
 }: ModernCheckOutDetailsProps) {
   const [selectedRooms, setSelectedRooms] = useState<Set<string>>(
@@ -79,7 +81,9 @@ export function ModernCheckOutDetails({
   const calculateNights = () => {
     const checkIn = new Date(booking.checkInDate);
     const checkOut = new Date(booking.checkOutDate);
-    return Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.ceil(
+      (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+    );
   };
 
   const calculateTotal = () => {
@@ -105,9 +109,14 @@ export function ModernCheckOutDetails({
           Back to Search
         </Button>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Check-out Details</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Check-out Details
+          </h2>
           <p className="text-sm text-gray-600">
-            Booking Code: <span className="font-mono font-semibold text-blue-600">{booking.bookingCode}</span>
+            Booking Code:{" "}
+            <span className="font-mono font-semibold text-blue-600">
+              {booking.bookingCode}
+            </span>
           </p>
         </div>
       </div>
@@ -130,16 +139,22 @@ export function ModernCheckOutDetails({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500 mb-1">Full Name</p>
-                    <p className="font-semibold text-gray-900">{booking.primaryCustomer.fullName}</p>
+                    <p className="font-semibold text-gray-900">
+                      {booking.primaryCustomer.fullName}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500 mb-1">Phone Number</p>
-                    <p className="font-semibold text-gray-900">{booking.primaryCustomer.phone}</p>
+                    <p className="font-semibold text-gray-900">
+                      {booking.primaryCustomer.phone}
+                    </p>
                   </div>
                   {booking.primaryCustomer.email && (
                     <div className="col-span-2">
                       <p className="text-gray-500 mb-1">Email</p>
-                      <p className="font-semibold text-gray-900">{booking.primaryCustomer.email}</p>
+                      <p className="font-semibold text-gray-900">
+                        {booking.primaryCustomer.email}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -152,7 +167,9 @@ export function ModernCheckOutDetails({
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                  <span className="w-5 h-5 text-white">{ICONS.CALENDAR_DAYS}</span>
+                  <span className="w-5 h-5 text-white">
+                    {ICONS.CALENDAR_DAYS}
+                  </span>
                 </div>
                 <span>Stay Details</span>
               </CardTitle>
@@ -161,7 +178,9 @@ export function ModernCheckOutDetails({
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500 mb-1">Check-in Date</p>
-                  <p className="font-semibold text-gray-900">{formatDate(booking.checkInDate)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatDate(booking.checkInDate)}
+                  </p>
                   {bookingRooms[0]?.actualCheckIn && (
                     <p className="text-xs text-gray-500 mt-1">
                       Actual: {formatDateTime(bookingRooms[0].actualCheckIn)}
@@ -170,7 +189,9 @@ export function ModernCheckOutDetails({
                 </div>
                 <div>
                   <p className="text-gray-500 mb-1">Check-out Date</p>
-                  <p className="font-semibold text-gray-900">{formatDate(booking.checkOutDate)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatDate(booking.checkOutDate)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500 mb-1">Number of Nights</p>
@@ -178,7 +199,9 @@ export function ModernCheckOutDetails({
                 </div>
                 <div>
                   <p className="text-gray-500 mb-1">Total Guests</p>
-                  <p className="font-semibold text-gray-900">{booking.totalGuests} guests</p>
+                  <p className="font-semibold text-gray-900">
+                    {booking.totalGuests} guests
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -198,7 +221,7 @@ export function ModernCheckOutDetails({
               <div className="space-y-3">
                 {bookingRooms.map((bookingRoom) => {
                   const isSelected = selectedRooms.has(bookingRoom.id);
-                  
+
                   return (
                     <Card
                       key={bookingRoom.id}
@@ -212,26 +235,36 @@ export function ModernCheckOutDetails({
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center gap-4">
-                          <div className={cn(
-                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                            isSelected
-                              ? "border-blue-500 bg-blue-500"
-                              : "border-gray-300"
-                          )}>
+                          <div
+                            className={cn(
+                              "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                              isSelected
+                                ? "border-blue-500 bg-blue-500"
+                                : "border-gray-300"
+                            )}
+                          >
                             {isSelected && (
-                              <span className="w-4 h-4 text-white">{ICONS.CHECK}</span>
+                              <span className="w-4 h-4 text-white">
+                                {ICONS.CHECK}
+                              </span>
                             )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
                               <h4 className="font-bold text-gray-900">
-                                Room {bookingRoom.room?.roomNumber || bookingRoom.roomId}
+                                Room{" "}
+                                {bookingRoom.room?.roomNumber ||
+                                  bookingRoom.roomId}
                               </h4>
                               <Badge variant="outline" className="text-xs">
                                 {bookingRoom.roomType?.name || "Room"}
                               </Badge>
                               <Badge
-                                variant={bookingRoom.status === "CHECKED_IN" ? "default" : "secondary"}
+                                variant={
+                                  bookingRoom.status === "CHECKED_IN"
+                                    ? "default"
+                                    : "secondary"
+                                }
                                 className="text-xs"
                               >
                                 {bookingRoom.status}
@@ -239,17 +272,23 @@ export function ModernCheckOutDetails({
                             </div>
                             <div className="grid grid-cols-3 gap-3 text-sm">
                               <div>
-                                <p className="text-gray-500 text-xs">Price/Night</p>
+                                <p className="text-gray-500 text-xs">
+                                  Price/Night
+                                </p>
                                 <p className="font-semibold text-gray-900">
                                   {formatCurrency(bookingRoom.pricePerNight)}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-gray-500 text-xs">Nights</p>
-                                <p className="font-semibold text-gray-900">{nights}</p>
+                                <p className="font-semibold text-gray-900">
+                                  {nights}
+                                </p>
                               </div>
                               <div>
-                                <p className="text-gray-500 text-xs">Room Total</p>
+                                <p className="text-gray-500 text-xs">
+                                  Room Total
+                                </p>
                                 <p className="font-semibold text-gray-900">
                                   {formatCurrency(bookingRoom.totalAmount)}
                                 </p>
@@ -273,7 +312,9 @@ export function ModernCheckOutDetails({
             <CardHeader className="pb-3 bg-linear-to-br from-green-50 to-emerald-50">
               <CardTitle className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-linear-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                  <span className="w-5 h-5 text-white">{ICONS.CREDIT_CARD}</span>
+                  <span className="w-5 h-5 text-white">
+                    {ICONS.CREDIT_CARD}
+                  </span>
                 </div>
                 <span>Payment Summary</span>
               </CardTitle>
@@ -282,7 +323,9 @@ export function ModernCheckOutDetails({
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Room Charges</span>
-                  <span className="font-semibold">{formatCurrency(totalAmount)}</span>
+                  <span className="font-semibold">
+                    {formatCurrency(totalAmount)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Service Charges</span>
@@ -296,11 +339,13 @@ export function ModernCheckOutDetails({
                   <span className="text-gray-600">Surcharges</span>
                   <span className="font-semibold">{formatCurrency(0)}</span>
                 </div>
-                
+
                 <Separator className="my-3" />
-                
+
                 <div className="flex justify-between items-center pt-2">
-                  <span className="text-lg font-semibold text-gray-900">Grand Total</span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    Grand Total
+                  </span>
                   <span className="text-2xl font-bold text-green-600">
                     {formatCurrency(totalAmount)}
                   </span>
@@ -308,13 +353,20 @@ export function ModernCheckOutDetails({
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-700 font-medium">Amount Paid</span>
+                    <span className="text-blue-700 font-medium">
+                      Amount Paid
+                    </span>
                     <span className="font-bold text-blue-700">
-                      {formatCurrency(parseFloat(booking.totalAmount) - parseFloat(booking.balance))}
+                      {formatCurrency(
+                        parseFloat(booking.totalAmount) -
+                          parseFloat(booking.balance)
+                      )}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm mt-2">
-                    <span className="text-blue-700 font-medium">Balance Due</span>
+                    <span className="text-blue-700 font-medium">
+                      Balance Due
+                    </span>
                     <span className="font-bold text-blue-700">
                       {formatCurrency(booking.balance)}
                     </span>
@@ -324,6 +376,17 @@ export function ModernCheckOutDetails({
 
               <Separator />
 
+              {/* View Bill Button */}
+              <Button
+                onClick={onViewBill}
+                variant="outline"
+                disabled={isLoading}
+                className="w-full h-11 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 text-base font-semibold"
+              >
+                <span className="w-5 h-5 mr-2">{ICONS.FILE_TEXT}</span>
+                Xem Hóa Đơn & Thanh Toán
+              </Button>
+
               <Button
                 onClick={onCompleteCheckout}
                 disabled={isLoading || selectedRooms.size === 0}
@@ -331,7 +394,9 @@ export function ModernCheckOutDetails({
               >
                 {isLoading ? (
                   <>
-                    <span className="w-5 h-5 mr-2 animate-spin">{ICONS.LOADING}</span>
+                    <span className="w-5 h-5 mr-2 animate-spin">
+                      {ICONS.LOADING}
+                    </span>
                     Processing...
                   </>
                 ) : (

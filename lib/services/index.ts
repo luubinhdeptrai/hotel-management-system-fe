@@ -10,6 +10,7 @@ export { employeeService } from "./employee.service";
 export { roomService } from "./room.service";
 export { roomTagService } from "./roomTag.service";
 export { serviceManagementService } from "./service.service";
+export { transactionService } from "./transaction.service";
 
 // Re-export API utilities
 export { api, ApiError, getAccessToken, clearTokens } from "./api";

@@ -23,6 +23,7 @@ export function useCheckOut() {
   const [showAddPenaltyModal, setShowAddPenaltyModal] = useState(false);
   const [showAddSurchargeModal, setShowAddSurchargeModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showFinalPaymentModal, setShowFinalPaymentModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serviceUsages, setServiceUsages] = useState<ServiceUsageResponse[]>(
     []
@@ -108,6 +109,32 @@ export function useCheckOut() {
     setShowPaymentModal(true);
   };
 
+  // Open final payment modal to view bill and pay remaining balance
+  const handleViewBill = () => {
+    setShowFinalPaymentModal(true);
+  };
+
+  // Handle final payment success - refresh booking data
+  const handleFinalPaymentSuccess = async () => {
+    setShowFinalPaymentModal(false);
+    // Refresh booking data to reflect payment
+    if (selectedBooking) {
+      try {
+        const updatedBookings = await bookingService.searchBookings(
+          selectedBooking.bookingCode || ""
+        );
+        const updated = updatedBookings.find(
+          (b) => b.id === selectedBooking.id
+        );
+        if (updated) {
+          setSelectedBooking(updated);
+        }
+      } catch (error) {
+        logger.error("Failed to refresh booking:", error);
+      }
+    }
+  };
+
   const handleConfirmPayment = async (
     method: PaymentMethod
   ): Promise<string> => {
@@ -156,6 +183,7 @@ export function useCheckOut() {
     showAddPenaltyModal,
     showAddSurchargeModal,
     showPaymentModal,
+    showFinalPaymentModal,
     isLoading,
     handleSearch,
     handleSelectBooking,
@@ -165,9 +193,12 @@ export function useCheckOut() {
     handleAddSurcharge,
     handleCompleteCheckout,
     handleConfirmPayment,
+    handleViewBill,
+    handleFinalPaymentSuccess,
     setShowAddServiceModal,
     setShowAddPenaltyModal,
     setShowAddSurchargeModal,
     setShowPaymentModal,
+    setShowFinalPaymentModal,
   };
 }

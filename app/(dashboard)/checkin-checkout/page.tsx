@@ -11,6 +11,7 @@ import { ModernCheckOutDetails } from "@/components/checkin-checkout/modern-chec
 import { AddServiceModal } from "@/components/checkin-checkout/add-service-modal";
 import { AddPenaltyModal } from "@/components/checkin-checkout/add-penalty-modal";
 import { AddSurchargeModal } from "@/components/checkin-checkout/add-surcharge-modal";
+import { FinalPaymentModal } from "@/components/checkin-checkout/final-payment-modal";
 import { PaymentModal } from "@/components/payments/payment-modal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ICONS } from "@/src/constants/icons.enum";
@@ -186,6 +187,7 @@ export default function CheckinCheckoutPage() {
               onAddPenalty={() => checkOut.setShowAddPenaltyModal(true)}
               onAddSurcharge={() => checkOut.setShowAddSurchargeModal(true)}
               onCompleteCheckout={handleCompleteCheckout}
+              onViewBill={checkOut.handleViewBill}
               onBack={checkOut.handleBackToSearch}
               onConfirmPayment={checkOut.handleConfirmPayment}
               showPaymentModal={checkOut.showPaymentModal}
@@ -238,6 +240,19 @@ export default function CheckinCheckoutPage() {
         summary={null}
         onConfirm={handleConfirmPayment}
       />
+
+      {/* Final Payment Modal - View Bill and Pay Remaining Balance */}
+      {checkOut.selectedBooking && (
+        <FinalPaymentModal
+          isOpen={checkOut.showFinalPaymentModal}
+          onClose={() => checkOut.setShowFinalPaymentModal(false)}
+          onSuccess={checkOut.handleFinalPaymentSuccess}
+          bookingId={checkOut.selectedBooking.id}
+          bookingCode={
+            checkOut.selectedBooking.bookingCode || checkOut.selectedBooking.id
+          }
+        />
+      )}
     </div>
   );
 }

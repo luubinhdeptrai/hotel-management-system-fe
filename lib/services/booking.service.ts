@@ -28,6 +28,47 @@ export interface BookingResponse {
   booking?: Booking;
 }
 
+export interface RoomTypeAvailability {
+  roomTypeId: string;
+  name: string;
+  availableCount: number;
+  pricePerNight: number;
+  maxGuests: number;
+}
+
+export interface BookingService {
+  serviceId: string;
+  serviceName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  status: "PENDING" | "COMPLETED";
+  orderedAt: string;
+}
+
+export interface AddServiceRequest {
+  bookingRoomId: string;
+  serviceId: string;
+  quantity: number;
+  notes?: string;
+}
+
+export interface BookingServicesResponse {
+  bookingId: string;
+  services: BookingService[];
+  totalServiceCharges: number;
+}
+
+export interface CancellationPreview {
+  bookingId: string;
+  totalAmount: number;
+  paidAmount: number;
+  cancellationFee: number;
+  refundAmount: number;
+  refundPercentage: number;
+  policy: string;
+}
+
 /**
  * Build query string from params object
  */
@@ -306,6 +347,132 @@ export const bookingService = {
       console.error("Get available rooms failed:", error);
       // Return empty array - mock fallback handled in hook
       return [];
+    }
+  },
+
+  // ============================================================================
+  // ROOM TYPE AVAILABILITY
+  // ============================================================================
+
+  /**
+   * Check room type availability for date range
+   * GET /employee/room-types/availability?checkInDate=...&checkOutDate=...
+   */
+  async getRoomTypeAvailability(
+    checkInDate: string,
+    checkOutDate: string
+  ): Promise<RoomTypeAvailability[]> {
+    try {
+      const response = await api.get<
+        ApiResponse<{ available: RoomTypeAvailability[] }>
+      >(
+        `/employee/room-types/availability?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`,
+        { requiresAuth: true }
+      );
+      const data =
+        response && typeof response === "object" && "data" in response
+          ? (response as ApiResponse<{ available: RoomTypeAvailability[] }>)
+              .data
+          : (response as unknown as { available: RoomTypeAvailability[] });
+      return data.available || [];
+    } catch (error) {
+      console.error("Get room type availability failed:", error);
+      return [];
+    }
+  },
+
+  // ============================================================================
+  // BOOKING SERVICES
+  // ============================================================================
+
+  /**
+   * Add service to a booking
+   * POST /employee/bookings/{bookingId}/services
+   */
+  async addService(
+    bookingId: string,
+    data: AddServiceRequest
+  ): Promise<BookingService> {
+    try {
+      const response = await api.post<ApiResponse<BookingService>>(
+        `/employee/bookings/${bookingId}/services`,
+        data,
+        { requiresAuth: true }
+      );
+      const unwrappedData =
+        response && typeof response === "object" && "data" in response
+          ? (response as ApiResponse<BookingService>).data
+          : (response as unknown as BookingService);
+      return unwrappedData;
+    } catch (error) {
+      console.error("Add service to booking failed:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all services for a booking
+   * GET /employee/bookings/{bookingId}/services
+   */
+  async getBookingServices(
+    bookingId: string
+  ): Promise<BookingServicesResponse> {
+    try {
+      const response = await api.get<ApiResponse<BookingServicesResponse>>(
+        `/employee/bookings/${bookingId}/services`,
+        { requiresAuth: true }
+      );
+      const data =
+        response && typeof response === "object" && "data" in response
+          ? (response as ApiResponse<BookingServicesResponse>).data
+          : (response as unknown as BookingServicesResponse);
+      return data;
+    } catch (error) {
+      console.error("Get booking services failed:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Remove service from a booking
+   * DELETE /employee/bookings/{bookingId}/services/{serviceId}
+   */
+  async removeService(bookingId: string, serviceId: string): Promise<void> {
+    try {
+      await api.delete(
+        `/employee/bookings/${bookingId}/services/${serviceId}`,
+        { requiresAuth: true }
+      );
+    } catch (error) {
+      console.error("Remove service from booking failed:", error);
+      throw error;
+    }
+  },
+
+  // ============================================================================
+  // CANCELLATION
+  // ============================================================================
+
+  /**
+   * Preview cancellation and refund amount
+   * GET /employee/bookings/{bookingId}/cancellation-preview
+   */
+  async getCancellationPreview(
+    bookingId: string
+  ): Promise<CancellationPreview> {
+    try {
+      const response = await api.get<ApiResponse<CancellationPreview>>(
+        `/employee/bookings/${bookingId}/cancellation-preview`,
+        { requiresAuth: true }
+      );
+      const data =
+        response && typeof response === "object" && "data" in response
+          ? (response as ApiResponse<CancellationPreview>).data
+          : (response as unknown as CancellationPreview);
+      return data;
+    } catch (error) {
+      console.error("Get cancellation preview failed:", error);
+      throw error;
     }
   },
 };

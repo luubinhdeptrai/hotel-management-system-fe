@@ -1,21 +1,43 @@
 import { logger } from "@/lib/utils/logger";
 import { useState, useMemo, useEffect } from "react";
 import {
-  mockReservations,
-  convertReservationsToEvents,
-} from "@/lib/mock-reservations";
-import {
   Reservation,
   ReservationStatus,
   ReservationFormData,
   ReservationEvent,
 } from "@/lib/types/reservation";
 import { Room } from "@/lib/types/room";
-import { searchAvailableRooms } from "@/lib/mock-rooms";
 import { bookingService } from "@/lib/services/booking.service";
 import type { CreateBookingRequest, Booking } from "@/lib/types/api";
 
 type ViewMode = "calendar" | "list";
+
+/**
+ * Convert reservations to calendar events
+ */
+function convertReservationsToEvents(
+  reservations: Reservation[]
+): ReservationEvent[] {
+  const events: ReservationEvent[] = [];
+
+  reservations.forEach((reservation) => {
+    reservation.details.forEach((detail) => {
+      events.push({
+        id: detail.detailID,
+        reservationID: reservation.reservationID,
+        roomID: detail.roomID,
+        roomName: detail.roomName,
+        customerName: reservation.customer.customerName,
+        start: new Date(detail.checkInDate),
+        end: new Date(detail.checkOutDate),
+        status: detail.status,
+        numberOfGuests: detail.numberOfGuests,
+      });
+    });
+  });
+
+  return events;
+}
 
 /**
  * Convert Booking entity to Reservation format for UI compatibility
@@ -75,28 +97,32 @@ function convertBookingToReservation(booking: Booking): Reservation {
 
 export function useReservations() {
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
-  const [reservations, setReservations] =
-    useState<Reservation[]>(mockReservations);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Load bookings from backend on mount
   useEffect(() => {
     const loadBookings = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
         const response = await bookingService.getAllBookings();
         const bookings = response.data || [];
-        if (bookings.length > 0) {
-          const converted = bookings.map(convertBookingToReservation);
-          setReservations(converted);
-          logger.log("Loaded bookings from backend:", converted);
-        } else {
-          // Use mock data if no bookings returned
-          logger.log("No bookings from API, using mock data");
-          setReservations(mockReservations);
-        }
-      } catch (error) {
-        logger.error("Failed to load bookings:", error);
-        // Fallback to mock data
-        setReservations(mockReservations);
+        const converted = bookings.map(convertBookingToReservation);
+        setReservations(converted);
+        logger.log("Loaded bookings from backend:", converted);
+      } catch (err) {
+        logger.error("Failed to load bookings:", err);
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Không thể tải danh sách đặt phòng. Vui lòng thử lại.";
+        setError(errorMessage);
+        setReservations([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -125,6 +151,16 @@ export function useReservations() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isRoomSelectionModalOpen, setIsRoomSelectionModalOpen] =
     useState(false);
+
+  // Deposit modal state - for confirming deposit after booking creation
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [createdBookingInfo, setCreatedBookingInfo] = useState<{
+    bookingId: string;
+    bookingCode: string;
+    totalAmount: number;
+    depositRequired: number;
+    customerName: string;
+  } | null>(null);
 
   // Filter reservations
   const filteredReservations = useMemo(() => {
@@ -175,51 +211,43 @@ export function useReservations() {
       roomTypeFilter: findRoomType,
     });
 
+    setIsLoading(true);
+    setError(null);
+
     try {
-      // Try API first
       const apiRooms = await bookingService.getAvailableRooms({
         checkInDate: findCheckInDate,
         checkOutDate: findCheckOutDate,
         roomTypeId: findRoomType !== "Tất cả" ? findRoomType : undefined,
       });
 
-      if (apiRooms.length > 0) {
-        // Convert API rooms to local Room type
-        const convertedRooms: Room[] = apiRooms.map((r) => ({
-          roomID: r.id,
-          roomName: r.roomNumber,
+      // Convert API rooms to local Room type
+      const convertedRooms: Room[] = apiRooms.map((r) => ({
+        roomID: r.id,
+        roomName: r.roomNumber,
+        roomTypeID: r.roomType.id,
+        roomType: {
           roomTypeID: r.roomType.id,
-          roomType: {
-            roomTypeID: r.roomType.id,
-            roomTypeName: r.roomType.name,
-            price: parseInt(r.roomType.pricePerNight),
-            capacity: r.roomType.capacity,
-          },
-          roomStatus: "Sẵn sàng" as const,
-          floor: r.floor,
-        }));
-        setAvailableRooms(convertedRooms);
-      } else {
-        // Fallback to mock
-        const mockRooms = searchAvailableRooms(
-          findCheckInDate,
-          findCheckOutDate,
-          findRoomType !== "Tất cả" ? findRoomType : undefined
-        );
-        setAvailableRooms(mockRooms);
-      }
-    } catch (error) {
-      logger.error("API room search failed, using mock:", error);
-      // Fallback to mock search
-      const rooms = searchAvailableRooms(
-        findCheckInDate,
-        findCheckOutDate,
-        findRoomType !== "Tất cả" ? findRoomType : undefined
-      );
-      setAvailableRooms(rooms);
+          roomTypeName: r.roomType.name,
+          price: parseInt(r.roomType.pricePerNight),
+          capacity: r.roomType.capacity,
+        },
+        roomStatus: "Sẵn sàng" as const,
+        floor: r.floor,
+      }));
+      setAvailableRooms(convertedRooms);
+      setIsAvailableRoomsModalOpen(true);
+    } catch (err) {
+      logger.error("Room search failed:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Không thể tìm phòng trống. Vui lòng thử lại.";
+      setError(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsAvailableRoomsModalOpen(true);
   };
 
   // Handle filter for calendar/list (Filter tab) - doesn't open modal
@@ -456,6 +484,19 @@ export function useReservations() {
         };
 
         setReservations((prev) => [...prev, newReservation]);
+
+        // Set booking info for deposit confirmation modal
+        setCreatedBookingInfo({
+          bookingId: response.id || newReservation.reservationID,
+          bookingCode: response.bookingCode || newReservation.reservationID,
+          totalAmount: parseInt(response.totalAmount) || totalAmount,
+          depositRequired:
+            parseInt(response.depositRequired) || Math.round(totalAmount * 0.3),
+          customerName: data.customerName,
+        });
+
+        // Open deposit confirmation modal
+        setIsDepositModalOpen(true);
       } catch (error) {
         logger.error("Failed to create booking:", error);
         throw error;
@@ -515,6 +556,27 @@ export function useReservations() {
     setSelectedRoom(null);
   };
 
+  // Handle deposit modal close
+  const handleCloseDepositModal = () => {
+    setIsDepositModalOpen(false);
+  };
+
+  // Handle deposit success
+  const handleDepositSuccess = () => {
+    // Update local state to mark booking as confirmed
+    if (createdBookingInfo) {
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.reservationID === createdBookingInfo.bookingCode
+            ? { ...r, status: "Đã xác nhận" as ReservationStatus }
+            : r
+        )
+      );
+    }
+    setCreatedBookingInfo(null);
+    setIsDepositModalOpen(false);
+  };
+
   return {
     // State
     viewMode,
@@ -533,6 +595,10 @@ export function useReservations() {
     formMode,
     selectedRoom,
     isRoomSelectionModalOpen,
+    isDepositModalOpen,
+    createdBookingInfo,
+    isLoading,
+    error,
 
     // Actions
     setViewMode,
@@ -556,5 +622,7 @@ export function useReservations() {
     handleConfirmRoomSelection,
     handleClearRoomSelection,
     handleCloseRoomSelectionModal,
+    handleCloseDepositModal,
+    handleDepositSuccess,
   };
 }

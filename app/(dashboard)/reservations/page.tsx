@@ -10,6 +10,7 @@ import { ReservationFormModal } from "@/components/reservations/reservation-form
 import { CancelReservationDialog } from "@/components/reservations/cancel-reservation-dialog";
 import { AvailableRoomsModal } from "@/components/reservations/available-rooms-modal";
 import { RoomSelectionModal } from "@/components/reservations/room-selection-modal";
+import { DepositConfirmationModal } from "@/components/reservations/deposit-confirmation-modal";
 import { mockRoomTypes } from "@/lib/mock-room-types";
 import { useReservations } from "@/hooks/use-reservations";
 import { useMemo, useState, useEffect } from "react";
@@ -35,6 +36,10 @@ export default function ReservationsPage() {
     reservations,
     selectedRoom,
     isRoomSelectionModalOpen,
+    isDepositModalOpen,
+    createdBookingInfo,
+    isLoading,
+    error,
     setViewMode,
     setCheckInDate,
     setCheckOutDate,
@@ -54,6 +59,8 @@ export default function ReservationsPage() {
     handleSelectRoom,
     handleConfirmRoomSelection,
     handleCloseRoomSelectionModal,
+    handleCloseDepositModal,
+    handleDepositSuccess,
   } = useReservations();
 
   // Fetch room types from backend API
@@ -444,27 +451,117 @@ export default function ReservationsPage() {
 
         {/* Calendar View */}
         <TabsContent value="calendar" className="space-y-6">
-          <ReservationCalendar
-            events={calendarEvents}
-            onEventClick={(event) => {
-              const reservation = reservations.find(
-                (r) => r.reservationID === event.reservationID
-              );
-              if (reservation) {
-                handleViewDetails(reservation);
-              }
-            }}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-4">
+                <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+                <p className="text-gray-600 font-medium">Đang tải dữ liệu...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 max-w-md text-center space-y-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                  <span className="w-8 h-8 text-red-600">
+                    {ICONS.ALERT_CIRCLE}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-red-900">
+                  Lỗi tải dữ liệu
+                </h3>
+                <p className="text-red-700">{error}</p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Thử lại
+                </Button>
+              </div>
+            </div>
+          ) : filteredReservations.length === 0 ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                  <span className="w-10 h-10 text-gray-400">
+                    {ICONS.CALENDAR}
+                  </span>
+                </div>
+                <p className="text-gray-600 font-medium text-lg">
+                  Không có đặt phòng nào
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Tạo đặt phòng mới để bắt đầu
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ReservationCalendar
+              events={calendarEvents}
+              onEventClick={(event) => {
+                const reservation = reservations.find(
+                  (r) => r.reservationID === event.reservationID
+                );
+                if (reservation) {
+                  handleViewDetails(reservation);
+                }
+              }}
+            />
+          )}
         </TabsContent>
 
         {/* List View */}
         <TabsContent value="list" className="space-y-6">
-          <ReservationList
-            reservations={filteredReservations}
-            onEdit={handleEdit}
-            onCancel={handleCancelClick}
-            onViewDetails={handleViewDetails}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-4">
+                <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+                <p className="text-gray-600 font-medium">Đang tải dữ liệu...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 max-w-md text-center space-y-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                  <span className="w-8 h-8 text-red-600">
+                    {ICONS.ALERT_CIRCLE}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-red-900">
+                  Lỗi tải dữ liệu
+                </h3>
+                <p className="text-red-700">{error}</p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Thử lại
+                </Button>
+              </div>
+            </div>
+          ) : filteredReservations.length === 0 ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                  <span className="w-10 h-10 text-gray-400">
+                    {ICONS.CLIPBOARD_LIST}
+                  </span>
+                </div>
+                <p className="text-gray-600 font-medium text-lg">
+                  Không có đặt phòng nào
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Tạo đặt phòng mới để bắt đầu
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ReservationList
+              reservations={filteredReservations}
+              onEdit={handleEdit}
+              onCancel={handleCancelClick}
+              onViewDetails={handleViewDetails}
+            />
+          )}
         </TabsContent>
       </Tabs>
 
@@ -507,6 +604,20 @@ export default function ReservationsPage() {
         checkInDate={checkInDate}
         checkOutDate={checkOutDate}
       />
+
+      {/* Deposit Confirmation Modal - shown after successful booking creation */}
+      {createdBookingInfo && (
+        <DepositConfirmationModal
+          isOpen={isDepositModalOpen}
+          onClose={handleCloseDepositModal}
+          onSuccess={handleDepositSuccess}
+          bookingId={createdBookingInfo.bookingId}
+          bookingCode={createdBookingInfo.bookingCode}
+          totalAmount={createdBookingInfo.totalAmount}
+          depositRequired={createdBookingInfo.depositRequired}
+          customerName={createdBookingInfo.customerName}
+        />
+      )}
     </div>
   );
 }
