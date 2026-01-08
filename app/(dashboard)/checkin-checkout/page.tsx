@@ -18,7 +18,6 @@ import { ICONS } from "@/src/constants/icons.enum";
 import { useCheckIn } from "@/hooks/use-checkin";
 import { useCheckOut } from "@/hooks/use-checkout";
 import { useNotification } from "@/hooks/use-notification";
-import { mockServices } from "@/lib/mock-checkin-checkout";
 import type { Booking } from "@/lib/types/api";
 
 export default function CheckinCheckoutPage() {
@@ -218,7 +217,6 @@ export default function CheckinCheckoutPage() {
       <AddServiceModal
         open={checkOut.showAddServiceModal}
         onOpenChange={checkOut.setShowAddServiceModal}
-        services={mockServices}
         onConfirm={handleAddService}
       />
 

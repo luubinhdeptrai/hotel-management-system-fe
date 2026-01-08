@@ -8,6 +8,7 @@ import {
 } from "@/lib/types/reservation";
 import { Room } from "@/lib/types/room";
 import { bookingService } from "@/lib/services/booking.service";
+import { transactionService } from "@/lib/services/transaction.service";
 import type { CreateBookingRequest, Booking } from "@/lib/types/api";
 
 type ViewMode = "calendar" | "list";
@@ -151,16 +152,6 @@ export function useReservations() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isRoomSelectionModalOpen, setIsRoomSelectionModalOpen] =
     useState(false);
-
-  // Deposit modal state - for confirming deposit after booking creation
-  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [createdBookingInfo, setCreatedBookingInfo] = useState<{
-    bookingId: string;
-    bookingCode: string;
-    totalAmount: number;
-    depositRequired: number;
-    customerName: string;
-  } | null>(null);
 
   // Filter reservations
   const filteredReservations = useMemo(() => {
@@ -371,6 +362,7 @@ export function useReservations() {
 
         // Convert dates to ISO 8601 format
         // Parse the date and set appropriate times (check-in at 14:00, check-out at 12:00)
+        // Note: check-out time (12:00) is for the check-out DATE, which should be after check-in date
         const parseToISO = (dateStr: string, hours: number): string => {
           // Handle both "YYYY-MM-DD" and ISO formats
           const [year, month, day] = dateStr.split("-").map(Number);
@@ -384,8 +376,10 @@ export function useReservations() {
           return date.toISOString();
         };
 
-        const checkInISO = parseToISO(checkInDateStr, 14);
-        const checkOutISO = parseToISO(checkOutDateStr, 12);
+        // Use same time for both to avoid time-based comparison issues
+        // Backend should compare dates, not datetime
+        const checkInISO = parseToISO(checkInDateStr, 0);
+        const checkOutISO = parseToISO(checkOutDateStr, 23);
 
         // Transform to backend-compatible CreateBookingRequest
         const createBookingRequest: CreateBookingRequest = {
@@ -479,54 +473,225 @@ export function useReservations() {
           totalAmount,
           depositAmount: data.depositAmount,
           notes: data.notes,
-          status: "Đã đặt",
+          status: data.depositConfirmed ? "Đã xác nhận" : "Đã đặt",
           details,
         };
 
         setReservations((prev) => [...prev, newReservation]);
 
-        // Set booking info for deposit confirmation modal
-        setCreatedBookingInfo({
-          bookingId: response.id || newReservation.reservationID,
-          bookingCode: response.bookingCode || newReservation.reservationID,
-          totalAmount: parseInt(response.totalAmount) || totalAmount,
-          depositRequired:
-            parseInt(response.depositRequired) || Math.round(totalAmount * 0.3),
-          customerName: data.customerName,
-        });
+        // If deposit was confirmed in the form, create deposit transaction
+        if (data.depositConfirmed && data.depositPaymentMethod) {
+          try {
+            const bookingId = response.id || newReservation.reservationID;
+            logger.log("Creating deposit transaction for booking:", bookingId);
 
-        // Open deposit confirmation modal
-        setIsDepositModalOpen(true);
+            await transactionService.createTransaction({
+              bookingId,
+              paymentMethod: data.depositPaymentMethod,
+              transactionType: "DEPOSIT",
+            });
+
+            logger.log("Deposit transaction created successfully");
+          } catch (depositError) {
+            // Log error but don't fail the whole booking
+            logger.error("Failed to create deposit transaction:", depositError);
+            // Update status back to pending since deposit failed
+            setReservations((prev) =>
+              prev.map((r) =>
+                r.reservationID === newReservation.reservationID
+                  ? { ...r, status: "Đã đặt" as ReservationStatus }
+                  : r
+              )
+            );
+          }
+        }
       } catch (error) {
         logger.error("Failed to create booking:", error);
         throw error;
       }
     } else if (selectedReservation) {
       // Update existing reservation
-      setReservations((prev) =>
-        prev.map((r) =>
-          r.reservationID === selectedReservation.reservationID
-            ? {
-                ...r,
-                customer: {
-                  ...r.customer,
-                  customerName: data.customerName,
-                  phoneNumber: data.phoneNumber,
-                  email: data.email,
-                  identityCard: data.identityCard,
-                  address: data.address,
-                },
-                depositAmount: data.depositAmount,
-                notes: data.notes,
-                details: r.details.map((d) => ({
-                  ...d,
-                  checkInDate: data.checkInDate,
-                  checkOutDate: data.checkOutDate,
-                })),
-              }
-            : r
-        )
-      );
+      try {
+        const roomSelections = data.roomSelections || [];
+
+        // Get dates from room selections (use first room's dates as primary)
+        const allCheckIns = roomSelections
+          .map((s) => s.checkInDate)
+          .filter(Boolean);
+        const allCheckOuts = roomSelections
+          .map((s) => s.checkOutDate)
+          .filter(Boolean);
+
+        // Use existing dates if no new room selections provided
+        const checkInDateStr =
+          allCheckIns[0] || selectedReservation.details[0]?.checkInDate;
+        const checkOutDateStr =
+          allCheckOuts[0] || selectedReservation.details[0]?.checkOutDate;
+
+        // Convert dates to ISO 8601 format
+        const parseToISO = (dateStr: string, hours: number): string => {
+          const [year, month, day] = dateStr.split("-").map(Number);
+          if (year && month && day) {
+            const d = new Date(Date.UTC(year, month - 1, day, hours, 0, 0));
+            return d.toISOString();
+          }
+          const date = new Date(dateStr);
+          date.setUTCHours(hours, 0, 0, 0);
+          return date.toISOString();
+        };
+
+        const checkInISO = checkInDateStr
+          ? parseToISO(checkInDateStr, 0)
+          : undefined;
+        const checkOutISO = checkOutDateStr
+          ? parseToISO(checkOutDateStr, 23)
+          : undefined;
+
+        // Calculate total guests from room selections or use existing
+        const totalGuests =
+          roomSelections.length > 0
+            ? roomSelections.reduce((sum, sel) => sum + sel.numberOfGuests, 0)
+            : selectedReservation.details.reduce(
+                (sum, d) => sum + (d.numberOfGuests || 0),
+                0
+              );
+
+        // Check if deposit was already confirmed (status is not PENDING)
+        const wasDepositConfirmed =
+          selectedReservation.status === "Đã xác nhận" ||
+          selectedReservation.status === "Đã đặt" ||
+          selectedReservation.status === "Đã nhận phòng" ||
+          selectedReservation.status === "Đã nhận";
+
+        // Call update API (without status - status changes via transaction API)
+        await bookingService.updateBooking(selectedReservation.reservationID, {
+          checkInDate: checkInISO,
+          checkOutDate: checkOutISO,
+          totalGuests: totalGuests || undefined,
+        });
+
+        logger.log(
+          "Booking updated successfully:",
+          selectedReservation.reservationID
+        );
+
+        // Track if we successfully confirmed deposit
+        let depositConfirmedSuccessfully = false;
+
+        // If deposit was newly confirmed (checkbox checked and wasn't confirmed before), create deposit transaction
+        // The transaction API will change the status from PENDING to CONFIRMED on the backend
+        if (
+          data.depositConfirmed &&
+          !wasDepositConfirmed &&
+          data.depositPaymentMethod
+        ) {
+          try {
+            logger.log(
+              "Creating deposit transaction for booking:",
+              selectedReservation.reservationID
+            );
+
+            await transactionService.createTransaction({
+              bookingId: selectedReservation.reservationID,
+              paymentMethod: data.depositPaymentMethod,
+              transactionType: "DEPOSIT",
+            });
+
+            logger.log(
+              "Deposit transaction created successfully - status will be updated to CONFIRMED"
+            );
+            depositConfirmedSuccessfully = true;
+          } catch (depositError) {
+            // Log error but don't fail the whole update
+            logger.error("Failed to create deposit transaction:", depositError);
+          }
+        }
+
+        // Determine new status for local state update
+        let newStatus: ReservationStatus = selectedReservation.status;
+        if (depositConfirmedSuccessfully) {
+          newStatus = "Đã xác nhận";
+        }
+
+        // Calculate new total amount if room selections changed
+        const totalAmount =
+          roomSelections.length > 0
+            ? roomSelections.reduce((total, selection) => {
+                if (!selection.checkInDate || !selection.checkOutDate)
+                  return total;
+                const start = new Date(selection.checkInDate);
+                const end = new Date(selection.checkOutDate);
+                const n = Math.ceil(
+                  (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+                );
+                return (
+                  total +
+                  selection.pricePerNight * selection.quantity * (n > 0 ? n : 0)
+                );
+              }, 0)
+            : selectedReservation.totalAmount;
+
+        // Update local state
+        setReservations((prev) =>
+          prev.map((r) =>
+            r.reservationID === selectedReservation.reservationID
+              ? {
+                  ...r,
+                  customer: {
+                    ...r.customer,
+                    customerName: data.customerName,
+                    phoneNumber: data.phoneNumber,
+                    email: data.email,
+                    identityCard: data.identityCard,
+                    address: data.address,
+                  },
+                  depositAmount: data.depositAmount,
+                  paidDeposit: data.depositConfirmed
+                    ? Math.round(totalAmount * 0.3)
+                    : r.paidDeposit,
+                  notes: data.notes,
+                  status: newStatus,
+                  totalAmount,
+                  totalRooms:
+                    roomSelections.length > 0
+                      ? roomSelections.reduce((sum, s) => sum + s.quantity, 0)
+                      : r.totalRooms,
+                  details:
+                    roomSelections.length > 0
+                      ? roomSelections.flatMap((selection, selIndex) => {
+                          return Array.from(
+                            { length: selection.quantity },
+                            (_, index) => ({
+                              detailID: `${r.reservationID}_${selIndex}_${index}`,
+                              reservationID: r.reservationID,
+                              roomID: `P${selection.roomTypeID}_${index + 1}`,
+                              roomName: `${selection.roomTypeName} ${
+                                index + 1
+                              }`,
+                              roomTypeID: selection.roomTypeID,
+                              roomTypeName: selection.roomTypeName,
+                              checkInDate: selection.checkInDate,
+                              checkOutDate: selection.checkOutDate,
+                              status: newStatus,
+                              numberOfGuests: selection.numberOfGuests,
+                              pricePerNight: selection.pricePerNight,
+                            })
+                          );
+                        })
+                      : r.details.map((d) => ({
+                          ...d,
+                          checkInDate: checkInDateStr || d.checkInDate,
+                          checkOutDate: checkOutDateStr || d.checkOutDate,
+                          status: newStatus,
+                        })),
+                }
+              : r
+          )
+        );
+      } catch (error) {
+        logger.error("Failed to update booking:", error);
+        throw error;
+      }
     }
   };
 
@@ -556,27 +721,6 @@ export function useReservations() {
     setSelectedRoom(null);
   };
 
-  // Handle deposit modal close
-  const handleCloseDepositModal = () => {
-    setIsDepositModalOpen(false);
-  };
-
-  // Handle deposit success
-  const handleDepositSuccess = () => {
-    // Update local state to mark booking as confirmed
-    if (createdBookingInfo) {
-      setReservations((prev) =>
-        prev.map((r) =>
-          r.reservationID === createdBookingInfo.bookingCode
-            ? { ...r, status: "Đã xác nhận" as ReservationStatus }
-            : r
-        )
-      );
-    }
-    setCreatedBookingInfo(null);
-    setIsDepositModalOpen(false);
-  };
-
   return {
     // State
     viewMode,
@@ -595,8 +739,6 @@ export function useReservations() {
     formMode,
     selectedRoom,
     isRoomSelectionModalOpen,
-    isDepositModalOpen,
-    createdBookingInfo,
     isLoading,
     error,
 
@@ -622,7 +764,5 @@ export function useReservations() {
     handleConfirmRoomSelection,
     handleClearRoomSelection,
     handleCloseRoomSelectionModal,
-    handleCloseDepositModal,
-    handleDepositSuccess,
   };
 }

@@ -519,6 +519,28 @@ export interface CreateBookingEmployeeRequest {
   notes?: string;
 }
 
+/**
+ * Update booking request - for modifying existing booking details
+ * PUT /employee/bookings/{id}
+ */
+export interface UpdateBookingRequest {
+  checkInDate?: string; // ISO 8601 format
+  checkOutDate?: string; // ISO 8601 format
+  totalGuests?: number;
+  status?: BookingStatus;
+}
+
+export interface UpdateBookingResponse {
+  id: string;
+  bookingCode: string;
+  status: BookingStatus;
+  checkInDate: string;
+  checkOutDate: string;
+  totalGuests: number;
+  totalAmount: string;
+  updatedAt: string;
+}
+
 export interface CancelBookingRequest {
   reason?: string;
 }

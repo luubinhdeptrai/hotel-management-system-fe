@@ -10,7 +10,6 @@ import { ReservationFormModal } from "@/components/reservations/reservation-form
 import { CancelReservationDialog } from "@/components/reservations/cancel-reservation-dialog";
 import { AvailableRoomsModal } from "@/components/reservations/available-rooms-modal";
 import { RoomSelectionModal } from "@/components/reservations/room-selection-modal";
-import { DepositConfirmationModal } from "@/components/reservations/deposit-confirmation-modal";
 import { mockRoomTypes } from "@/lib/mock-room-types";
 import { useReservations } from "@/hooks/use-reservations";
 import { useMemo, useState, useEffect } from "react";
@@ -36,8 +35,6 @@ export default function ReservationsPage() {
     reservations,
     selectedRoom,
     isRoomSelectionModalOpen,
-    isDepositModalOpen,
-    createdBookingInfo,
     isLoading,
     error,
     setViewMode,
@@ -59,8 +56,6 @@ export default function ReservationsPage() {
     handleSelectRoom,
     handleConfirmRoomSelection,
     handleCloseRoomSelectionModal,
-    handleCloseDepositModal,
-    handleDepositSuccess,
   } = useReservations();
 
   // Fetch room types from backend API
@@ -604,20 +599,6 @@ export default function ReservationsPage() {
         checkInDate={checkInDate}
         checkOutDate={checkOutDate}
       />
-
-      {/* Deposit Confirmation Modal - shown after successful booking creation */}
-      {createdBookingInfo && (
-        <DepositConfirmationModal
-          isOpen={isDepositModalOpen}
-          onClose={handleCloseDepositModal}
-          onSuccess={handleDepositSuccess}
-          bookingId={createdBookingInfo.bookingId}
-          bookingCode={createdBookingInfo.bookingCode}
-          totalAmount={createdBookingInfo.totalAmount}
-          depositRequired={createdBookingInfo.depositRequired}
-          customerName={createdBookingInfo.customerName}
-        />
-      )}
     </div>
   );
 }

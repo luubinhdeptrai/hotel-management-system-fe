@@ -90,11 +90,21 @@ export function ReservationList({
   };
 
   const canEdit = (reservation: Reservation) => {
-    return reservation.status === "Đã đặt";
+    // Allow editing for pending and confirmed reservations
+    return (
+      reservation.status === "Đã đặt" ||
+      reservation.status === "Chờ xác nhận" ||
+      reservation.status === "Đã xác nhận"
+    );
   };
 
   const canCancel = (reservation: Reservation) => {
-    return reservation.status === "Đã đặt";
+    // Allow cancellation for pending and confirmed reservations
+    return (
+      reservation.status === "Đã đặt" ||
+      reservation.status === "Chờ xác nhận" ||
+      reservation.status === "Đã xác nhận"
+    );
   };
 
   return (
@@ -132,13 +142,12 @@ export function ReservationList({
           <TableBody>
             {reservations.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="text-center py-16"
-                >
+                <TableCell colSpan={8} className="text-center py-16">
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-gray-400 text-2xl">{ICONS.CALENDAR}</span>
+                      <span className="text-gray-400 text-2xl">
+                        {ICONS.CALENDAR}
+                      </span>
                     </div>
                     <p className="text-gray-500 font-semibold text-base">
                       Không tìm thấy đặt phòng nào
@@ -178,19 +187,31 @@ export function ReservationList({
                     <TableCell>
                       <div className="text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="w-4 h-4 text-success-600">{ICONS.CALENDAR}</span>
-                          <span className="text-gray-900 font-bold">{formatDate(firstDetail.checkInDate)}</span>
+                          <span className="w-4 h-4 text-success-600">
+                            {ICONS.CALENDAR}
+                          </span>
+                          <span className="text-gray-900 font-bold">
+                            {formatDate(firstDetail.checkInDate)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="w-4 h-4 text-error-600">{ICONS.CALENDAR_CHECK}</span>
-                          <span className="text-gray-600 font-semibold">{formatDate(firstDetail.checkOutDate)}</span>
+                          <span className="w-4 h-4 text-error-600">
+                            {ICONS.CALENDAR_CHECK}
+                          </span>
+                          <span className="text-gray-600 font-semibold">
+                            {formatDate(firstDetail.checkOutDate)}
+                          </span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 text-primary-600">{ICONS.BED_DOUBLE}</span>
-                        <span className="text-gray-700 font-bold">{reservation.totalRooms} phòng</span>
+                        <span className="w-4 h-4 text-primary-600">
+                          {ICONS.BED_DOUBLE}
+                        </span>
+                        <span className="text-gray-700 font-bold">
+                          {reservation.totalRooms} phòng
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="font-extrabold text-primary-600 text-base text-right">
@@ -231,7 +252,9 @@ export function ReservationList({
                             onClick={() => onCancel?.(reservation)}
                             className="h-9 px-4 bg-error-50 border-2 border-error-300 text-error-700 font-bold hover:bg-error-600 hover:text-white hover:border-error-700 hover:scale-110 transition-all shadow-sm"
                           >
-                            <span className="w-4 h-4 mr-1.5">{ICONS.X_CIRCLE}</span>
+                            <span className="w-4 h-4 mr-1.5">
+                              {ICONS.X_CIRCLE}
+                            </span>
                             Hủy
                           </Button>
                         )}

@@ -21,6 +21,8 @@ import type {
   ConfirmBookingResponse,
   AvailableRoomSearchParams,
   AvailableRoom,
+  UpdateBookingRequest,
+  UpdateBookingResponse,
 } from "@/lib/types/api";
 
 export interface BookingResponse {
@@ -160,27 +162,16 @@ export const bookingService = {
   async createBooking(
     data: CreateBookingRequest | CreateBookingEmployeeRequest
   ): Promise<CreateBookingResponse> {
-    try {
-      const response = await api.post<ApiResponse<CreateBookingResponse>>(
-        "/employee/bookings",
-        data,
-        { requiresAuth: true }
-      );
-      const unwrappedData =
-        response && typeof response === "object" && "data" in response
-          ? (response as ApiResponse<CreateBookingResponse>).data
-          : (response as unknown as CreateBookingResponse);
-      return unwrappedData;
-    } catch (error) {
-      console.error("Create booking failed:", error);
-      // Return mock response for frontend state update
-      return {
-        bookingId: `mock_${Date.now()}`,
-        bookingCode: `BK${Date.now()}`,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-        totalAmount: 0,
-      };
-    }
+    const response = await api.post<ApiResponse<CreateBookingResponse>>(
+      "/employee/bookings",
+      data,
+      { requiresAuth: true }
+    );
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as ApiResponse<CreateBookingResponse>).data
+        : (response as unknown as CreateBookingResponse);
+    return unwrappedData;
   },
 
   // ============================================================================
@@ -252,6 +243,46 @@ export const bookingService = {
         bookingCode: "",
         status: "CONFIRMED",
         confirmedAt: new Date().toISOString(),
+      };
+    }
+  },
+
+  /**
+   * Update booking details
+   * PUT /employee/bookings/{id}
+   *
+   * Note: Uses mock response if API doesn't exist
+   */
+  async updateBooking(
+    bookingId: string,
+    data: UpdateBookingRequest
+  ): Promise<UpdateBookingResponse> {
+    try {
+      const response = await api.put<ApiResponse<UpdateBookingResponse>>(
+        `/employee/bookings/${bookingId}`,
+        data,
+        { requiresAuth: true }
+      );
+      const unwrappedData =
+        response && typeof response === "object" && "data" in response
+          ? (response as ApiResponse<UpdateBookingResponse>).data
+          : (response as unknown as UpdateBookingResponse);
+      return unwrappedData;
+    } catch (error) {
+      console.error(
+        "Update booking API failed, returning mock response:",
+        error
+      );
+      // Return mock response for frontend state update
+      return {
+        id: bookingId,
+        bookingCode: "",
+        status: data.status || "PENDING",
+        checkInDate: data.checkInDate || "",
+        checkOutDate: data.checkOutDate || "",
+        totalGuests: data.totalGuests || 0,
+        totalAmount: "0",
+        updatedAt: new Date().toISOString(),
       };
     }
   },

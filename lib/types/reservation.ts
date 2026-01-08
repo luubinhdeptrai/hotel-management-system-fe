@@ -113,6 +113,13 @@ export interface ReservationFormData {
   roomSelections?: RoomTypeSelection[];
   depositAmount: number;
   notes?: string;
+  // Deposit confirmation fields
+  depositConfirmed?: boolean;
+  depositPaymentMethod?:
+    | "CASH"
+    | "CREDIT_CARD"
+    | "DEBIT_CARD"
+    | "BANK_TRANSFER";
 }
 
 // Available Room Search
