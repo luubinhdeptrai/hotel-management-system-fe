@@ -126,6 +126,11 @@ const adminManagement = [
     url: "/reports",
     icon: ICONS.BAR_CHART,
   },
+  {
+    title: "Cài đặt",
+    url: "/app-settings",
+    icon: ICONS.SETTINGS,
+  },
 ];
 
 const operationalManagement = [
