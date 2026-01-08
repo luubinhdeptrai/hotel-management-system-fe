@@ -52,6 +52,7 @@ interface ReservationFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: ReservationFormData) => Promise<void>;
+  onCancelReservation?: (reservation: Reservation) => void;
   roomTypes: RoomType[];
   reservation?: Reservation;
   mode: "create" | "edit";
@@ -61,6 +62,7 @@ export function ReservationFormModal({
   isOpen,
   onClose,
   onSave,
+  onCancelReservation,
   roomTypes,
   reservation,
   mode,
@@ -1034,12 +1036,33 @@ export function ReservationFormModal({
 
         <DialogFooter className="border-t-2 border-gray-200 pt-5 bg-gray-50">
           <div className="flex items-center justify-between w-full">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 flex items-center gap-4">
               {totalRooms > 0 && (
                 <span className="font-bold">
                   {totalRooms} phòng • {totalAmount.toLocaleString("vi-VN")} VNĐ
                 </span>
               )}
+              {/* Cancel Reservation Button - only show in edit mode for cancellable reservations */}
+              {mode === "edit" &&
+                reservation &&
+                onCancelReservation &&
+                (reservation.status === "Đã đặt" ||
+                  reservation.status === "Chờ xác nhận" ||
+                  reservation.status === "Đã xác nhận") && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      onClose();
+                      onCancelReservation(reservation);
+                    }}
+                    disabled={isSubmitting}
+                    className="h-9 px-4 bg-error-50 border-2 border-error-300 text-error-700 font-bold hover:bg-error-600 hover:text-white hover:border-error-700 transition-all"
+                  >
+                    <span className="w-4 h-4 mr-1.5">{ICONS.X_CIRCLE}</span>
+                    Hủy đặt phòng
+                  </Button>
+                )}
             </div>
             <div className="flex gap-3">
               <Button
@@ -1049,7 +1072,7 @@ export function ReservationFormModal({
                 className="h-11 px-6 border-2 border-gray-300 font-bold hover:bg-gray-100 hover:scale-105 transition-all"
               >
                 <span className="w-4 h-4 mr-2">{ICONS.CLOSE}</span>
-                Hủy
+                Đóng
               </Button>
               <Button
                 onClick={handleSubmit}

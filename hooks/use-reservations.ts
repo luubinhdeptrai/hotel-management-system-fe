@@ -301,13 +301,13 @@ export function useReservations() {
     setIsCancelModalOpen(true);
   };
 
-  const handleConfirmCancel = async () => {
+  const handleConfirmCancel = async (reason?: string) => {
     if (selectedReservation) {
       try {
-        // Call cancel API
+        // Call cancel API with reason
         await bookingService.cancelBooking(
           selectedReservation.reservationID,
-          "Hủy theo yêu cầu"
+          reason || "Hủy theo yêu cầu"
         );
         logger.log(
           "Booking cancelled via API:",

@@ -180,7 +180,7 @@ export const bookingService = {
 
   /**
    * Cancel a booking
-   * PATCH /employee/bookings/{id}/cancel
+   * POST /employee/bookings/{id}/cancel
    *
    * Note: Uses mock response if API doesn't exist
    */
@@ -189,7 +189,7 @@ export const bookingService = {
     reason?: string
   ): Promise<CancelBookingResponse> {
     try {
-      const response = await api.patch<ApiResponse<CancelBookingResponse>>(
+      const response = await api.post<ApiResponse<CancelBookingResponse>>(
         `/employee/bookings/${bookingId}/cancel`,
         { reason } as CancelBookingRequest,
         { requiresAuth: true }

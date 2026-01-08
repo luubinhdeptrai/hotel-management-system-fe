@@ -565,6 +565,7 @@ export default function ReservationsPage() {
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
         onSave={handleSaveReservation}
+        onCancelReservation={handleCancelClick}
         roomTypes={roomTypes}
         reservation={selectedReservation || undefined}
         mode={formMode}
