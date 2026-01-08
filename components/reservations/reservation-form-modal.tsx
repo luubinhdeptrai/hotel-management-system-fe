@@ -242,12 +242,12 @@ export function ReservationFormModal({
   // Add room type to selections
   const handleAddRoomType = () => {
     if (!selectedRoomType) {
-      alert("Vui lòng chọn loại phòng!");
+      toast.error("Vui lòng chọn loại phòng!");
       return;
     }
 
     if (!selectedCheckInDate || !selectedCheckOutDate) {
-      alert("Vui lòng chọn ngày đến và ngày đi cho phòng này!");
+      toast.error("Vui lòng chọn ngày đến và ngày đi cho phòng này!");
       return;
     }
 
@@ -255,7 +255,7 @@ export function ReservationFormModal({
     const checkIn = new Date(selectedCheckInDate);
     const checkOut = new Date(selectedCheckOutDate);
     if (checkOut <= checkIn) {
-      alert("Ngày đi phải sau ngày đến!");
+      toast.error("Ngày đi phải sau ngày đến!");
       return;
     }
 
@@ -308,13 +308,13 @@ export function ReservationFormModal({
       newErrors.identityCard = "Vui lòng nhập số CMND/CCCD";
     }
 
-    if (!formData.email.trim()) {
+    if (!formData.email || !formData.email.trim()) {
       newErrors.email = "Vui lòng nhập email";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Email không hợp lệ";
     }
 
-    if (!formData.address.trim()) {
+    if (!formData.address || !formData.address.trim()) {
       newErrors.address = "Vui lòng nhập địa chỉ";
     }
 
@@ -442,10 +442,10 @@ export function ReservationFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[950px]! w-[98vw] md:w-[90vw] lg:w-[90vw] max-h-[98vh] overflow-hidden flex flex-col bg-linear-to-br from-white via-gray-50 to-white mx-auto">
+      <DialogContent className="max-w-[950px] w-[98vw] md:w-[90vw] lg:w-[90vw] max-h-[98vh] overflow-hidden flex flex-col bg-gradient-to-br from-white via-gray-50 to-white mx-auto">
         <DialogHeader className="border-b-2 border-gray-200 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-lg">
               <span className="w-6 h-6 text-white">{ICONS.CALENDAR}</span>
             </div>
             <div>
@@ -1105,7 +1105,7 @@ export function ReservationFormModal({
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="h-11 px-6 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-11 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
