@@ -357,9 +357,9 @@ export type BookingStatus =
   | "PENDING"
   | "CONFIRMED"
   | "CHECKED_IN"
+  | "PARTIALLY_CHECKED_OUT"
   | "CHECKED_OUT"
-  | "CANCELLED"
-  | "EXPIRED";
+  | "CANCELLED";
 
 export type TransactionType =
   | "DEPOSIT"
@@ -449,13 +449,19 @@ export interface BookingRoom {
   room?: Room;
   roomType?: RoomType;
   booking?: Booking;
-  bookingCustomers?: Array<{
-    bookingId: string;
-    customerId: string;
-    bookingRoomId: string;
-    isPrimary: boolean;
-    customer: Customer;
-  }>;
+  bookingCustomers?: BookingCustomer[];
+}
+
+// Booking Customer - represents customer assignment to booking/room
+export interface BookingCustomer {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  bookingRoomId?: string;
+  isPrimary: boolean;
+  customer?: Customer;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Booking - main booking entity
@@ -474,6 +480,7 @@ export interface Booking {
   updatedAt: string;
   primaryCustomer?: Customer;
   bookingRooms?: BookingRoom[];
+  bookingCustomers?: BookingCustomer[];
   cancelledAt?: string;
   cancelReason?: string;
   confirmedAt?: string;

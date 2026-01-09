@@ -70,8 +70,24 @@ export function useCheckIn() {
 
       logger.log("Check-in successful:", response);
 
-      // Remove from results after successful check-in
-      setResults((prev) => prev.filter((b) => b.id !== selectedBooking?.id));
+      // Refresh booking details from backend to get updated state
+      if (selectedBooking?.id) {
+        try {
+          const bookingResponse = await bookingService.getBookingById(selectedBooking.id);
+          const updatedBooking = bookingResponse.booking;
+          
+          if (updatedBooking) {
+            // Update results with fresh data from backend
+            setResults((prev) =>
+              prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
+            );
+          }
+        } catch (refreshError) {
+          logger.warn("Failed to refresh booking details:", refreshError);
+          // Still remove from CONFIRMED list even if refresh fails
+          setResults((prev) => prev.filter((b) => b.id !== selectedBooking?.id));
+        }
+      }
 
       // Reset modal
       setShowModal(false);
@@ -95,9 +111,50 @@ export function useCheckIn() {
     try {
       logger.log("Walk-in check-in data:", data);
 
-      // TODO: Implement walk-in booking creation + immediate check-in
-      // const booking = await bookingService.createBooking(...);
-      // const checkin = await bookingService.checkIn(...);
+      // Step 1: Create booking (with customer + room types)
+      const bookingResponse = await bookingService.createBooking({
+        customer: {
+          fullName: data.customerName,
+          phone: data.phoneNumber,
+          idNumber: data.identityCard,
+          email: data.email,
+          address: data.address,
+        },
+        rooms: data.rooms || [], // Array of { roomTypeId, count }
+        checkInDate: new Date(data.checkInDate).toISOString(),
+        checkOutDate: new Date(data.checkOutDate).toISOString(),
+        totalGuests: data.numberOfGuests,
+      });
+
+      logger.log("Booking created:", bookingResponse);
+
+      // Step 2: Fetch full booking details
+      const fullBooking = await bookingService.getBookingById(bookingResponse.bookingId);
+      
+      logger.log("Full booking fetched:", fullBooking);
+
+      // Step 2b: Confirm booking before check-in
+      await bookingService.confirmBooking(bookingResponse.bookingId);
+      
+      // Step 3: Check-in all booking rooms
+      if (fullBooking?.bookingRooms) {
+        const primaryId = fullBooking.booking?.primaryCustomerId || fullBooking.booking?.primaryCustomer?.id || "";
+        const checkInInfo = fullBooking.bookingRooms.map((br) => ({
+          bookingRoomId: br.id,
+          customerIds: [primaryId], // Assign primary customer
+        }));
+
+        await bookingService.checkIn({
+          checkInInfo,
+        });
+
+        logger.log("Walk-in check-in successful");
+        
+        // Refresh search results
+        await handleSearch(query);
+      }
+
+      setShowWalkInModal(false);
     } catch (error) {
       logger.error("Walk-in check-in failed:", error);
       throw error;

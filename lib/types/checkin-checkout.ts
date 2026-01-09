@@ -118,7 +118,10 @@ export interface WalkInFormData {
   identityCard: string;
   email?: string;
   address?: string;
-  roomID: string;
+  rooms: Array<{
+    roomTypeId: string;
+    count: number;
+  }>;
   checkInDate: string;
   checkOutDate: string;
   numberOfGuests: number;

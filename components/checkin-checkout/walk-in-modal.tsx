@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ import { ICONS } from "@/src/constants/icons.enum";
 import { mockRooms } from "@/lib/mock-rooms";
 import { mockRoomTypes } from "@/lib/mock-room-types";
 import { NguoioFormModal } from "@/components/nguoio/nguoio-form-modal";
+import { logger } from "@/lib/utils/logger";
 import type { WalkInFormData } from "@/lib/types/checkin-checkout";
 
 interface WalkInModalProps {
@@ -67,10 +68,44 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
   const [nguoioModalOpen, setNguoioModalOpen] = useState(false);
 
   // Get available rooms (status = "Sẵn sàng") and not already selected
+  const [availableRoomsData, setAvailableRoomsData] = useState<typeof mockRooms>([]);
+
+  useEffect(() => {
+    const loadAvailableRooms = async () => {
+      try {
+        // Try to fetch from backend if dates are set
+        if (singleRoom.checkInDate && singleRoom.checkOutDate) {
+          // TODO: Replace with actual API call when roomService is available
+          // const response = await roomService.getAvailableRooms({
+          //   checkInDate: singleRoom.checkInDate,
+          //   checkOutDate: singleRoom.checkOutDate
+          // });
+          // setAvailableRoomsData(response);
+          
+          // For now, use mock data
+          const selectedRoomIDs = roomAssignments.map((a) => a.roomID);
+          const filtered = mockRooms.filter(
+            (room) => room.roomStatus === "Sẵn sàng" && !selectedRoomIDs.includes(room.roomID)
+          );
+          setAvailableRoomsData(filtered);
+        }
+      } catch (error) {
+        logger.error("Failed to fetch available rooms:", error);
+        const selectedRoomIDs = roomAssignments.map((a) => a.roomID);
+        const filtered = mockRooms.filter(
+          (room) => room.roomStatus === "Sẵn sàng" && !selectedRoomIDs.includes(room.roomID)
+        );
+        setAvailableRoomsData(filtered);
+      }
+    };
+
+    loadAvailableRooms();
+  }, [singleRoom.checkInDate, singleRoom.checkOutDate, roomAssignments]);
+
   const getAvailableRooms = () => {
-    const selectedRoomIDs = roomAssignments.map((a) => a.roomID);
-    return mockRooms.filter(
-      (room) => room.roomStatus === "Sẵn sàng" && !selectedRoomIDs.includes(room.roomID)
+    // Return fetched data if available, otherwise fallback to mock
+    return availableRoomsData.length > 0 ? availableRoomsData : mockRooms.filter(
+      (room) => room.roomStatus === "Sẵn sàng" && !roomAssignments.map((a) => a.roomID).includes(room.roomID)
     );
   };
 
@@ -176,16 +211,41 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
 
   const handleSubmit = () => {
     if (validateForm()) {
+      // Map room assignments to backend format
+      const roomsPayload = roomAssignments.map((assignment) => {
+        const room = mockRooms.find((r) => r.roomID === assignment.roomID);
+        return {
+          roomTypeId: room?.roomTypeID || "",
+          count: 1, // Each room assignment = 1 room
+        };
+      });
+
+      // Calculate total guests from all room assignments
+      const totalGuests = roomAssignments.reduce(
+        (sum, assignment) => sum + assignment.numberOfGuests,
+        0
+      );
+
+      // Use earliest check-in and latest check-out from all rooms
+      const checkInDate =
+        roomAssignments.length > 0
+          ? roomAssignments[0].checkInDate
+          : new Date().toISOString().split("T")[0];
+      const checkOutDate =
+        roomAssignments.length > 0
+          ? roomAssignments[0].checkOutDate
+          : new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
       const formData: WalkInFormData = {
         customerName: customerInfo.customerName,
         phoneNumber: customerInfo.phoneNumber,
         identityCard: customerInfo.identityCard,
         email: customerInfo.email || undefined,
         address: customerInfo.address || undefined,
-        roomID: singleRoom.roomID || (roomAssignments.length > 0 ? roomAssignments[0].roomID : ""),
-        checkInDate: singleRoom.checkInDate || new Date().toISOString().split('T')[0],
-        checkOutDate: singleRoom.checkOutDate || new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        numberOfGuests: singleRoom.numberOfGuests || 1,
+        rooms: roomsPayload, // Backend format: [{ roomTypeId, count }]
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        numberOfGuests: totalGuests,
         notes: notes.trim() || undefined,
       };
 

@@ -536,8 +536,7 @@ export function ReservationFormModal({
             }
             initialData={
               mode === "edit" && reservation
-                ? // @ts-expect-error - Customer types are compatible
-                  reservation.customer
+                ? (reservation.customer as any)
                 : undefined
             }
           />

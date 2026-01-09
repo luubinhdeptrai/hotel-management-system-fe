@@ -345,7 +345,7 @@ export function BookingDetailsModal({
                                             key={idx}
                                             className="text-sm text-gray-700"
                                           >
-                                            • {guest.customer.fullName}{" "}
+                                            • {guest.customer?.fullName || "Guest"}{" "}
                                             {guest.isPrimary && (
                                               <Badge className="ml-2 bg-emerald-100 text-emerald-800">
                                                 Chính

@@ -30,6 +30,23 @@ export default function CheckInPage() {
     }
   };
 
+  // Walk-in handler
+  const handleWalkInConfirm = async (
+    data: Parameters<typeof checkIn.handleConfirmWalkIn>[0]
+  ) => {
+    try {
+      await checkIn.handleConfirmWalkIn(data);
+      notification.showSuccess(
+        `Check-in khách vãng lai thành công cho ${data.customerName}!`
+      );
+    } catch (error) {
+      notification.showError(
+        "Walk-in check-in thất bại. Vui lòng thử lại."
+      );
+      console.error("Walk-in error:", error);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-8">
       {/* Modern Header with Gradient */}
@@ -112,9 +129,7 @@ export default function CheckInPage() {
       <WalkInModal
         open={checkIn.showWalkInModal}
         onOpenChange={checkIn.setShowWalkInModal}
-        onConfirm={async () => {
-          notification.showError("Tính năng đang được phát triển!");
-        }}
+        onConfirm={handleWalkInConfirm}
       />
     </div>
   );
