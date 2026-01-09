@@ -88,57 +88,35 @@ export const appSettingsService = {
 
   /**
    * Get deposit percentage configuration
-   * GET /employee/app-settings/deposit-percentage
-   * 
-   * NOTE: This endpoint is not yet implemented in the backend.
-   * Returns default value until backend implements it.
+   * GET /employee/app-settings/deposit_percentage (uses generic key-based endpoint)
    */
   async getDepositPercentage(): Promise<number> {
-    try {
-      const response = await apiFetch<{ data: { percentage: number } }>(
-        `${BASE_PATH}/deposit-percentage`,
-        { requiresAuth: true }
-      );
-      return response.data.percentage;
-    } catch (error) {
-      // Backend endpoint not implemented yet - return default
-      console.warn("Deposit percentage endpoint not available, using default 50%");
-      return 50;
-    }
+    const response = await apiFetch<{ 
+      data: { key: string; value: { percentage: number } } 
+    }>(
+      `${BASE_PATH}/deposit_percentage`,
+      { requiresAuth: true }
+    );
+    return response.data.value.percentage;
   },
 
   /**
    * Update deposit percentage configuration
-   * PUT /employee/app-settings/deposit-percentage
-   * 
-   * NOTE: This endpoint may not be implemented in the backend yet.
-   * Try to call it, but provide helpful error message if it fails.
+   * PUT /employee/app-settings/deposit_percentage (uses generic key-based endpoint)
    */
   async updateDepositPercentage(
     config: UpdateDepositPercentageRequest
   ): Promise<number> {
-    try {
-      const response = await apiFetch<{ data: { percentage: number } }>(
-        `${BASE_PATH}/deposit-percentage`,
-        {
-          method: "PUT",
-          body: JSON.stringify(config),
-          requiresAuth: true,
-        }
-      );
-      return response.data.percentage;
-    } catch (error) {
-      // Provide helpful error message
-      const errorMsg = error instanceof Error ? error.message : "Failed to update deposit percentage";
-      
-      // Check if it's a 404 (endpoint not found)
-      if (errorMsg.includes("404") || errorMsg.includes("not found")) {
-        throw new Error(
-          "Tính năng Tỷ lệ đặt cọc chưa được kích hoạt trên server. Vui lòng liên hệ quản trị viên."
-        );
+    const response = await apiFetch<{ 
+      data: { key: string; value: { percentage: number } } 
+    }>(
+      `${BASE_PATH}/deposit_percentage`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ value: { percentage: config.percentage } }),
+        requiresAuth: true,
       }
-      
-      throw error;
-    }
+    );
+    return response.data.value.percentage;
   },
 };
