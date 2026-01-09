@@ -6,8 +6,10 @@ import type {
   BackendCheckInRequest,
 } from "@/lib/types/checkin-checkout";
 import { bookingService } from "@/lib/services/booking.service";
+import { useAuth } from "@/hooks/use-auth";
 
 export function useCheckIn() {
+  const { user, isLoading: authLoading } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Booking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -15,8 +17,13 @@ export function useCheckIn() {
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch initial bookings on mount
+  // Fetch initial bookings on mount (only after auth is ready)
   const fetchInitialBookings = useCallback(async () => {
+    // Skip if auth is still loading or user is not authenticated
+    if (authLoading || !user) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
       // Fetch all bookings without a search query
@@ -32,7 +39,7 @@ export function useCheckIn() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [authLoading, user]);
 
   useEffect(() => {
     fetchInitialBookings();

@@ -104,7 +104,7 @@ function convertBookingToReservation(booking: Booking): Reservation {
 }
 
 export function useReservations() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -113,6 +113,11 @@ export function useReservations() {
   // Load bookings from backend on mount
   useEffect(() => {
     const loadBookings = async () => {
+      // Skip if authentication is still loading or user is not authenticated
+      if (authLoading || !user) {
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -136,7 +141,7 @@ export function useReservations() {
     };
 
     loadBookings();
-  }, []);
+  }, [authLoading, user]);
 
   // Filters
   const [checkInDate, setCheckInDate] = useState("");

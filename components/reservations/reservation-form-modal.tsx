@@ -23,6 +23,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { ICONS } from "@/src/constants/icons.enum";
+import { appSettingsService } from "@/lib/services";
 import {
   ReservationFormData,
   Reservation,
@@ -97,6 +98,7 @@ export function ReservationFormModal({
   const [conflictWarning, setConflictWarning] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string>("");
+  const [depositPercentage, setDepositPercentage] = useState<number>(30);
   // Track if deposit was already confirmed when modal opened (to disable checkbox)
   const [wasDepositAlreadyConfirmed, setWasDepositAlreadyConfirmed] =
     useState(false);
@@ -244,6 +246,23 @@ export function ReservationFormModal({
       cancelled = true;
     };
   }, [isOpen, reservation, mode]);
+
+  // Load deposit percentage when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadDepositPercentage = async () => {
+      try {
+        const percentage = await appSettingsService.getDepositPercentage();
+        setDepositPercentage(percentage);
+      } catch (error) {
+        console.warn("Failed to load deposit percentage, using default 30%");
+        setDepositPercentage(30);
+      }
+    };
+
+    loadDepositPercentage();
+  }, [isOpen]);
 
   // Add room type to selections
   const handleAddRoomType = () => {
@@ -878,12 +897,12 @@ export function ReservationFormModal({
                     </span>
                   </div>
                   <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
-                    <span className="text-gray-600">Tiền cọc (30%):</span>
+                    <span className="text-gray-600">Tiền cọc ({depositPercentage}%):</span>
                     <span className="font-bold text-primary-600 text-lg">
-                      {/* Display deposit amount from formData (backend-calculated) or fallback to 30% */}
+                      {/* Display deposit amount from formData (backend-calculated) or fallback to configured percentage */}
                       {formData.depositAmount > 0
                         ? formData.depositAmount.toLocaleString("vi-VN")
-                        : Math.round(totalAmount * 0.3).toLocaleString("vi-VN")}{" "}
+                        : Math.round(totalAmount * (depositPercentage / 100)).toLocaleString("vi-VN")}{" "}
                       VNĐ
                     </span>
                   </div>
@@ -962,10 +981,10 @@ export function ReservationFormModal({
                         <>
                           Tôi xác nhận khách hàng đã thanh toán số tiền{" "}
                           <span className="font-semibold">
-                            {/* Use backend-calculated deposit amount or fallback to 30% */}
+                            {/* Use backend-calculated deposit amount or fallback to configured percentage */}
                             {formData.depositAmount > 0
                               ? formData.depositAmount.toLocaleString("vi-VN")
-                              : Math.round(totalAmount * 0.3).toLocaleString(
+                              : Math.round(totalAmount * (depositPercentage / 100)).toLocaleString(
                                   "vi-VN"
                                 )}{" "}
                             VNĐ
