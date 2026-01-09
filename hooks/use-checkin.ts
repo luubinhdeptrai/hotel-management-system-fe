@@ -135,18 +135,19 @@ export function useCheckIn() {
 
       logger.log("Booking created:", bookingResponse);
 
-      // Step 2: Fetch full booking details
-      const fullBooking = await bookingService.getBookingById(bookingResponse.bookingId);
-      
-      logger.log("Full booking fetched:", fullBooking);
-
-      // Step 2b: Confirm booking before check-in
+      // Step 2: CRITICAL - Confirm booking first and WAIT for completion
+      // Backend requires booking rooms to be CONFIRMED status before check-in
       await bookingService.confirmBooking(bookingResponse.bookingId);
+      logger.log("Booking confirmed:", bookingResponse.bookingId);
       
-      // Step 3: Check-in all booking rooms
-      if (fullBooking?.bookingRooms) {
-        const primaryId = fullBooking.booking?.primaryCustomerId || fullBooking.booking?.primaryCustomer?.id || "";
-        const checkInInfo = fullBooking.bookingRooms.map((br) => ({
+      // Step 3: AFTER confirmation, fetch fresh booking data with updated status
+      const confirmedBooking = await bookingService.getBookingById(bookingResponse.bookingId);
+      logger.log("Booking refetched after confirmation:", confirmedBooking);
+      
+      // Step 4: NOW check-in with confirmed rooms
+      if (confirmedBooking?.bookingRooms) {
+        const primaryId = confirmedBooking.booking?.primaryCustomerId || confirmedBooking.booking?.primaryCustomer?.id || "";
+        const checkInInfo = confirmedBooking.bookingRooms.map((br) => ({
           bookingRoomId: br.id,
           customerIds: [primaryId], // Assign primary customer
         }));

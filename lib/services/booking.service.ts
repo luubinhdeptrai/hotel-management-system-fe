@@ -297,7 +297,7 @@ export const bookingService = {
    */
   async checkIn(data: CheckInRequest): Promise<BookingResponse> {
     const response = await api.post<ApiResponse<BookingResponse>>(
-      "/employee/bookings/check-in-rooms",
+      "/employee/bookings/check-in",
       data,
       { requiresAuth: true }
     );
