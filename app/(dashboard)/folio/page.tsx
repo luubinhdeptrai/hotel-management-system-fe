@@ -2,7 +2,7 @@
 
 
 import { logger } from "@/lib/utils/logger";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,76 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ICONS } from "@/src/constants/icons.enum";
-import * as FolioService from "@/lib/services/folio-service";
-import type { Transaction } from "@/lib/services/folio-service";
-
-// Mock folio data
-const mockFolios: Array<{
-  folioID: string;
-  folioType: "GUEST" | "MASTER" | "NO_RESIDENT";
-  guestName: string;
-  roomNumber: string;
-  checkInDate: string;
-  checkOutDate: string;
-  balance: number;
-  transactions: Transaction[];
-  linkedFolios?: string[];
-}> = [
-  {
-    folioID: "F001",
-    folioType: "GUEST" as const,
-    guestName: "Nguyễn Văn A",
-    roomNumber: "101",
-    checkInDate: "2025-12-10",
-    checkOutDate: "2025-12-16",
-    balance: 8500000,
-    transactions: [
-      { id: "T001", date: "2025-12-10", type: "ROOM_CHARGE" as const, description: "Tiền phòng - Đêm 1", amount: 1500000 },
-      { id: "T002", date: "2025-12-11", type: "ROOM_CHARGE" as const, description: "Tiền phòng - Đêm 2", amount: 1500000 },
-      { id: "T003", date: "2025-12-12", type: "SERVICE" as const, description: "Minibar - Nước ngọt", amount: 50000 },
-      { id: "T004", date: "2025-12-13", type: "ROOM_CHARGE" as const, description: "Tiền phòng - Đêm 3", amount: 1500000 },
-      { id: "T005", date: "2025-12-14", type: "SERVICE" as const, description: "Giặt là - 3 áo", amount: 150000 },
-      { id: "T006", date: "2025-12-15", type: "ROOM_CHARGE" as const, description: "Tiền phòng - Đêm 4", amount: 1500000 },
-      { id: "T007", date: "2025-12-16", type: "ROOM_CHARGE" as const, description: "Tiền phòng - Đêm 5", amount: 1500000 },
-      { id: "T008", date: "2025-12-14", type: "DEPOSIT" as const, description: "Đặt cọc", amount: -1200000 },
-    ],
-  },
-  {
-    folioID: "F002",
-    folioType: "MASTER" as const,
-    guestName: "Công ty ABC",
-    roomNumber: "201-205",
-    checkInDate: "2025-12-12",
-    checkOutDate: "2025-12-18",
-    balance: 25000000,
-    transactions: [
-      { id: "M001", date: "2025-12-12", type: "ROOM_CHARGE" as const, description: "Tiền phòng - 5 phòng x Đêm 1", amount: 7500000 },
-      { id: "M002", date: "2025-12-13", type: "ROOM_CHARGE" as const, description: "Tiền phòng - 5 phòng x Đêm 2", amount: 7500000 },
-      { id: "M003", date: "2025-12-14", type: "ROOM_CHARGE" as const, description: "Tiền phòng - 5 phòng x Đêm 3", amount: 7500000 },
-      { id: "M004", date: "2025-12-12", type: "DEPOSIT" as const, description: "Đặt cọc", amount: -5000000 },
-    ],
-    linkedFolios: ["F003", "F004", "F005", "F006", "F007"],
-  },
-  {
-    folioID: "F003",
-    folioType: "NO_RESIDENT" as const,
-    guestName: "Sự kiện Hội nghị",
-    roomNumber: "N/A",
-    checkInDate: "2025-12-15",
-    checkOutDate: "2025-12-15",
-    balance: 12000000,
-    transactions: [
-      { id: "N001", date: "2025-12-15", type: "SERVICE" as const, description: "Thuê hội trường - 4 giờ", amount: 8000000 },
-      { id: "N002", date: "2025-12-15", type: "SERVICE" as const, description: "Set coffee break - 50 pax", amount: 2500000 },
-      { id: "N003", date: "2025-12-15", type: "SERVICE" as const, description: "Microphone & Projector", amount: 1500000 },
-    ],
-  },
-];
+import type { Folio } from "@/lib/types/folio";
 
 type FolioType = "GUEST" | "MASTER" | "NO_RESIDENT" | "ALL";
 
 export default function FolioPage() {
-  const [selectedFolio, setSelectedFolio] = useState(mockFolios[0]);
+  const [folios, setFolios] = useState<Folio[]>([]);
+  const [selectedFolio, setSelectedFolio] = useState<Folio | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [splitModalOpen, setSplitModalOpen] = useState(false);
   const [filterType, setFilterType] = useState<FolioType>("ALL");
@@ -99,34 +38,37 @@ export default function FolioPage() {
     guestAmount: number;
   }>({ companyAmount: 0, guestAmount: 0 });
 
+  // Load folios from API
+  useEffect(() => {
+    const loadFolios = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // TODO: Implement getFolios API endpoint in backend
+        // For now, we'll show a placeholder until the API is available
+        // const response = await transactionService.getFolios();
+        setFolios([]);
+        setSelectedFolio(null);
+      } catch (err) {
+        logger.error("Failed to load folios:", err);
+        setError(err instanceof Error ? err.message : "Failed to load folios");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadFolios();
+  }, []);
+
   const filteredFolios = filterType === "ALL" 
-    ? mockFolios 
-    : mockFolios.filter(f => f.folioType === filterType);
-
-  // Use FolioService to calculate balance
-  const calculatedBalance = FolioService.calculateBalance(selectedFolio.transactions);
-  const breakdown = FolioService.getTransactionBreakdown(selectedFolio.transactions);
-
-  const getFolioTypeBadge = (type: "GUEST" | "MASTER" | "NO_RESIDENT") => {
-    const badges = {
-      GUEST: <Badge className="bg-linear-to-r from-primary-600 to-primary-500 text-white">Guest Folio</Badge>,
-      MASTER: <Badge className="bg-linear-to-r from-success-600 to-success-500 text-white">Master Folio</Badge>,
-      NO_RESIDENT: <Badge className="bg-linear-to-r from-warning-600 to-warning-500 text-white">No-Resident Folio</Badge>,
-    };
-    return badges[type];
-  };
-
-  const getTransactionTypeBadge = (type: string) => {
-    const badges: Record<string, React.ReactElement> = {
-      ROOM_CHARGE: <Badge variant="outline" className="border-primary-600 text-primary-700">Tiền phòng</Badge>,
-      SERVICE: <Badge variant="outline" className="border-info-600 text-info-700">Dịch vụ</Badge>,
-      DEPOSIT: <Badge variant="outline" className="border-success-600 text-success-700">Đặt cọc</Badge>,
-      PAYMENT: <Badge variant="outline" className="border-error-600 text-error-700">Thanh toán</Badge>,
-    };
-    return badges[type] || <Badge variant="outline">{type}</Badge>;
-  };
+    ? folios 
+    : folios;
 
   const handleTransferCharge = () => {
+    if (!selectedFolio) {
+      alert("Vui lòng chọn folio");
+      return;
+    }
     if (!transferData.selectedTransaction || !transferData.targetFolio) {
       alert("Vui lòng chọn transaction và folio đích");
       return;
@@ -139,14 +81,11 @@ export default function FolioPage() {
   };
 
   const handleSplitBill = () => {
-    const total = selectedFolio.balance;
-    
-    if (splitData.companyAmount + splitData.guestAmount !== total) {
-      alert(`Tổng tiền split (${(splitData.companyAmount + splitData.guestAmount).toLocaleString("vi-VN")}đ) phải bằng tổng bill (${total.toLocaleString("vi-VN")}đ)`);
+    if (!selectedFolio) {
+      alert("Vui lòng chọn folio");
       return;
     }
-    // BACKEND INTEGRATION: Call POST /api/folios/split-bill
-    // with { folioId, companyAmount, guestAmount, newFolioType }
+    // TODO: Implement split bill logic when API returns correct folio structure
     logger.log("Split bill:", splitData);
     setSplitModalOpen(false);
     setSplitData({ companyAmount: 0, guestAmount: 0 });
@@ -170,19 +109,19 @@ export default function FolioPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
             <div className="text-primary-100 text-sm mb-1">Guest Folios</div>
-            <div className="text-3xl font-bold">{mockFolios.filter(f => f.folioType === "GUEST").length}</div>
+            <div className="text-3xl font-bold">{0}</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
             <div className="text-primary-100 text-sm mb-1">Master Folios</div>
-            <div className="text-3xl font-bold">{mockFolios.filter(f => f.folioType === "MASTER").length}</div>
+            <div className="text-3xl font-bold">{0}</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
             <div className="text-primary-100 text-sm mb-1">No-Resident</div>
-            <div className="text-3xl font-bold">{mockFolios.filter(f => f.folioType === "NO_RESIDENT").length}</div>
+            <div className="text-3xl font-bold">{0}</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
             <div className="text-primary-100 text-sm mb-1">Tổng balance</div>
-            <div className="text-3xl font-bold">{mockFolios.reduce((sum, f) => sum + f.balance, 0).toLocaleString("vi-VN")}</div>
+            <div className="text-3xl font-bold">{0}</div>
           </div>
         </div>
       </div>
@@ -214,21 +153,21 @@ export default function FolioPage() {
                   key={folio.folioID}
                   onClick={() => setSelectedFolio(folio)}
                   className={`p-4 cursor-pointer transition-colors ${
-                    selectedFolio.folioID === folio.folioID
+                    selectedFolio && selectedFolio.folioID === folio.folioID
                       ? "bg-primary-50 border-l-4 border-primary-600"
                       : "hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-bold text-gray-900">{folio.guestName}</p>
-                      <p className="text-sm text-gray-600">{folio.folioID} • {folio.roomNumber}</p>
+                      <p className="font-bold text-gray-900">{folio.folioID}</p>
+                      <p className="text-sm text-gray-600">Folio Details</p>
                     </div>
-                    {getFolioTypeBadge(folio.folioType)}
+                    <Badge>Folio</Badge>
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
                     <span className="text-xs text-gray-600">Balance:</span>
-                    <span className="font-bold text-primary-700">{folio.balance.toLocaleString("vi-VN")}đ</span>
+                    <span className="font-bold text-primary-700">{0}đ</span>
                   </div>
                 </div>
               ))}
@@ -239,38 +178,49 @@ export default function FolioPage() {
         {/* Right: Folio Details */}
         <Card className="shadow-xl border-0 lg:col-span-2">
           <CardHeader className="bg-linear-to-br from-primary-50 via-white to-primary-50/30 border-b border-primary-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
-                  {selectedFolio.guestName}
-                  <span className="ml-2">{getFolioTypeBadge(selectedFolio.folioType)}</span>
-                </CardTitle>
-                <CardDescription className="text-gray-600 mt-1">
-                  {selectedFolio.folioID} • Phòng: {selectedFolio.roomNumber} • {selectedFolio.checkInDate} → {selectedFolio.checkOutDate}
-                </CardDescription>
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTransferModalOpen(true)}
-                className="h-9 border-info-300 text-info-700 hover:bg-info-50 flex items-center"
-              >
-                <span className="w-4 h-4 mr-1 flex items-center justify-center">{ICONS.ARROW_UP_DOWN}</span>
-                Transfer Charge
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSplitModalOpen(true)}
-                className="h-9 border-success-300 text-success-700 hover:bg-success-50 flex items-center"
-              >
-                <span className="w-4 h-4 mr-1 flex items-center justify-center">{ICONS.SPLIT}</span>
-                Split Bill
-              </Button>
-            </div>
+            {isLoading ? (
+              <div className="text-center py-8">Đang tải...</div>
+            ) : error ? (
+              <div className="text-center py-8 text-red-600">{error}</div>
+            ) : !selectedFolio ? (
+              <div className="text-center py-8">Không có folio nào được chọn</div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                      {selectedFolio.folioID}
+                      <span className="ml-2">Folio</span>
+                    </CardTitle>
+                    <CardDescription className="text-gray-600 mt-1">
+                      Folio Details
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTransferModalOpen(true)}
+                    className="h-9 border-info-300 text-info-700 hover:bg-info-50 flex items-center"
+                  >
+                    <span className="w-4 h-4 mr-1 flex items-center justify-center">{ICONS.ARROW_UP_DOWN}</span>
+                    Transfer Charge
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSplitModalOpen(true)}
+                    className="h-9 border-success-300 text-success-700 hover:bg-success-50 flex items-center"
+                  >
+                    <span className="w-4 h-4 mr-1 flex items-center justify-center">{ICONS.SPLIT}</span>
+                    Split Bill
+                  </Button>
+                </div>
+              </>
+            )}
           </CardHeader>
+          {!isLoading && !error && selectedFolio && (
           <CardContent className="p-6">
             <Tabs defaultValue="transactions" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
@@ -289,16 +239,11 @@ export default function FolioPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedFolio.transactions.map((txn) => (
-                      <TableRow key={txn.id} className="hover:bg-gray-50">
-                        <TableCell className="text-sm text-gray-600">{txn.date}</TableCell>
-                        <TableCell>{getTransactionTypeBadge(txn.type)}</TableCell>
-                        <TableCell className="font-medium text-gray-900">{txn.description}</TableCell>
-                        <TableCell className={`text-right font-bold ${txn.amount < 0 ? 'text-success-700' : 'text-gray-900'}`}>
-                          {txn.amount < 0 ? '-' : ''}{Math.abs(txn.amount).toLocaleString("vi-VN")}đ
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                        Ghi chú: Dữ liệu giao dịch sẽ được tải từ API khi kết nối hoàn tất
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </TabsContent>
@@ -306,75 +251,15 @@ export default function FolioPage() {
               <TabsContent value="summary" className="space-y-4">
                 <Card className="bg-linear-to-br from-gray-50 to-white border-gray-200">
                   <CardContent className="p-6 space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-                      <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Chi tiết tính toán (Folio Service)</span>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Tiền phòng:</span>
-                        <span className="font-semibold text-gray-900">
-                          {breakdown.roomCharges.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Dịch vụ:</span>
-                        <span className="font-semibold text-gray-900">
-                          {breakdown.services.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Phụ thu:</span>
-                        <span className="font-semibold text-gray-900">
-                          {breakdown.surcharges.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Phạt:</span>
-                        <span className="font-semibold text-gray-900">
-                          {breakdown.penalties.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Đặt cọc:</span>
-                        <span className="font-semibold text-success-700">
-                          {breakdown.deposits.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Thanh toán:</span>
-                        <span className="font-semibold text-success-700">
-                          {breakdown.payments.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                      <div className="pt-3 border-t border-gray-300 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-700 font-semibold">Tổng charges:</span>
-                          <span className="font-bold text-gray-900">{breakdown.totalCharges.toLocaleString("vi-VN")}đ</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-700 font-semibold">Tổng payments:</span>
-                          <span className="font-bold text-success-700">{breakdown.totalPayments.toLocaleString("vi-VN")}đ</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-3 border-t-2 border-gray-400">
-                        <span className="text-lg font-bold text-gray-900">Balance (Calculated):</span>
-                        <span className="text-2xl font-bold text-primary-700">
-                          {calculatedBalance.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                      <div className="bg-info-50 border border-info-200 rounded-lg p-3">
-                        <p className="text-xs text-info-800">
-                          <span className="font-bold">Verification:</span> Mock balance: {selectedFolio.balance.toLocaleString("vi-VN")}đ | 
-                          Service balance: {calculatedBalance.toLocaleString("vi-VN")}đ | 
-                          Breakdown balance: {breakdown.balance.toLocaleString("vi-VN")}đ
-                        </p>
-                      </div>
+                    <div className="text-center py-8 text-gray-500">
+                      Tính năng tóm tắt sẽ được kích hoạt khi API tích hợp hoàn tất
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
             </Tabs>
           </CardContent>
+          )}
         </Card>
       </div>
 
@@ -398,8 +283,8 @@ export default function FolioPage() {
                   <SelectValue placeholder="Chọn transaction cần transfer..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {selectedFolio.transactions.filter(t => t.amount > 0).map(txn => (
-                    <SelectItem key={txn.id} value={txn.id}>
+                  {selectedFolio && selectedFolio.transactions?.filter(t => t.amount > 0).map((txn, idx) => (
+                    <SelectItem key={idx} value={String(idx)}>
                       {txn.description} - {txn.amount.toLocaleString("vi-VN")}đ
                     </SelectItem>
                   ))}
@@ -413,9 +298,9 @@ export default function FolioPage() {
                   <SelectValue placeholder="Chọn folio..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockFolios.filter(f => f.folioID !== selectedFolio.folioID).map(folio => (
+                  {selectedFolio && folios.filter(f => f.folioID !== selectedFolio.folioID).map(folio => (
                     <SelectItem key={folio.folioID} value={folio.folioID}>
-                      {folio.folioID} - {folio.guestName}
+                      {folio.folioID}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -444,7 +329,7 @@ export default function FolioPage() {
           <div className="space-y-4 py-4">
             <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
               <p className="text-sm font-semibold text-primary-900">
-                Tổng bill: <span className="text-xl font-bold text-primary-700">{selectedFolio.balance.toLocaleString("vi-VN")}đ</span>
+                Tổng bill: <span className="text-xl font-bold text-primary-700">{selectedFolio && selectedFolio.balance ? selectedFolio.balance.toLocaleString("vi-VN") : "0"}đ</span>
               </p>
             </div>
             <div className="space-y-3">
@@ -482,7 +367,7 @@ export default function FolioPage() {
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-blue-200 text-sm">
                 <span className="text-gray-700 font-semibold">Tổng:</span>
-                <span className={`font-bold text-lg ${(splitData.companyAmount + splitData.guestAmount) === selectedFolio.balance ? 'text-success-700' : 'text-error-700'}`}>
+                <span className={`font-bold text-lg ${selectedFolio && (splitData.companyAmount + splitData.guestAmount) === selectedFolio.balance ? 'text-success-700' : 'text-error-700'}`}>
                   {(splitData.companyAmount + splitData.guestAmount).toLocaleString("vi-VN")}đ
                 </span>
               </div>
@@ -499,7 +384,7 @@ export default function FolioPage() {
             <Button variant="outline" onClick={() => setSplitModalOpen(false)}>Hủy</Button>
             <Button 
               className="bg-linear-to-r from-success-600 to-success-500 hover:from-success-700 hover:to-success-600 text-white"
-              disabled={(splitData.companyAmount + splitData.guestAmount) !== selectedFolio.balance}
+              disabled={!selectedFolio || (splitData.companyAmount + splitData.guestAmount) !== selectedFolio.balance}
               onClick={handleSplitBill}
             >
               Xác nhận Split

@@ -69,8 +69,9 @@ export function TransactionTable({ transactions, onVoidTransaction, isFolioClose
               <TableHead className="w-20 font-bold">Giờ</TableHead>
               <TableHead className="font-bold">Loại</TableHead>
               <TableHead className="font-bold">Diễn giải</TableHead>
-              <TableHead className="text-right font-bold">Debit</TableHead>
-              <TableHead className="text-right font-bold">Credit</TableHead>
+              <TableHead className="text-right font-bold">Số tiền gốc</TableHead>
+              <TableHead className="text-right font-bold">Giảm giá</TableHead>
+              <TableHead className="text-right font-bold">Thành tiền</TableHead>
               <TableHead className="font-bold">Người tạo</TableHead>
               {onVoidTransaction && !isFolioClosed && (
                 <TableHead className="w-20 font-bold text-center">Thao tác</TableHead>
@@ -81,7 +82,7 @@ export function TransactionTable({ transactions, onVoidTransaction, isFolioClose
             {sortedTransactions.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-center py-16"
                 >
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
@@ -121,24 +122,29 @@ export function TransactionTable({ transactions, onVoidTransaction, isFolioClose
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    {txn.debit > 0 && (
-                      <span className="font-bold text-error-600 bg-error-50 px-2 py-1 rounded">
-                        {formatCurrency(txn.debit)}
+                    {txn.baseAmount > 0 && (
+                      <span className="text-gray-900">
+                        {formatCurrency(txn.baseAmount)}
                       </span>
                     )}
-                    {txn.debit === 0 && (
+                    {txn.baseAmount === 0 && (
                       <span className="text-gray-400">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    {txn.credit > 0 && (
-                      <span className="font-bold text-success-600 bg-success-50 px-2 py-1 rounded">
-                        {formatCurrency(txn.credit)}
+                    {txn.discountAmount > 0 && (
+                      <span className="text-success-600">
+                        -{formatCurrency(txn.discountAmount)}
                       </span>
                     )}
-                    {txn.credit === 0 && (
+                    {txn.discountAmount === 0 && (
                       <span className="text-gray-400">-</span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-bold text-gray-900">
+                      {formatCurrency(txn.amount)}
+                    </span>
                   </TableCell>
                   <TableCell className="text-sm text-gray-500">
                     {txn.createdBy}

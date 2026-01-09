@@ -314,7 +314,7 @@ export interface GetRoomTypesParams {
 export interface Service {
   id: string;
   name: string;
-  price: string;
+  price: number; // Changed from string to number (parse Decimal from backend)
   unit: string;
   isActive: boolean;
   createdAt: string;
@@ -373,6 +373,56 @@ export type PaymentMethod =
   | "CREDIT_CARD"
   | "BANK_TRANSFER"
   | "E_WALLET";
+
+// Transaction Status
+export type TransactionStatus =
+  | "PENDING"
+  | "COMPLETED"
+  | "FAILED"
+  | "REFUNDED";
+
+export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, string> = {
+  PENDING: "Chờ xử lý",
+  COMPLETED: "Hoàn thành",
+  FAILED: "Thất bại",
+  REFUNDED: "Đã hoàn tiền",
+};
+
+export const TRANSACTION_STATUS_COLORS: Record<TransactionStatus, string> = {
+  PENDING: "bg-yellow-100 text-yellow-800",
+  COMPLETED: "bg-green-100 text-green-800",
+  FAILED: "bg-red-100 text-red-800",
+  REFUNDED: "bg-blue-100 text-blue-800",
+};
+
+// Service Usage Status
+export type ServiceUsageStatus =
+  | "PENDING"
+  | "TRANSFERRED"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export const SERVICE_USAGE_STATUS_LABELS: Record<ServiceUsageStatus, string> = {
+  PENDING: "Chờ xử lý",
+  TRANSFERRED: "Đã chuyển",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
+};
+
+export const SERVICE_USAGE_STATUS_COLORS: Record<ServiceUsageStatus, string> = {
+  PENDING: "bg-yellow-100 text-yellow-800",
+  TRANSFERRED: "bg-blue-100 text-blue-800",
+  COMPLETED: "bg-green-100 text-green-800",
+  CANCELLED: "bg-gray-100 text-gray-800",
+};
+
+// Payment Method Labels
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  CASH: "Tiền mặt",
+  CREDIT_CARD: "Thẻ tín dụng",
+  BANK_TRANSFER: "Chuyển khoản",
+  E_WALLET: "Ví điện tử",
+};
 
 // ============================================================================
 // Booking Related Types

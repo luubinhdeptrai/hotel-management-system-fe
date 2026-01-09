@@ -15,13 +15,17 @@ import type {
 // ============================================================================
 
 export interface CreateTransactionRequest {
-  bookingId: string;
+  bookingId?: string; // Optional for guest service payments
+  bookingRoomIds?: string[];
+  serviceUsageId?: string; // For service payment scenarios
   paymentMethod: PaymentMethod;
   transactionType: TransactionType;
-  bookingRoomIds?: string[];
+  description?: string; // Transaction notes
+  employeeId: string; // Required for audit trail
   promotionApplications?: Array<{
     customerPromotionId: string;
-    bookingRoomId: string;
+    bookingRoomId?: string; // For room-specific promotions
+    serviceUsageId?: string; // For service-specific promotions
   }>;
 }
 
@@ -93,7 +97,7 @@ export const transactionService = {
   ): Promise<TransactionResponse> {
     try {
       const response = await api.post<ApiResponse<TransactionResponse>>(
-        "/employee/transactions",
+        "/employee-api/v1/transactions",
         data,
         { requiresAuth: true }
       );

@@ -328,29 +328,8 @@ export const bookingService = {
   // ============================================================================
   // TRANSACTIONS
   // ============================================================================
-
-  /**
-   * Create a transaction for a booking (employee)
-   * POST /employee/bookings/transaction
-   */
-  async createTransaction(
-    data: CreateTransactionRequest
-  ): Promise<BookingResponse> {
-    const response = await api.post<ApiResponse<BookingResponse>>(
-      "/employee/bookings/transaction",
-      data,
-      { requiresAuth: true }
-    );
-    const unwrappedData =
-      response && typeof response === "object" && "data" in response
-        ? (response as ApiResponse<BookingResponse>).data
-        : (response as unknown as BookingResponse);
-    return unwrappedData;
-  },
-
-  // ============================================================================
   // AVAILABLE ROOMS
-  // ============================================================================
+  // =============================================================================
 
   /**
    * Get available rooms for a date range

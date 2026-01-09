@@ -11,6 +11,7 @@ import { bookingService } from "@/lib/services/booking.service";
 import { transactionService } from "@/lib/services/transaction.service";
 import { customerService } from "@/lib/services/customer.service";
 import type { CreateBookingRequest, Booking } from "@/lib/types/api";
+import { useAuth } from "@/hooks/use-auth";
 
 type ViewMode = "calendar" | "list";
 
@@ -103,6 +104,7 @@ function convertBookingToReservation(booking: Booking): Reservation {
 }
 
 export function useReservations() {
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -503,6 +505,7 @@ export function useReservations() {
               bookingId,
               paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
+              employeeId: user?.id || "",
             });
 
             logger.log("Deposit transaction created successfully");
@@ -636,6 +639,7 @@ export function useReservations() {
               bookingId: selectedReservation.reservationID,
               paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
+              employeeId: user?.id || "",
             });
 
             logger.log(

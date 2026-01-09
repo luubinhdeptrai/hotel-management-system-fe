@@ -11,9 +11,9 @@ import type {
 import type { AddSurchargeFormData } from "@/components/checkin-checkout/add-surcharge-modal";
 import { bookingService } from "@/lib/services/booking.service";
 import { checkinCheckoutService } from "@/lib/services/checkin-checkout.service";
+import { useAuth } from "@/hooks/use-auth";
 
-export function useCheckOut() {
-  const [query, setQuery] = useState("");
+export function useCheckOut() {  const { user } = useAuth();  const [query, setQuery] = useState("");
   const [results, setResults] = useState<Booking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedBookingRooms, setSelectedBookingRooms] = useState<
@@ -99,6 +99,7 @@ export function useCheckOut() {
         bookingRoomId: bookingRoomId,
         serviceId: data.serviceID,
         quantity: data.quantity,
+        employeeId: user?.id || "",
       });
 
       logger.log("Service usage added:", response);

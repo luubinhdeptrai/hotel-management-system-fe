@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ICONS } from "@/src/constants/icons.enum";
 import { transactionService } from "@/lib/services";
 import type { PaymentMethod } from "@/lib/types/api";
+import { useAuth } from "@/hooks/use-auth";
 
 interface DepositConfirmationModalProps {
   isOpen: boolean;
@@ -54,6 +55,7 @@ export function DepositConfirmationModal({
   depositRequired,
   customerName,
 }: DepositConfirmationModalProps) {
+  const { user } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +76,7 @@ export function DepositConfirmationModal({
         bookingId,
         paymentMethod,
         transactionType: "DEPOSIT",
+        employeeId: user?.id || "",
       });
 
       console.log("Deposit confirmed:", response);
