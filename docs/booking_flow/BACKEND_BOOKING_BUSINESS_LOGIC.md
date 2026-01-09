@@ -1,4 +1,3 @@
-# Backend Booking Business Logic & Scenarios
 
 ## Executive Summary
 
