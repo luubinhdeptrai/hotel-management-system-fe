@@ -394,8 +394,21 @@ export function useReservations() {
         const checkInISO = parseToISO(checkInDateStr, 14);
         const checkOutISO = parseToISO(checkOutDateStr, 12);
 
+        // Validate that roomSelections have roomIDs (from user selection in room-selector component)
+        // The new component already provides specific roomIDs - no need for auto-selection
+        const roomSelectionsWithIds = roomSelections.map((sel) => {
+          if (!sel.roomID) {
+            throw new Error(
+              `Room selection for ${sel.roomTypeName} is missing roomID. ` +
+              `Please select a specific room from the room selector.`
+            );
+          }
+          return sel;
+        });
+
         // Transform to backend-compatible CreateBookingRequest
         // Support both existing customer (customerId) and new customer (customer object)
+        // Backend expects array of specific roomIds (not room types + count)
         const createBookingRequest: CreateBookingRequest = {
           // Include customer selection data:
           // - If useExisting = true: use customerId (backend will lookup)
@@ -411,10 +424,12 @@ export function useReservations() {
                   address: data.address,
                 },
               }),
-          rooms: roomSelections.map((sel) => ({
-            roomTypeId: sel.roomTypeID,
-            count: sel.quantity,
-          })),
+          rooms: (() => {
+            // Use auto-selected roomIDs (from either user selection or auto-search above)
+            return roomSelectionsWithIds.map((sel) => ({
+              roomId: sel.roomID!,
+            }));
+          })(),
           checkInDate: checkInISO,
           checkOutDate: checkOutISO,
           totalGuests: roomSelections.reduce(

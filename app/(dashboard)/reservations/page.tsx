@@ -6,7 +6,7 @@ import { ICONS } from "@/src/constants/icons.enum";
 import { UnifiedReservationsFilter } from "@/components/reservations/unified-reservations-filter";
 import { ReservationCalendar } from "@/components/reservations/reservation-calendar";
 import { ReservationList } from "@/components/reservations/reservation-list";
-import { ReservationFormModal } from "@/components/reservations/reservation-form-modal";
+import { NewReservationFormModal } from "@/components/reservations/new-reservation-form-modal";
 import { CancelReservationDialog } from "@/components/reservations/cancel-reservation-dialog";
 import { AvailableRoomsModal } from "@/components/reservations/available-rooms-modal";
 import { RoomSelectionModal } from "@/components/reservations/room-selection-modal";
@@ -567,12 +567,10 @@ export default function ReservationsPage() {
       </Tabs>
 
       {/* Form Modal */}
-      <ReservationFormModal
+      <NewReservationFormModal
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
         onSave={handleSaveReservation}
-        onCancelReservation={handleCancelClick}
-        roomTypes={roomTypes}
         reservation={selectedReservation || undefined}
         mode={formMode}
       />

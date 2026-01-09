@@ -428,11 +428,6 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 // Booking Related Types
 // ============================================================================
 
-export interface RoomRequest {
-  roomTypeId: string;
-  count: number;
-}
-
 export interface CreateBookingRequest {
   customerId?: string;
   customer?: {
@@ -443,8 +438,7 @@ export interface CreateBookingRequest {
     address?: string;
   };
   rooms: Array<{
-    roomTypeId: string;
-    count: number;
+    roomId: string;
   }>;
   checkInDate: string; // ISO 8601 format
   checkOutDate: string; // ISO 8601 format
@@ -567,8 +561,7 @@ export interface CreateBookingEmployeeRequest {
     address?: string;
   };
   rooms: Array<{
-    roomTypeId: string;
-    count: number;
+    roomId: string;
   }>;
   checkInDate: string; // ISO 8601 format
   checkOutDate: string; // ISO 8601 format

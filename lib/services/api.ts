@@ -3,9 +3,9 @@
  * Centralized API client for making HTTP requests to the backend
  */
 
-// API Base URL - Backend runs on port 3000
+// API Base URL - Backend runs on port 8000
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/v1";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/v1";
 
 // Storage keys for tokens
 export const AUTH_STORAGE_KEYS = {

@@ -118,7 +118,51 @@ export function useCheckIn() {
     try {
       logger.log("Walk-in check-in data:", data);
 
-      // Step 1: Create booking (with customer + room types)
+      // AUTO-SELECT ROOMS: If rooms don't have specific roomIDs,
+      // search for available rooms and auto-select them
+      const roomsWithIds = await Promise.all(
+        (data.rooms || []).map(async (roomSelection) => {
+          // If roomID is already specified, use it
+          if ('roomId' in roomSelection && roomSelection.roomId) {
+            return roomSelection;
+          }
+
+          // Otherwise, search for available rooms of this type
+          // Handle both old format (roomTypeId + count) and new format (roomId)
+          const roomTypeId = (roomSelection as any).roomTypeId;
+          const count = (roomSelection as any).count || 1;
+
+          if (!roomTypeId) {
+            throw new Error('Room type ID is required for walk-in booking');
+          }
+
+          logger.log(`Searching for ${count} available rooms of type ${roomTypeId}...`);
+
+          try {
+            const availableRooms = await bookingService.getAvailableRooms({
+              checkInDate: data.checkInDate,
+              checkOutDate: data.checkOutDate,
+              roomTypeId: roomTypeId,
+            });
+
+            if (availableRooms.length < count) {
+              throw new Error(
+                `Not enough rooms available. Need ${count}, but only ${availableRooms.length} available.`
+              );
+            }
+
+            // Use first available room
+            return {
+              roomId: availableRooms[0].id,
+            };
+          } catch (err) {
+            logger.error(`Failed to auto-select rooms:`, err);
+            throw err;
+          }
+        })
+      );
+
+      // Step 1: Create booking (with customer + room IDs)
       const bookingResponse = await bookingService.createBooking({
         customer: {
           fullName: data.customerName,
@@ -127,7 +171,7 @@ export function useCheckIn() {
           email: data.email,
           address: data.address,
         },
-        rooms: data.rooms || [], // Array of { roomTypeId, count }
+        rooms: roomsWithIds as any, // Array of { roomId }
         checkInDate: new Date(data.checkInDate).toISOString(),
         checkOutDate: new Date(data.checkOutDate).toISOString(),
         totalGuests: data.numberOfGuests,
