@@ -48,10 +48,6 @@ export const validateServiceUsageRequest = (
     return { valid: false, error: "quantity must be greater than 0" };
   }
 
-  if (!input.employeeId) {
-    return { valid: false, error: "employeeId is required for audit trail" };
-  }
-
   // For booking services, at least one of bookingId or bookingRoomId should be set
   const hasBookingContext = Boolean(input.bookingId || input.bookingRoomId);
   
@@ -71,10 +67,6 @@ export const validateTransactionRequest = (
 
   if (!input.transactionType) {
     return { valid: false, error: "transactionType is required" };
-  }
-
-  if (!input.employeeId) {
-    return { valid: false, error: "employeeId is required for audit trail" };
   }
 
   // Scenario-based validations

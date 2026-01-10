@@ -110,7 +110,6 @@ export function FinalPaymentModal({
         bookingId,
         paymentMethod,
         transactionType: "ROOM_CHARGE", // or FINAL_PAYMENT based on backend
-        employeeId: user?.id || "",
       });
 
       console.log("Final payment confirmed:", response);

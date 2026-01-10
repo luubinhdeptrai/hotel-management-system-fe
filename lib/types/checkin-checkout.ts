@@ -158,7 +158,6 @@ export interface ServiceUsageRequest {
   bookingRoomId?: string;
   serviceId: string;
   quantity: number;
-  employeeId: string; // Required for audit trail
 }
 
 /**

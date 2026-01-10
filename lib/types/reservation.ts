@@ -81,8 +81,11 @@ export interface Reservation {
   paidDeposit?: number; // NEW: Actual deposit paid
   notes?: string;
   headerStatus?: ReservationHeaderStatus; // NEW: Booking-level status (optional for backward compat)
-  status: ReservationStatus; // Required for backward compatibility
+  status: ReservationStatus; // Required for backward compatibility - Vietnamese label for display
   details: ReservationDetail[];
+  // Backend data for accurate deposit and status logic (Issue #6 fix)
+  backendStatus?: string; // Backend status enum: "PENDING" | "CONFIRMED" | "CHECKED_IN" | etc.
+  backendData?: any; // Full booking data from backend (includes totalDeposit, totalPaid, etc.)
 }
 
 // Room Type Selection for multi-room booking

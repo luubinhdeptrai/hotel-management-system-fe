@@ -106,7 +106,6 @@ export function useCheckOut() {
         bookingRoomId: bookingRoomId,
         serviceId: data.serviceID,
         quantity: data.quantity,
-        employeeId: user?.id || "",
       });
 
       logger.log("Service usage added:", response);

@@ -100,6 +100,9 @@ function convertBookingToReservation(booking: Booking): Reservation {
     totalAmount: parseInt(booking.totalAmount || "0"),
     depositAmount: parseInt(booking.depositRequired || "0"),
     status: statusMap[booking.status] || "Chờ xác nhận",
+    // Store backend data for accurate deposit logic
+    backendStatus: booking.status, // "PENDING", "CONFIRMED", etc. - used for logic checks
+    backendData: booking, // Full booking data from backend
   };
 }
 
@@ -578,7 +581,6 @@ export function useReservations() {
               bookingId,
               paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
-              employeeId: user?.id || "",
             });
 
             logger.log("Deposit transaction created successfully");
@@ -646,12 +648,11 @@ export function useReservations() {
                 0
               );
 
-        // Check if deposit was already confirmed (status is not PENDING)
-        const wasDepositConfirmed =
-          selectedReservation.status === "Đã xác nhận" ||
-          selectedReservation.status === "Đã đặt" ||
-          selectedReservation.status === "Đã nhận phòng" ||
-          selectedReservation.status === "Đã nhận";
+        // Check if deposit was already confirmed using backend status (not Vietnamese labels)
+        // Backend logic: Deposit confirmed when status !== PENDING
+        // See DEPOSIT_CONFIRMATION_ANALYSIS.md for details
+        const wasDepositConfirmed = 
+          selectedReservation.backendStatus !== "PENDING";
 
         // Update customer information first (if changed)
         try {
@@ -695,11 +696,21 @@ export function useReservations() {
         // Track if we successfully confirmed deposit
         let depositConfirmedSuccessfully = false;
 
+        // Check if deposit payment is still needed (using backend data)
+        const depositStillNeeded = (() => {
+          if (!selectedReservation.backendData) return true;
+          const totalDeposit = parseFloat(selectedReservation.backendData.totalDeposit || "0");
+          const depositRequired = parseFloat(selectedReservation.backendData.depositRequired || "0");
+          return totalDeposit < depositRequired;
+        })();
+
         // If deposit was newly confirmed (checkbox checked and wasn't confirmed before), create deposit transaction
         // The transaction API will change the status from PENDING to CONFIRMED on the backend
+        // Only create transaction if deposit is still needed (idempotent check)
         if (
           data.depositConfirmed &&
           !wasDepositConfirmed &&
+          depositStillNeeded &&
           data.depositPaymentMethod
         ) {
           try {
@@ -712,7 +723,6 @@ export function useReservations() {
               bookingId: selectedReservation.reservationID,
               paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
-              employeeId: user?.id || "",
             });
 
             logger.log(
@@ -769,6 +779,9 @@ export function useReservations() {
                     : r.paidDeposit,
                   notes: data.notes,
                   status: newStatus,
+                  // Update backend status to match the new status
+                  // When deposit is confirmed, backend status changes to CONFIRMED
+                  backendStatus: depositConfirmedSuccessfully ? "CONFIRMED" : r.backendStatus,
                   totalAmount,
                   totalRooms:
                     roomSelections.length > 0

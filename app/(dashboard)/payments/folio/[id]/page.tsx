@@ -64,7 +64,6 @@ export default function FolioPage({ params }: FolioPageProps) {
           paymentMethod: "CASH",
           transactionType: data.type,
           description: data.description,
-          employeeId: "",
         });
 
         // Reload folio to get updated data
@@ -105,7 +104,6 @@ export default function FolioPage({ params }: FolioPageProps) {
           paymentMethod: paymentMethodMap[data.paymentMethod] || "CASH",
           transactionType: data.mode === "DEPOSIT" ? "DEPOSIT" : "ROOM_CHARGE",
           description: data.notes,
-          employeeId: "",
         });
 
         // Reload folio to get updated data

@@ -76,7 +76,6 @@ export function DepositConfirmationModal({
         bookingId,
         paymentMethod,
         transactionType: "DEPOSIT",
-        employeeId: user?.id || "",
       });
 
       console.log("Deposit confirmed:", response);

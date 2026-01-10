@@ -21,7 +21,6 @@ export interface CreateTransactionRequest {
   paymentMethod: PaymentMethod;
   transactionType: TransactionType;
   description?: string; // Transaction notes
-  employeeId: string; // Required for audit trail
   promotionApplications?: Array<{
     customerPromotionId: string;
     bookingRoomId?: string; // For room-specific promotions
@@ -97,7 +96,7 @@ export const transactionService = {
   ): Promise<TransactionResponse> {
     try {
       const response = await api.post<ApiResponse<TransactionResponse>>(
-        "/employee-api/v1/transactions",
+        "/employee/transactions",
         data,
         { requiresAuth: true }
       );

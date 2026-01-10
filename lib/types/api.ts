@@ -519,6 +519,8 @@ export interface Booking {
   totalGuests: number;
   totalAmount: string;
   depositRequired: string;
+  totalDeposit: string;     // Tiền cọc đã thanh toán (source of truth for deposit confirmation)
+  totalPaid: string;         // Tổng tiền đã thanh toán (bao gồm deposit + các khoản khác)
   balance: string;
   createdAt: string;
   updatedAt: string;
