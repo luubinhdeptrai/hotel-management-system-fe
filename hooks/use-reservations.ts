@@ -813,23 +813,10 @@ export function useReservations() {
     }
   };
 
-  // Handle view details - open modal in appropriate mode (edit or view-only)
+  // Handle view details - always open in view-only mode to see details without editing
   const handleViewDetails = (reservation: Reservation) => {
     setSelectedReservation(reservation);
-    
-    // Check if booking can be edited
-    const cannotEditStatuses: ReservationStatus[] = [
-      "Đã hủy",       // CANCELLED
-      "Đã trả phòng", // CHECKED_OUT
-    ];
-    
-    // If booking cannot be edited, open in view-only mode
-    if (cannotEditStatuses.includes(reservation.status)) {
-      setFormMode("view");
-    } else {
-      setFormMode("edit");
-    }
-    
+    setFormMode("view");
     setIsFormModalOpen(true);
   };
 
