@@ -19,6 +19,12 @@ export function SelectedRoomsList({
   onChangeRoom,
   isEditable = true,
 }: SelectedRoomsListProps) {
+  const calculateNights = (checkIn: string, checkOut: string): number => {
+    const from = new Date(checkIn);
+    const to = new Date(checkOut);
+    return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
   if (rooms.length === 0) {
     return (
       <Card className="border-yellow-200 bg-yellow-50">
@@ -43,12 +49,6 @@ export function SelectedRoomsList({
     const nights = calculateNights(room.checkInDate, room.checkOutDate);
     return sum + room.pricePerNight * nights;
   }, 0);
-
-  const calculateNights = (checkIn: string, checkOut: string): number => {
-    const from = new Date(checkIn);
-    const to = new Date(checkOut);
-    return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
-  };
 
   return (
     <div className="space-y-4">
