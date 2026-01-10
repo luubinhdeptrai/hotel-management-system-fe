@@ -316,12 +316,17 @@ export default function ReservationsPage() {
                 statusColors[reservation.status] ||
                 statusColors["Chờ xác nhận"];
 
+              // Match backend constraints for edit and cancel
+              const canEdit = (res: typeof reservation) => {
+                // Backend: Cannot update if CANCELLED or CHECKED_OUT
+                const cannotEditStatuses = ["Đã hủy", "Đã trả phòng"];
+                return !cannotEditStatuses.includes(res.status);
+              };
+
               const canCancel = (res: typeof reservation) => {
-                return (
-                  res.status === "Đã đặt" ||
-                  res.status === "Chờ xác nhận" ||
-                  res.status === "Đã xác nhận"
-                );
+                // Backend: Cannot cancel if CANCELLED, CHECKED_IN, or CHECKED_OUT
+                const cannotCancelStatuses = ["Đã hủy", "Đã nhận phòng", "Đã trả phòng"];
+                return !cannotCancelStatuses.includes(res.status);
               };
 
               return (
@@ -422,6 +427,17 @@ export default function ReservationsPage() {
                       <span className="w-4 h-4 mr-1.5">{ICONS.EYE}</span>
                       Xem
                     </Button>
+                    {canEdit(reservation) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(reservation)}
+                        className="h-9 px-4 bg-blue-50 border-2 border-blue-300 text-blue-700 font-bold hover:bg-blue-600 hover:text-white hover:border-blue-700 hover:scale-110 transition-all shadow-sm flex-1 min-w-[100px]"
+                      >
+                        <span className="w-4 h-4 mr-1.5">{ICONS.EDIT}</span>
+                        Sửa
+                      </Button>
+                    )}
                     {canCancel(reservation) && (
                       <Button
                         variant="outline"

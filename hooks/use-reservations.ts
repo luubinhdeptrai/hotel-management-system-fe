@@ -159,7 +159,7 @@ export function useReservations() {
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
-  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
 
   // Room selection state (for optional specific room selection during booking)
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -303,6 +303,28 @@ export function useReservations() {
 
   // Handle edit reservation
   const handleEdit = (reservation: Reservation) => {
+    // VALIDATION: Check if booking can be edited (match Backend logic)
+    // Backend constraints from booking.service.ts line 691-700:
+    // - Cannot update if status = CANCELLED
+    // - Cannot update if status = CHECKED_OUT
+    // - Can update if status = PENDING, CONFIRMED, CHECKED_IN, PARTIALLY_CHECKED_OUT
+    const cannotEditStatuses: ReservationStatus[] = [
+      "Đã hủy",       // CANCELLED
+      "Đã trả phòng", // CHECKED_OUT
+    ];
+
+    if (cannotEditStatuses.includes(reservation.status)) {
+      logger.error(
+        "Cannot edit booking with status:",
+        reservation.status
+      );
+      alert(
+        `Không thể chỉnh sửa đặt phòng ở trạng thái "${reservation.status}". ` +
+        `Chỉ có thể chỉnh sửa đặt phòng ở trạng thái "Chờ xác nhận", "Đã xác nhận", hoặc "Đã nhận phòng".`
+      );
+      return;
+    }
+
     setSelectedReservation(reservation);
     setFormMode("edit");
     setIsFormModalOpen(true);
@@ -371,6 +393,11 @@ export function useReservations() {
 
   // Handle save reservation
   const handleSaveReservation = async (data: ReservationFormData) => {
+    // Don't allow saving in view mode
+    if (formMode === "view") {
+      return;
+    }
+
     if (formMode === "create") {
       // Create new reservation with multi-room support
       const roomSelections = data.roomSelections || [];
@@ -786,10 +813,23 @@ export function useReservations() {
     }
   };
 
-  // Handle view details
+  // Handle view details - open modal in appropriate mode (edit or view-only)
   const handleViewDetails = (reservation: Reservation) => {
     setSelectedReservation(reservation);
-    setFormMode("edit");
+    
+    // Check if booking can be edited
+    const cannotEditStatuses: ReservationStatus[] = [
+      "Đã hủy",       // CANCELLED
+      "Đã trả phòng", // CHECKED_OUT
+    ];
+    
+    // If booking cannot be edited, open in view-only mode
+    if (cannotEditStatuses.includes(reservation.status)) {
+      setFormMode("view");
+    } else {
+      setFormMode("edit");
+    }
+    
     setIsFormModalOpen(true);
   };
 

@@ -29,7 +29,7 @@ interface NewReservationFormModalProps {
   onClose: () => void;
   onSave: (data: ReservationFormData) => Promise<void>;
   reservation?: Reservation;
-  mode: "create" | "edit";
+  mode: "create" | "edit" | "view";
 }
 
 const FORM_STEPS = {
@@ -87,8 +87,8 @@ export function NewReservationFormModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    if (mode === "edit" && reservation) {
-      // Load existing reservation data
+    if ((mode === "edit" || mode === "view") && reservation) {
+      // Load existing reservation data (for both edit and view modes)
       const customer = reservation.customer;
       setCustomerData({
         useExisting: true,
@@ -260,10 +260,16 @@ export function NewReservationFormModal({
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-3xl font-bold text-white">
-                {mode === "create" ? "🏨 Tạo Đặt Phòng Mới" : "✏️ Chỉnh Sửa Đặt Phòng"}
+                {mode === "create" 
+                  ? "🏨 Tạo Đặt Phòng Mới" 
+                  : mode === "view"
+                  ? "👁️ Xem Chi Tiết Đặt Phòng"
+                  : "✏️ Chỉnh Sửa Đặt Phòng"}
               </DialogTitle>
               <p className="text-blue-100 mt-2 text-sm">
-                {currentStep === FORM_STEPS.customer
+                {mode === "view" 
+                  ? "Xem chi tiết đặt phòng (không thể chỉnh sửa)"
+                  : currentStep === FORM_STEPS.customer
                   ? "Bước 1 / 3: Chọn khách hàng"
                   : currentStep === FORM_STEPS.rooms
                   ? "Bước 2 / 3: Chọn phòng"
@@ -271,25 +277,27 @@ export function NewReservationFormModal({
               </p>
             </div>
             
-            {/* Step Indicator */}
-            <div className="flex gap-3 items-center">
-              {[1, 2, 3].map((step) => (
-                <div
-                  key={step}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm transition-all ${
-                    step === 1 && currentStep === FORM_STEPS.customer
-                      ? "bg-white text-blue-600 scale-110"
-                      : step === 2 && currentStep === FORM_STEPS.rooms
-                      ? "bg-white text-blue-600 scale-110"
-                      : step === 3 && currentStep === FORM_STEPS.summary
-                      ? "bg-white text-blue-600 scale-110"
-                      : "bg-blue-500 text-white"
-                  }`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
+            {/* Step Indicator - hide in view mode */}
+            {mode !== "view" && (
+              <div className="flex gap-3 items-center">
+                {[1, 2, 3].map((step) => (
+                  <div
+                    key={step}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm transition-all ${
+                      step === 1 && currentStep === FORM_STEPS.customer
+                        ? "bg-white text-blue-600 scale-110"
+                        : step === 2 && currentStep === FORM_STEPS.rooms
+                        ? "bg-white text-blue-600 scale-110"
+                        : step === 3 && currentStep === FORM_STEPS.summary
+                        ? "bg-white text-blue-600 scale-110"
+                        : "bg-blue-500 text-white"
+                    }`}
+                  >
+                    {step}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </DialogHeader>
 
@@ -300,8 +308,52 @@ export function NewReservationFormModal({
         )}
 
         <div className="flex-1 overflow-y-auto px-8 py-6">
-          {/* Step 1: Customer Selection */}
-          {currentStep === FORM_STEPS.customer && (
+          {/* VIEW MODE: Show summary only */}
+          {mode === "view" && reservation && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Info Alert */}
+              <Alert className="bg-blue-50 border-blue-200 border-2">
+                <AlertDescription className="text-blue-700 font-medium">
+                  ℹ️ Đặt phòng ở trạng thái &quot;{reservation?.status}&quot; không thể chỉnh sửa. Bạn chỉ có thể xem thông tin chi tiết.
+                </AlertDescription>
+              </Alert>
+
+              {/* Summary view - render regardless of customerData state since it's loaded from useEffect */}
+              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                <BookingSummary
+                  rooms={selectedRooms.length > 0 ? selectedRooms : reservation.details.map((detail) => ({
+                    roomID: `view-${detail.detailID}`,
+                    roomName: detail.roomName,
+                    roomTypeID: detail.roomTypeID || "",
+                    roomType: {
+                      roomTypeID: detail.roomTypeID || "",
+                      roomTypeName: detail.roomTypeName || "",
+                      price: detail.pricePerNight || 0,
+                      capacity: 1,
+                    },
+                    roomStatus: "AVAILABLE" as any,
+                    floor: 0,
+                    selectedAt: new Date().toISOString(),
+                    checkInDate: detail.checkInDate,
+                    checkOutDate: detail.checkOutDate,
+                    numberOfGuests: detail.numberOfGuests || 1,
+                    pricePerNight: detail.pricePerNight || 0,
+                  }))}
+                  customerName={customerData?.customerName || reservation.customer?.customerName || ""}
+                  checkInDate={checkInDate || reservation.details[0]?.checkInDate || ""}
+                  checkOutDate={checkOutDate || reservation.details[0]?.checkOutDate || ""}
+                  totalGuests={totalGuests || reservation.totalRooms || 1}
+                  depositPercentage={depositPercentage}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* EDIT/CREATE MODE: Step-by-step form */}
+          {mode !== "view" && (
+            <>
+              {/* Step 1: Customer Selection */}
+              {currentStep === FORM_STEPS.customer && (
             <div className="space-y-6 animate-fadeIn">
               <div className="bg-white p-8 rounded-xl shadow-sm border border-blue-100">
                 <CustomerSelectionCard
@@ -321,9 +373,9 @@ export function NewReservationFormModal({
               />
               </div>
             </div>
-          )}
+              )}
 
-          {/* Step 2: Room Selection */}
+              {/* Step 2: Room Selection */}
           {currentStep === FORM_STEPS.rooms && (
             <div className="space-y-6 animate-fadeIn">
               {/* Date Inputs */}
@@ -441,56 +493,72 @@ export function NewReservationFormModal({
               </div>
             </div>
           )}
+            </>
+          )}
         </div>
 
         {/* Footer with Actions */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 px-8 py-6 flex justify-between items-center rounded-b-2xl gap-4">
-          <Button
-            onClick={() => {
-              if (currentStep === FORM_STEPS.customer) {
-                onClose();
-              } else {
-                handlePreviousStep();
-              }
-            }}
-            variant="outline"
-            className="px-8 py-2 rounded-lg border-2 hover:bg-gray-100 transition-colors font-medium"
-          >
-            {currentStep === FORM_STEPS.customer ? "❌ Đóng" : "⬅️ Quay lại"}
-          </Button>
-
-          <div className="flex gap-3">
-            {currentStep !== FORM_STEPS.summary && (
+          {mode === "view" ? (
+            // View mode: Only close button
+            <Button
+              onClick={onClose}
+              className="ml-auto px-8 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-medium transition-all hover:shadow-lg"
+            >
+              ✅ Đóng
+            </Button>
+          ) : (
+            // Edit/Create mode: Navigation buttons
+            <>
               <Button
-                onClick={handleNextStep}
-                disabled={
-                  currentStep === FORM_STEPS.customer ? !customerData : selectedRooms.length === 0
-                }
-                className="px-8 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all hover:shadow-lg disabled:opacity-50"
+                onClick={() => {
+                  if (currentStep === FORM_STEPS.customer) {
+                    onClose();
+                  } else {
+                    handlePreviousStep();
+                  }
+                }}
+                variant="outline"
+                className="px-8 py-2 rounded-lg border-2 hover:bg-gray-100 transition-colors font-medium"
               >
-                Tiếp Theo ➜
+                {currentStep === FORM_STEPS.customer ? "❌ Đóng" : "⬅️ Quay lại"}
               </Button>
-            )}
 
-            {currentStep === FORM_STEPS.summary && (
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !customerData || selectedRooms.length === 0}
-                className="px-8 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium transition-all hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="inline-block animate-spin">⏳</span>
-                    Đang xử lý...
-                  </>
-                ) : (
-                  <>✅ Xác Nhận Đặt Phòng</>
+              <div className="flex gap-3">
+                {currentStep !== FORM_STEPS.summary && (
+                  <Button
+                    onClick={handleNextStep}
+                    disabled={
+                      currentStep === FORM_STEPS.customer ? !customerData : selectedRooms.length === 0
+                    }
+                    className="px-8 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all hover:shadow-lg disabled:opacity-50"
+                  >
+                    Tiếp Theo ➜
+                  </Button>
                 )}
-              </Button>
-            )}
-          </div>
+
+                {currentStep === FORM_STEPS.summary && (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !customerData || selectedRooms.length === 0}
+                    className="px-8 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium transition-all hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="inline-block animate-spin">⏳</span>
+                        Đang xử lý...
+                      </>
+                    ) : (
+                      <>✅ Xác Nhận Đặt Phòng</>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+

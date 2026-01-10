@@ -90,21 +90,23 @@ export function ReservationList({
   };
 
   const canEdit = (reservation: Reservation) => {
-    // Allow editing for pending and confirmed reservations
-    return (
-      reservation.status === "Đã đặt" ||
-      reservation.status === "Chờ xác nhận" ||
-      reservation.status === "Đã xác nhận"
-    );
+    // Backend constraint: Cannot update if CANCELLED or CHECKED_OUT
+    // Can update: PENDING, CONFIRMED, CHECKED_IN, PARTIALLY_CHECKED_OUT
+    const cannotEditStatuses: ReservationStatus[] = [
+      "Đã hủy",       // CANCELLED
+      "Đã trả phòng", // CHECKED_OUT
+    ];
+    return !cannotEditStatuses.includes(reservation.status);
   };
 
   const canCancel = (reservation: Reservation) => {
-    // Allow cancellation for pending and confirmed reservations
-    return (
-      reservation.status === "Đã đặt" ||
-      reservation.status === "Chờ xác nhận" ||
-      reservation.status === "Đã xác nhận"
-    );
+    // Backend constraint: Cannot cancel if CANCELLED, CHECKED_IN, or CHECKED_OUT
+    const cannotCancelStatuses: ReservationStatus[] = [
+      "Đã hủy",       // CANCELLED
+      "Đã nhận phòng", // CHECKED_IN
+      "Đã trả phòng", // CHECKED_OUT
+    ];
+    return !cannotCancelStatuses.includes(reservation.status);
   };
 
   return (
