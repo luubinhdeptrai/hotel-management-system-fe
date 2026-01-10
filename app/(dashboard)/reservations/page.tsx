@@ -316,14 +316,24 @@ export default function ReservationsPage() {
                 statusColors[reservation.status] ||
                 statusColors["Chờ xác nhận"];
 
+              const canCancel = (res: typeof reservation) => {
+                return (
+                  res.status === "Đã đặt" ||
+                  res.status === "Chờ xác nhận" ||
+                  res.status === "Đã xác nhận"
+                );
+              };
+
               return (
                 <div
                   key={reservation.reservationID}
-                  className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
-                  onClick={() => handleViewDetails(reservation)}
+                  className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all group flex flex-col"
                 >
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="flex items-start justify-between mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <div className="flex-1">
                       <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">
                         Mã đặt
@@ -340,7 +350,10 @@ export default function ReservationsPage() {
                   </div>
 
                   {/* Customer Info */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <div
+                    className="bg-gray-50 rounded-xl p-4 mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <p className="text-sm font-bold text-gray-600">
                       Khách hàng
                     </p>
@@ -353,7 +366,10 @@ export default function ReservationsPage() {
                   </div>
 
                   {/* Room & Dates */}
-                  <div className="space-y-3 mb-4">
+                  <div
+                    className="space-y-3 mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="w-5 h-5 text-blue-600">
                         {ICONS.DOOR_OPEN}
@@ -379,7 +395,10 @@ export default function ReservationsPage() {
                   </div>
 
                   {/* Price */}
-                  <div className="border-t border-gray-200 pt-4 flex items-center justify-between">
+                  <div
+                    className="border-t border-gray-200 pt-4 flex items-center justify-between mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <span className="text-xs font-bold text-gray-600 uppercase">
                       Tổng tiền
                     </span>
@@ -390,6 +409,30 @@ export default function ReservationsPage() {
                         maximumFractionDigits: 0,
                       }).format(reservation.totalAmount)}
                     </span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="border-t border-gray-200 pt-4 flex gap-3 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDetails(reservation)}
+                      className="h-9 px-4 bg-blue-50 border-2 border-blue-300 text-blue-700 font-bold hover:bg-blue-600 hover:text-white hover:border-blue-700 hover:scale-110 transition-all shadow-sm flex-1 min-w-[100px]"
+                    >
+                      <span className="w-4 h-4 mr-1.5">{ICONS.EYE}</span>
+                      Xem
+                    </Button>
+                    {canCancel(reservation) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelClick(reservation)}
+                        className="h-9 px-4 bg-error-50 border-2 border-error-300 text-error-700 font-bold hover:bg-error-600 hover:text-white hover:border-error-700 hover:scale-110 transition-all shadow-sm flex-1 min-w-[100px]"
+                      >
+                        <span className="w-4 h-4 mr-1.5">{ICONS.X_CIRCLE}</span>
+                        Hủy
+                      </Button>
+                    )}
                   </div>
                 </div>
               );

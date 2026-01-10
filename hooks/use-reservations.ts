@@ -315,22 +315,42 @@ export function useReservations() {
   };
 
   const handleConfirmCancel = async (reason?: string) => {
-    if (selectedReservation) {
-      try {
-        // Call cancel API with reason
-        await bookingService.cancelBooking(
-          selectedReservation.reservationID,
-          reason || "Hủy theo yêu cầu"
-        );
-        logger.log(
-          "Booking cancelled via API:",
-          selectedReservation.reservationID
-        );
-      } catch (error) {
-        logger.error("Cancel API failed, updating local state:", error);
-      }
+    if (!selectedReservation) return;
 
-      // Update local state regardless of API success (mock fallback in service)
+    // VALIDATION: Check if booking can be cancelled (match Backend logic)
+    // Backend constraints from booking.service.ts line 644-655:
+    // - Cannot cancel if status = CANCELLED
+    // - Cannot cancel if status = CHECKED_IN
+    // - Cannot cancel if status = CHECKED_OUT
+    const cannotCancelStatuses: ReservationStatus[] = [
+      "Đã hủy",        // CANCELLED
+      "Đã nhận phòng", // CHECKED_IN
+      "Đã trả phòng",  // CHECKED_OUT
+    ];
+
+    if (cannotCancelStatuses.includes(selectedReservation.status)) {
+      logger.error(
+        "Cannot cancel booking with status:",
+        selectedReservation.status
+      );
+      alert(
+        `Không thể hủy đặt phòng ở trạng thái "${selectedReservation.status}". ` +
+        `Chỉ có thể hủy đặt phòng ở trạng thái "Chờ xác nhận" hoặc "Đã xác nhận".`
+      );
+      return;
+    }
+
+    try {
+      // Call cancel API (Backend does NOT accept reason parameter)
+      await bookingService.cancelBooking(
+        selectedReservation.reservationID
+      );
+      logger.log(
+        "Booking cancelled successfully:",
+        selectedReservation.reservationID
+      );
+
+      // Update local state after successful cancellation
       setReservations((prev) =>
         prev.map((r) =>
           r.reservationID === selectedReservation.reservationID
@@ -340,6 +360,12 @@ export function useReservations() {
       );
       setIsCancelModalOpen(false);
       setSelectedReservation(null);
+    } catch (error) {
+      logger.error("Failed to cancel booking:", error);
+      alert(
+        "Không thể hủy đặt phòng. " +
+        (error instanceof Error ? error.message : "Vui lòng thử lại.")
+      );
     }
   };
 

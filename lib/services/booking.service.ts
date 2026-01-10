@@ -182,16 +182,22 @@ export const bookingService = {
    * Cancel a booking
    * POST /employee/bookings/{id}/cancel
    *
-   * Note: Uses mock response if API doesn't exist
+   * Backend constraints:
+   * - Cannot cancel if status = CANCELLED (already cancelled)
+   * - Cannot cancel if status = CHECKED_IN (guest already checked in)
+   * - Cannot cancel if status = CHECKED_OUT (booking already completed)
+   * - Can only cancel if status = PENDING or CONFIRMED
+   *
+   * Backend does NOT accept 'reason' parameter - it's ignored.
+   * Validation should be done in FE before calling this API.
    */
   async cancelBooking(
-    bookingId: string,
-    reason?: string
+    bookingId: string
   ): Promise<CancelBookingResponse> {
     try {
       const response = await api.post<ApiResponse<CancelBookingResponse>>(
         `/employee/bookings/${bookingId}/cancel`,
-        { reason } as CancelBookingRequest,
+        {}, // Backend expects empty body - no reason parameter
         { requiresAuth: true }
       );
       const data =
@@ -201,17 +207,10 @@ export const bookingService = {
       return data;
     } catch (error) {
       console.error(
-        "Cancel booking API failed, returning mock response:",
+        "Cancel booking API failed:",
         error
       );
-      // Return mock response for frontend state update
-      return {
-        id: bookingId,
-        bookingCode: "",
-        status: "CANCELLED",
-        cancelledAt: new Date().toISOString(),
-        cancelReason: reason,
-      };
+      throw error; // Don't silently return mock - let caller handle error
     }
   },
 
@@ -466,23 +465,16 @@ export const bookingService = {
   /**
    * Preview cancellation and refund amount
    * GET /employee/bookings/{bookingId}/cancellation-preview
+   *
+   * NOTE: This endpoint does NOT exist in Backend.
+   * Backend has NO cancellation policy, penalty, or refund calculation.
+   * Cancellation is simple: just changes status to CANCELLED and releases rooms.
+   * This function is kept for backward compatibility but will throw error.
    */
   async getCancellationPreview(
     bookingId: string
   ): Promise<CancellationPreview> {
-    try {
-      const response = await api.get<ApiResponse<CancellationPreview>>(
-        `/employee/bookings/${bookingId}/cancellation-preview`,
-        { requiresAuth: true }
-      );
-      const data =
-        response && typeof response === "object" && "data" in response
-          ? (response as ApiResponse<CancellationPreview>).data
-          : (response as unknown as CancellationPreview);
-      return data;
-    } catch (error) {
-      console.error("Get cancellation preview failed:", error);
-      throw error;
-    }
+    // Backend does not provide this endpoint
+    throw new Error("Cancellation preview is not supported by Backend. Backend does not have cancellation policy or refund calculation.");
   },
 };

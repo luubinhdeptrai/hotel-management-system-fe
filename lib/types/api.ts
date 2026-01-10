@@ -591,16 +591,15 @@ export interface UpdateBookingResponse {
   updatedAt: string;
 }
 
-export interface CancelBookingRequest {
-  reason?: string;
-}
+// Backend cancelBooking() accepts NO body parameters
+// The endpoint signature is: async cancelBooking(id: string)
+// Request body should be empty {}
+export type CancelBookingRequest = Record<string, never>;
 
+// Backend returns: { message: 'Booking cancelled successfully' }
+// But we define the expected response structure for type safety
 export interface CancelBookingResponse {
-  id: string;
-  bookingCode: string;
-  status: "CANCELLED";
-  cancelledAt: string;
-  cancelReason?: string;
+  message: string;
 }
 
 export interface ConfirmBookingResponse {
