@@ -1,4 +1,188 @@
 
+## Issue 0: UpdateBooking() - Validation Schema vs Implementation Mismatch
+
+**Severity:** 🟠 **MEDIUM** (Design Flaw)
+
+**Location:** `src/validations/booking.validation.ts` (line 96-113) vs `src/services/booking.service.ts` (line 708-746)
+
+**Current Status:**
+- ❌ Validation schema accepts `status` and `rooms` fields
+- ❌ Service implementation ignores these fields or doesn't handle them properly
+- ❌ Creates false expectation for API consumers
+
+**Validation Schema Accepts:**
+```typescript
+const updateBooking = {
+  body: Joi.object().keys({
+    checkInDate: Joi.date().iso(),           // ✅ Used
+    checkOutDate: Joi.date().iso(),          // ✅ Used
+    totalGuests: Joi.number().integer(),     // ✅ Used
+    status: Joi.string().valid(BookingStatus), // ❌ NOT USED
+    rooms: Joi.array().items({               // ❌ NOT USED
+      Joi.object().keys({
+        roomId: Joi.string().required()
+      })
+    })
+  })
+};
+```
+
+**Service Implementation Reality:**
+```typescript
+async updateBooking(id: string, updateBody: any) {
+  // Only this line executes:
+  const updatedBooking = await this.prisma.booking.update({
+    where: { id },
+    data: updateBody, // Direct pass-through
+    include: { bookingRooms: true }
+  });
+  // No custom logic for:
+  // - status field (no side-effects)
+  // - rooms field (no BookingRoom updates)
+  // - availability validation (no conflicts check)
+  // - email notifications
+  // - activity logging
+}
+```
+
+**Problem for Frontend:**
+- FE sends `status` field → Backend ignores it (status not updated, no side-effects triggered)
+- FE sends `rooms` field → Backend might cause Prisma error or ignore it
+- FE expects validation but gets inconsistent results
+
+**Recommendation (Pick ONE):**
+
+### **Option A: Remove unsupported fields from validation schema** ✅ **RECOMMENDED**
+```typescript
+const updateBooking = {
+  body: Joi.object().keys({
+    checkInDate: Joi.date().iso(),           // ✅ Keep
+    checkOutDate: Joi.date().iso(),          // ✅ Keep
+    totalGuests: Joi.number().integer(),     // ✅ Keep
+    // Remove status - managed by system events
+    // Remove rooms - not implemented
+  })
+};
+```
+**Rationale:** 
+- Honest API contract
+- Status changes via transaction/check-in/cancel APIs
+- Rooms cannot change after booking creation
+- Frontend expectations match Backend reality
+
+### **Option B: Implement proper logic for status and rooms**
+```typescript
+async updateBooking(id: string, updateBody: any) {
+  const booking = await this.getBookingById(id);
+  
+  // If rooms provided, validate and update
+  if (updateBody.rooms) {
+    await this.updateBookingRooms(booking.id, updateBody.rooms);
+    delete updateBody.rooms;
+  }
+  
+  // If status changed, handle side-effects
+  if (updateBody.status && updateBody.status !== booking.status) {
+    await this.handleStatusChange(booking, updateBody.status);
+  }
+  
+  // Update basic fields
+  const updated = await this.prisma.booking.update({...});
+  return updated;
+}
+```
+**Effort:** High, requires significant refactoring
+
+**Status After Frontend Fix:**
+- ✅ Frontend now removed `status` and `rooms` from API calls
+- ✅ Type definition updated to remove these fields
+- ✅ Frontend expects Option A (cleaned validation schema)
+
+**Date Reported:** 2026-01-10
+
+---
+
+## Issue 0.5: UpdateBooking() - No Availability Validation When Dates Change
+
+**Severity:** 🟠 **MEDIUM** (Data Consistency Risk)
+
+**Location:** `src/services/booking.service.ts` line 708-746 (updateBooking method)
+
+**Current Status:**
+- ❌ When user changes `checkInDate` or `checkOutDate`, Backend does NOT validate room availability
+- ❌ Risk: Booking dates conflict with other bookings
+- ❌ No re-validation of room conflicts after date change
+
+**Example Scenario:**
+```
+1. Booking A: Room 101, 2026-01-15 → 2026-01-20 (CONFIRMED)
+2. User edits Booking B: Changes date to 2026-01-18 → 2026-01-25
+3. Backend should reject (Booking A already has Room in 2026-01-18~01-20 range)
+4. Currently: ✅ Backend accepts (no validation)
+```
+
+**Current Implementation:**
+```typescript
+async updateBooking(id: string, updateBody: any) {
+  // No availability check
+  const updatedBooking = await this.prisma.booking.update({
+    where: { id },
+    data: updateBody // Direct update without validation
+  });
+  return updatedBooking;
+}
+```
+
+**What Should Happen:**
+```typescript
+async updateBooking(id: string, updateBody: any) {
+  const booking = await this.getBookingById(id);
+  
+  // If dates changed, validate room availability for new dates
+  if (updateBody.checkInDate || updateBody.checkOutDate) {
+    const newCheckIn = updateBody.checkInDate || booking.checkInDate;
+    const newCheckOut = updateBody.checkOutDate || booking.checkOutDate;
+    
+    // Check each BookingRoom for conflicts
+    for (const bookingRoom of booking.bookingRooms) {
+      const conflicts = await this.prisma.bookingRoom.findMany({
+        where: {
+          AND: [
+            { roomId: bookingRoom.roomId },
+            { id: { not: bookingRoom.id } }, // Exclude current room
+            { status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] } },
+            { checkInDate: { lt: newCheckOut } },
+            { checkOutDate: { gt: newCheckIn } }
+          ]
+        }
+      });
+      
+      if (conflicts.length > 0) {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          `Room ${bookingRoom.room.roomNumber} has conflicting bookings for new dates`
+        );
+      }
+    }
+  }
+  
+  // Proceed with update if validation passed
+  return this.prisma.booking.update({...});
+}
+```
+
+**Frontend Impact:**
+- FE currently assumes Backend validates availability
+- FE allows user to change dates without re-checking availability
+- Result: Silent data inconsistency
+
+**Recommendation:**
+Add availability validation when `checkInDate` or `checkOutDate` is updated
+
+**Date Reported:** 2026-01-10
+
+---
+
 ## Issue 1: Missing Backend Endpoint - Get Available Rooms for Booking
 
 **Severity:** 🔴 **CRITICAL** (Feature Completely Broken)
@@ -50,6 +234,7 @@ getAvailableRooms = catchAsync(async (req: Request, res: Response) => {
 - Proper error handling for no results
 
 **Date Reported:** 2026-01-10
+
 
 ---
 

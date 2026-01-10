@@ -307,19 +307,17 @@ export function useReservations() {
   // Handle edit reservation
   const handleEdit = (reservation: Reservation) => {
     // VALIDATION: Check if booking can be edited (match Backend logic)
-    // Backend constraints from booking.service.ts line 691-700:
+    // Backend constraints from booking.service.ts line 713-716:
     // - Cannot update if status = CANCELLED
     // - Cannot update if status = CHECKED_OUT
     // - Can update if status = PENDING, CONFIRMED, CHECKED_IN, PARTIALLY_CHECKED_OUT
-    const cannotEditStatuses: ReservationStatus[] = [
-      "Đã hủy",       // CANCELLED
-      "Đã trả phòng", // CHECKED_OUT
-    ];
+    // MUST use backendStatus (not UI status labels) for accurate checks
+    const cannotEditBackendStatuses = ["CANCELLED", "CHECKED_OUT"];
 
-    if (cannotEditStatuses.includes(reservation.status)) {
+    if (cannotEditBackendStatuses.includes(reservation.backendStatus || "")) {
       logger.error(
-        "Cannot edit booking with status:",
-        reservation.status
+        "Cannot edit booking with backend status:",
+        reservation.backendStatus
       );
       alert(
         `Không thể chỉnh sửa đặt phòng ở trạng thái "${reservation.status}". ` +
@@ -343,20 +341,22 @@ export function useReservations() {
     if (!selectedReservation) return;
 
     // VALIDATION: Check if booking can be cancelled (match Backend logic)
-    // Backend constraints from booking.service.ts line 644-655:
+    // Backend constraints from booking.service.ts line 664-673:
     // - Cannot cancel if status = CANCELLED
     // - Cannot cancel if status = CHECKED_IN
     // - Cannot cancel if status = CHECKED_OUT
-    const cannotCancelStatuses: ReservationStatus[] = [
-      "Đã hủy",        // CANCELLED
-      "Đã nhận phòng", // CHECKED_IN
-      "Đã trả phòng",  // CHECKED_OUT
+    // MUST use backendStatus (not UI status labels) for accurate checks
+    const cannotCancelBackendStatuses = [
+      "CANCELLED",
+      "CHECKED_IN",
+      "CHECKED_OUT",
+      "PARTIALLY_CHECKED_OUT"
     ];
 
-    if (cannotCancelStatuses.includes(selectedReservation.status)) {
+    if (cannotCancelBackendStatuses.includes(selectedReservation.backendStatus || "")) {
       logger.error(
-        "Cannot cancel booking with status:",
-        selectedReservation.status
+        "Cannot cancel booking with backend status:",
+        selectedReservation.backendStatus
       );
       alert(
         `Không thể hủy đặt phòng ở trạng thái "${selectedReservation.status}". ` +
@@ -681,7 +681,10 @@ export function useReservations() {
           // The error will be logged but won't block the reservation update
         }
 
-        // Call update API (without status - status changes via transaction API)
+        // Call update API - Backend only supports: checkInDate, checkOutDate, totalGuests
+        // NOTE: Backend does NOT support changing rooms via update API
+        // Rooms are fixed at booking creation time
+        // NOTE: Status is managed by system (transactions, check-in/out), NOT directly editable
         await bookingService.updateBooking(selectedReservation.reservationID, {
           checkInDate: checkInISO,
           checkOutDate: checkOutISO,

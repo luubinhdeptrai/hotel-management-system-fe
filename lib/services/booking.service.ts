@@ -276,7 +276,7 @@ export const bookingService = {
       return {
         id: bookingId,
         bookingCode: "",
-        status: data.status || "PENDING",
+        status: "PENDING", // Default status - actual status managed by system
         checkInDate: data.checkInDate || "",
         checkOutDate: data.checkOutDate || "",
         totalGuests: data.totalGuests || 0,

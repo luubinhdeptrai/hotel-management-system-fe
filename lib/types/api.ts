@@ -574,12 +574,20 @@ export interface CreateBookingEmployeeRequest {
 /**
  * Update booking request - for modifying existing booking details
  * PUT /employee/bookings/{id}
+ * 
+ * Backend constraints:
+ * - Cannot update CANCELLED or CHECKED_OUT bookings
+ * - Can only update: checkInDate, checkOutDate, totalGuests
+ * - Status is managed by system (transactions, check-in/out), NOT directly editable
+ * - Rooms field exists in validation schema but Backend service doesn't implement room changes
+ *   (updateBooking() in booking.service.ts only does prisma.booking.update() - no room logic)
  */
 export interface UpdateBookingRequest {
   checkInDate?: string; // ISO 8601 format
   checkOutDate?: string; // ISO 8601 format
   totalGuests?: number;
-  status?: BookingStatus;
+  // status removed - managed by system, not editable via update API
+  // rooms removed - Backend validation allows it but service doesn't implement changes
 }
 
 export interface UpdateBookingResponse {
