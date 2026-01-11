@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar, ArrowRight } from "lucide-react";
 import { ICONS } from "@/src/constants/icons.enum";
 import type { RoomType } from "@/lib/types/room";
 import type { PricingRule } from "@/lib/types/pricing";
@@ -63,7 +65,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                 tích hợp <strong className="text-violet-900">Calendar Events</strong>, và hỗ trợ{" "}
                 <strong className="text-violet-900">RRule patterns</strong> (RFC 5545). 
                 Quy tắc có thứ tự cao hơn được áp dụng trước theo chiến lược{" "}
-                <strong className="text-fuchsia-700">"Top of List Wins"</strong>.
+                <strong className="text-fuchsia-700">&quot;Top of List Wins&quot;</strong>.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <Badge className="bg-gradient-to-r from-violet-600 to-purple-600 text-white px-5 py-2 text-sm font-bold shadow-lg">
@@ -191,6 +193,53 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
         </div>
       )}
 
+      {/* Quick Links Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Calendar Events Link */}
+        <Link href="/calendar-events" className="block">
+          <Card className="h-full relative overflow-hidden border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-2xl hover:border-blue-400 transition-all transform hover:-translate-y-1 cursor-pointer shadow-lg">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-300/20 rounded-full blur-3xl"></div>
+            <CardContent className="p-8 relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-2xl font-black text-blue-900 mb-2">📅 Calendar Events</h3>
+                  <p className="text-blue-700 text-sm font-semibold mb-6">
+                    Quản lý các sự kiện đặc biệt (Tết, Hè, Concert...) để áp dụng giá động
+                  </p>
+                </div>
+                <div className="text-4xl">🎉</div>
+              </div>
+              <div className="flex items-center gap-2 text-blue-600 font-bold hover:gap-3 transition-all">
+                <span>Chuyển đến Calendar Events</span>
+                <ArrowRight className="w-5 h-5" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Info Card */}
+        <Card className="relative overflow-hidden border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-100 shadow-lg">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-teal-300/20 rounded-full blur-3xl"></div>
+          <CardContent className="p-8 relative z-10">
+            <h3 className="text-2xl font-black text-teal-900 mb-4">🔗 Mối quan hệ</h3>
+            <ul className="space-y-3 text-teal-700 font-semibold text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-lg">✓</span>
+                <span>Calendar Events định nghĩa các khoảng thời gian đặc biệt</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-lg">✓</span>
+                <span>Pricing Rules tham chiếu Calendar Events để áp dụng giá</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-lg">✓</span>
+                <span>Một sự kiện có thể liên kết với nhiều Pricing Rules</span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Pricing Rules Section */}
       <Card className="border-2 shadow-2xl bg-gradient-to-br from-white to-gray-50">
         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 border-b-2 border-violet-200 pb-6">
@@ -261,7 +310,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
               <div className="space-y-4">
                 <h4 className="text-lg font-black text-violet-900 flex items-center gap-2">
                   <span className="w-8 h-8 bg-violet-600 text-white rounded-lg flex items-center justify-center text-sm font-black">1</span>
-                  Chiến lược "Top of List Wins"
+                  Chiến lược &quotTop of List Wins&quot
                 </h4>
                 <p className="text-gray-700 leading-relaxed pl-10">
                   Quy tắc ở <strong className="text-violet-600">vị trí cao nhất</strong> (rank thấp) trong danh sách sẽ được ưu tiên áp dụng trước. 
@@ -340,7 +389,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="w-6 h-6 bg-violet-600 text-white rounded-full flex items-center justify-center font-bold text-xs">1</span>
-                      <span className="font-bold text-gray-900">Quy tắc "Cuối tuần" (PERCENTAGE +40%)</span>
+                      <span className="font-bold text-gray-900">Quy tắc &quot;Cuối tuần&quot; (PERCENTAGE +40%)</span>
                     </div>
                     <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-emerald-200">
                       <p className="text-2xl font-black text-emerald-600">{formatCurrency(1400000)}</p>
@@ -351,7 +400,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="w-6 h-6 bg-amber-600 text-white rounded-full flex items-center justify-center font-bold text-xs">2</span>
-                      <span className="font-bold text-gray-900">Quy tắc "Tết 2025" (FIXED_AMOUNT +500,000)</span>
+                      <span className="font-bold text-gray-900">Quy tắc &quot;Tết 2025&quot; (FIXED_AMOUNT +500,000)</span>
                     </div>
                     <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-amber-200">
                       <p className="text-2xl font-black text-amber-600">{formatCurrency(1500000)}</p>

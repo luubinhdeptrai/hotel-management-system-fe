@@ -7,6 +7,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useCalendarEvents } from "@/hooks/use-calendar-events";
 import { CalendarEvent, CreateCalendarEventRequest, UpdateCalendarEventRequest } from "@/lib/types/pricing";
 import { CalendarEventsList, CalendarEventDialog, CalendarView } from "@/components/calendar-events";
@@ -23,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Info } from "lucide-react";
+import { Plus, Info, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function CalendarEventsPage() {
@@ -121,13 +122,24 @@ export default function CalendarEventsPage() {
                   Quản lý ngày lễ, mùa vụ và sự kiện đặc biệt cho định giá động
                 </p>
               </div>
-              <Button
-                onClick={handleCreate}
-                className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Tạo Sự Kiện
-              </Button>
+              <div className="flex gap-3">
+                <Link href="/room-types?tab=pricing">
+                  <Button
+                    variant="outline"
+                    className="bg-white border-white hover:bg-gray-50 text-blue-600 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Quy Tắc Giá
+                  </Button>
+                </Link>
+                <Button
+                  onClick={handleCreate}
+                  className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Tạo Sự Kiện
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -190,6 +202,46 @@ export default function CalendarEventsPage() {
               <p className="text-xs text-gray-500 mt-2">Sự kiện trong 30 ngày tới</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Quick Links to Related Features */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Calendar Events Link */}
+          <Card className="border-2 border-blue-200 bg-blue-50 hover:shadow-lg transition-all cursor-pointer group">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-blue-200 rounded-lg group-hover:bg-blue-300 transition-colors">
+                    <span className="text-2xl">📅</span>
+                  </div>
+                  <div>
+                    <CardTitle className="text-blue-900">Calendar Events</CardTitle>
+                    <p className="text-sm text-blue-700">Sự kiện đặc biệt</p>
+                  </div>
+                </div>
+                <span className="text-2xl">{events.length}</span>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Pricing Rules Link */}
+          <Link href="/room-types?tab=pricing">
+            <Card className="border-2 border-teal-200 bg-teal-50 hover:shadow-lg transition-all cursor-pointer group h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-teal-200 rounded-lg group-hover:bg-teal-300 transition-colors">
+                      <TrendingUp className="w-6 h-6 text-teal-900" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-teal-900">Pricing Rules</CardTitle>
+                      <p className="text-sm text-teal-700">Quy tắc định giá động</p>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          </Link>
         </div>
 
         {/* Info Card */}
