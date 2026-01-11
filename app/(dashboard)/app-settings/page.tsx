@@ -9,6 +9,7 @@ import { LogIn, LogOut, RefreshCw, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TimeSettingsCard } from "@/components/app-settings/time-settings-card";
 import { DepositSettingsCard } from "@/components/app-settings/deposit-settings-card";
+import { PenaltySurchargeInfoCard } from "@/components/app-settings/penalty-surcharge-info-card";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -95,6 +96,9 @@ export default function AppSettingsPage() {
           onUpdate={updateDepositPercentage}
           loading={loading}
         />
+
+        {/* Penalty & Surcharge Info Card */}
+        <PenaltySurchargeInfoCard />
 
         {/* Info Section */}
         <div className="grid gap-4 md:grid-cols-3 pt-6 border-t border-slate-200 dark:border-slate-800">

@@ -8,12 +8,12 @@ import {
   ServiceItemFormData,
   ServiceGroup,
 } from "@/lib/types/service";
-import { serviceManagementService } from "@/lib/services";
-import type { Service as ApiService } from "@/lib/types/api";
+import { serviceAPI } from "@/lib/services/service-unified.service";
+import type { Service } from "@/lib/types/service-unified";
 import { ApiError } from "@/lib/services/api";
 
-// Map API Service to local ServiceItem format
-function mapApiToServiceItem(apiService: ApiService, categories: ServiceCategory[]): ServiceItem {
+// Map unified Service to legacy ServiceItem format
+function mapApiToServiceItem(apiService: Service, categories: ServiceCategory[]): ServiceItem {
   // Try to find a matching category or create a default one
   const category = categories[0] || {
     categoryID: "CAT001",
@@ -55,13 +55,12 @@ export function useServices() {
   const loadServices = async () => {
     try {
       setIsLoading(true);
-      const result = await serviceManagementService.getServices({
-        page: 1,
-        limit: 100,
-        sortBy: "name",
-        sortOrder: "asc",
-      });
-      setServices(result.data.map(s => mapApiToServiceItem(s, categories)));
+      
+      // ⚠️ IMPORTANT: Get REGULAR services only (exclude "Phạt" and "Phụ thu")
+      // Backend returns ALL services, but we filter to show only regular services
+      const regularServices = await serviceAPI.getRegularServices();
+      
+      setServices(regularServices.map(s => mapApiToServiceItem(s, categories)));
       setError(null);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Không thể tải danh sách dịch vụ";
@@ -161,7 +160,7 @@ export function useServices() {
         throw new Error("Loại dịch vụ không tồn tại");
       }
 
-      const created = await serviceManagementService.createService({
+      const created = await serviceAPI.createService({
         name: data.serviceName,
         price: data.price,
         unit: data.unit,
@@ -195,7 +194,7 @@ export function useServices() {
         throw new Error("Loại dịch vụ không tồn tại");
       }
 
-      const updated = await serviceManagementService.updateService(id, {
+      const updated = await serviceAPI.updateService(id, {
         name: data.serviceName,
         price: data.price,
         unit: data.unit,
@@ -221,7 +220,7 @@ export function useServices() {
   const softDeleteService = async (id: string) => {
     try {
       setIsLoading(true);
-      await serviceManagementService.updateService(id, { isActive: false });
+      await serviceAPI.updateService(id, { isActive: false });
       setServices(
         services.map((service) =>
           service.serviceID === id
@@ -242,7 +241,7 @@ export function useServices() {
   const deleteService = async (id: string) => {
     try {
       setIsLoading(true);
-      await serviceManagementService.deleteService(id);
+      await serviceAPI.deleteService(id);
       setServices(services.filter((service) => service.serviceID !== id));
       setError(null);
     } catch (err) {
