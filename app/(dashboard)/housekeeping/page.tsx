@@ -13,12 +13,11 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
-import { mockRooms } from "@/lib/mock-rooms";
 import type { RoomStatus } from "@/lib/types/room";
 
 export default function HousekeepingPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [rooms, setRooms] = useState(mockRooms);
+  const [rooms, setRooms] = useState<any[]>([]); // TODO: Fetch from API
 
   const housekeepingRooms = rooms.filter((room) => {
     const status = room.roomStatus;
@@ -54,7 +53,7 @@ export default function HousekeepingPage() {
     return ICONS.CLIPBOARD_LIST;
   };
 
-  const getActionButton = (room: (typeof mockRooms)[0]) => {
+  const getActionButton = (room: any) => {
     if (room.roomStatus === "Bẩn") {
       return (
         <Button

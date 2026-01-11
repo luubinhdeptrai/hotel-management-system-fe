@@ -3,7 +3,6 @@
 import * as React from "react";
 import { ICONS } from "@/src/constants/icons.enum";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { getCurrentUser } from "@/lib/mock-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
 export function Navbar() {
-  const user = getCurrentUser();
+  const user = null; // TODO: Get from auth service
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
@@ -57,7 +56,7 @@ export function Navbar() {
                   </div>
                   <div className="hidden sm:flex flex-col items-start">
                     <span className="text-sm font-semibold text-gray-900 leading-tight">
-                      {user?.role || "User"}
+                      {(user as any)?.role || "User"}
                     </span>
                   </div>
                   <span className="inline-flex items-center justify-center w-4 h-4 text-gray-500">{ICONS.CHEVRON_DOWN}</span>

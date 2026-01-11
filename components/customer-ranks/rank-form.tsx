@@ -59,11 +59,41 @@ interface FormError {
 }
 
 export function RankForm({ rank, onSubmit, onCancel, loading }: RankFormProps) {
+  // Parse benefits from rank (can be string or object)
+  const parseBenefits = (benefits: any): string[] => {
+    try {
+      let parsed = benefits;
+      if (typeof benefits === 'string') {
+        parsed = JSON.parse(benefits);
+      }
+      if (typeof parsed === 'object' && parsed) {
+        // Filter out falsy values and description, get keys as benefit names
+        return Object.entries(parsed)
+          .filter(([key, value]) => value && key !== 'description')
+          .map(([key]) => {
+            // Map BE field names to predefined benefits
+            const benefitMap: Record<string, string> = {
+              discount: (parsed.discount ? `Giảm giá ${parsed.discount}%` : ""),
+              prioritySupport: "Hỗ trợ ưu tiên 24/7",
+              lateCheckout: "Checkout muộn miễn phí",
+              roomUpgrade: "Nâng cấp phòng miễn phí",
+            };
+            return benefitMap[key] || key;
+          })
+          .filter(Boolean);
+      }
+      return [];
+    } catch (e) {
+      console.error("Error parsing benefits:", e);
+      return [];
+    }
+  };
+
   const [formData, setFormData] = useState({
     displayName: rank?.displayName || "",
     minSpending: rank?.minSpending?.toString() || "",
     maxSpending: rank?.maxSpending?.toString() || "",
-    benefitsList: rank?.benefits ? Object.keys(rank.benefits || {}) : [],
+    benefitsList: rank?.benefits ? parseBenefits(rank.benefits) : [],
     color: rank?.color || "bronze",
   });
   const [newBenefit, setNewBenefit] = useState("");
@@ -104,21 +134,28 @@ export function RankForm({ rank, onSubmit, onCancel, loading }: RankFormProps) {
 
     if (!validate()) return;
 
-    const maxSpendingValue = formData.maxSpending ? parseFloat(formData.maxSpending) : undefined;
-    
     const benefits = formData.benefitsList.reduce((acc: Record<string, boolean>, benefit: string) => {
       acc[benefit] = true;
       return acc;
     }, {});
 
-    const data = {
+    // Generate name from displayName (remove spaces, lowercase)
+    const nameValue = formData.displayName.trim().toLowerCase().replace(/\s+/g, '-');
+
+    const data: any = {
+      name: nameValue,
       displayName: formData.displayName.trim(),
       minSpending: parseFloat(formData.minSpending),
-      maxSpending: maxSpendingValue,
       benefits: JSON.stringify(benefits),
       color: formData.color,
     };
 
+    // Only include maxSpending if it has a value
+    if (formData.maxSpending) {
+      data.maxSpending = parseFloat(formData.maxSpending);
+    }
+
+    console.log("Submitting rank data:", data);
     await onSubmit(data);
   };
 

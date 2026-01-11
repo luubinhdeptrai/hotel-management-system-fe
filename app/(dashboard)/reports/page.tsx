@@ -51,7 +51,7 @@ export default function ReportsPage() {
       <ReportSummaryCards
         totalRevenue={summary.totalRevenue}
         totalBookings={summary.totalBookings}
-        averageOccupancy={summary.averageOccupancy}
+        averageOccupancy={summary.averageOccupancyRate}
         totalCustomers={summary.totalCustomers}
       />
 

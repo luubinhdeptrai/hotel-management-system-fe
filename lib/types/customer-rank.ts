@@ -10,26 +10,30 @@
 
 export interface CustomerRank {
   id: string;
+  name?: string; // Optional: Unique identifier: "VIP1", "VIP2", etc.
   displayName: string; // "Khách hàng Vàng", "Khách hàng Bạc", etc.
-  minSpending: number; // Minimum spending threshold (VND)
-  maxSpending: number | null; // Max spending (null for highest tier)
-  benefits: Record<string, any>; // JSON object describing benefits
-  color: string; // Color name: "gold", "silver", "bronze", etc.
+  description?: string; // Optional description
+  minSpending: number | string; // Minimum spending threshold (VND) - can be string from DB
+  maxSpending: number | string | null; // Max spending - can be string from DB
+  benefits: string | Record<string, any>; // JSON object or string
+  color: string; // Hex code or color name: "#FFD700" or "gold"
 }
 
 export interface CreateCustomerRankRequest {
+  name?: string;
   displayName: string;
   minSpending: number;
   maxSpending?: number | null;
-  benefits: Record<string, any>;
+  benefits: string;
   color: string;
 }
 
 export interface UpdateCustomerRankRequest {
+  name?: string;
   displayName?: string;
   minSpending?: number;
   maxSpending?: number | null;
-  benefits?: Record<string, any>;
+  benefits?: string;
   color?: string;
 }
 
@@ -61,9 +65,20 @@ interface RankColorClasses {
 }
 
 /**
- * Get rank badge color classes by color name
+ * Get rank badge color classes by color name or hex
  */
-export function getRankColor(colorName: string): RankColorClasses {
+export function getRankColor(color: string): RankColorClasses {
+  // If color is a hex code, map to color name
+  const hexToColorMap: Record<string, string> = {
+    "#CD7F32": "bronze",   // bronze
+    "#C0C0C0": "silver",   // silver
+    "#FFD700": "gold",     // gold
+    "#E5E4E2": "platinum", // platinum
+    "#B9F2FF": "diamond",  // diamond
+  };
+
+  const colorName = hexToColorMap[color] || color?.toLowerCase() || "silver";
+
   const colorMap: Record<string, RankColorClasses> = {
     bronze: { bg: "bg-orange-100", text: "text-orange-800", border: "border-orange-300" },
     silver: { bg: "bg-gray-200", text: "text-gray-800", border: "border-gray-400" },
@@ -72,20 +87,23 @@ export function getRankColor(colorName: string): RankColorClasses {
     diamond: { bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-300" },
   };
   
-  return colorMap[colorName?.toLowerCase()] || colorMap.silver;
+  return colorMap[colorName] || colorMap.silver;
 }
 
 /**
  * Format spending amount
  */
-export function formatSpending(amount: number): string {
-  if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(1)}M`;
+export function formatSpending(amount: number | string | undefined): string {
+  if (!amount) return "0";
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(numAmount)) return "0";
+  if (numAmount >= 1000000) {
+    return `${(numAmount / 1000000).toFixed(1)}M`;
   }
-  if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(0)}K`;
+  if (numAmount >= 1000) {
+    return `${(numAmount / 1000).toFixed(0)}K`;
   }
-  return amount.toLocaleString("vi-VN");
+  return numAmount.toLocaleString("vi-VN");
 }
 
 /**
@@ -98,12 +116,25 @@ export function getRankDisplayName(rank: CustomerRank | null): string {
 
 /**
  * Parse benefits JSON
+ * Accepts string (JSON string from DB) or Record object
  */
-export function parseBenefits(benefits: Record<string, any>): string[] {
-  if (!benefits) return [];
-  try {
-    return Object.entries(benefits).map(([key, value]) => `${key}: ${value}`);
-  } catch {
-    return [];
+export function parseBenefits(benefits: string | Record<string, any> | undefined): Record<string, any> {
+  if (!benefits) return {};
+  
+  // If already an object, return it
+  if (typeof benefits === 'object' && benefits !== null) {
+    return benefits;
   }
+  
+  // If string, try to parse JSON
+  if (typeof benefits === 'string') {
+    try {
+      const parsed = JSON.parse(benefits);
+      return typeof parsed === 'object' && parsed !== null ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  
+  return {};
 }

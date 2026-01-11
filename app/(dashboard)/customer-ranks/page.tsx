@@ -166,12 +166,16 @@ export default function CustomerRanksPage() {
                     (b) => b.rankId === rank.id
                   );
                   
-                  let benefits: Record<string, boolean> = {};
+                  let benefits: Record<string, any> = {};
                   try {
                     if (typeof rank.benefits === 'string') {
-                      benefits = JSON.parse(rank.benefits);
+                      const parsed = JSON.parse(rank.benefits);
+                      // Filter out falsy values and description
+                      benefits = Object.fromEntries(
+                        Object.entries(parsed).filter(([key, value]) => value && key !== 'description')
+                      );
                     } else if (typeof rank.benefits === 'object' && rank.benefits) {
-                      benefits = rank.benefits as Record<string, boolean>;
+                      benefits = rank.benefits as Record<string, any>;
                     }
                   } catch (e) {
                     console.error("Error parsing benefits:", e);
@@ -219,14 +223,22 @@ export default function CustomerRanksPage() {
                               <p className={`text-${colorSet.text}-600 font-medium mb-1`}>Quyền lợi</p>
                               <div className="flex flex-wrap gap-2">
                                 {(() => {
-                                  const benefitKeys = Object.keys(benefits || {}).filter(key => benefits[key as keyof typeof benefits]);
+                                  const benefitKeys = Object.keys(benefits || {});
+                                  const benefitLabels: Record<string, string> = {
+                                    discount: "Giảm giá",
+                                    prioritySupport: "Hỗ trợ ưu tiên",
+                                    lateCheckout: "Checkout muộn",
+                                    roomUpgrade: "Nâng cấp phòng",
+                                  };
+                                  
                                   return (
                                     <>
                                       {benefitKeys.slice(0, 3).map((key, idx) => {
                                         const benefitColors = ["from-orange-400 to-red-500", "from-yellow-400 to-orange-500", "from-green-400 to-emerald-500"];
+                                        const label = benefitLabels[key] || key;
                                         return (
                                           <span key={key} className={`bg-gradient-to-r ${benefitColors[idx % benefitColors.length]} text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md`}>
-                                            {key.slice(0, 12)}
+                                            {label}
                                           </span>
                                         );
                                       })}

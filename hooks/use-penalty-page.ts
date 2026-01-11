@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { mockPenaltyItems } from "@/lib/mock-penalties";
 import { PenaltyItem, PenaltyFormData } from "@/lib/types/penalty";
 
 interface Notification {
@@ -11,7 +10,7 @@ interface Notification {
 
 export function usePenaltyPage() {
   // Local state for penalties (in real app, this would come from API)
-  const [penalties, setPenalties] = useState<PenaltyItem[]>(mockPenaltyItems);
+  const [penalties, setPenalties] = useState<PenaltyItem[]>([]);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);

@@ -1,19 +1,8 @@
 "use client";
 
-
 import { logger } from "@/lib/utils/logger";
 import { useState, useCallback, useMemo } from "react";
 import type { ReportType } from "@/lib/types/reports";
-import {
-  mockRevenueByDayData,
-  mockRevenueByMonthData,
-  mockOccupancyRateData,
-  mockRoomAvailabilityData,
-  mockCustomerReportData,
-  mockServiceRevenueData,
-  filterDataByDateRange,
-  calculateSummary,
-} from "@/lib/mock-reports";
 
 export function useReports() {
   const [reportType, setReportType] = useState<ReportType>("revenue-by-day");
@@ -27,38 +16,19 @@ export function useReports() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Filter data based on date range
-  const filteredRevenueByDayData = useMemo(() => {
-    return filterDataByDateRange(
-      mockRevenueByDayData,
-      new Date(startDate),
-      new Date(endDate),
-      "date"
-    );
-  }, [startDate, endDate]);
+  // TODO: Fetch report data from API
+  const filteredRevenueByDayData: any[] = [];
+  const filteredRevenueByMonthData: any[] = [];
+  const filteredOccupancyData: any[] = [];
 
-  const filteredRevenueByMonthData = useMemo(() => {
-    return filterDataByDateRange(
-      mockRevenueByMonthData,
-      new Date(startDate),
-      new Date(endDate),
-      "month"
-    );
-  }, [startDate, endDate]);
-
-  const filteredOccupancyData = useMemo(() => {
-    return filterDataByDateRange(
-      mockOccupancyRateData,
-      new Date(startDate),
-      new Date(endDate),
-      "date"
-    );
-  }, [startDate, endDate]);
-
-  // Calculate summary
-  const summary = useMemo(() => {
-    return calculateSummary(filteredRevenueByDayData, filteredOccupancyData);
-  }, [filteredRevenueByDayData, filteredOccupancyData]);
+  const summary = {
+    totalRevenue: 0,
+    totalBookings: 0,
+    averageOccupancyRate: 0,
+    totalCustomers: 0,
+    averageOccupancy: 0,
+    topRoomType: "",
+  };
 
   // Get current report data based on selected type
   const currentReportData = useMemo(() => {
@@ -70,11 +40,11 @@ export function useReports() {
       case "occupancy-rate":
         return filteredOccupancyData;
       case "room-availability":
-        return mockRoomAvailabilityData;
+        return [];
       case "customer-list":
-        return mockCustomerReportData;
+        return [];
       case "service-revenue":
-        return mockServiceRevenueData;
+        return [];
       default:
         return [];
     }
@@ -130,9 +100,9 @@ export function useReports() {
     filteredRevenueByDayData,
     filteredRevenueByMonthData,
     filteredOccupancyData,
-    roomAvailabilityData: mockRoomAvailabilityData,
-    customerReportData: mockCustomerReportData,
-    serviceRevenueData: mockServiceRevenueData,
+    roomAvailabilityData: [],
+    customerReportData: [],
+    serviceRevenueData: [],
     handleGenerateReport,
     handleExportPdf,
     handleExportExcel,

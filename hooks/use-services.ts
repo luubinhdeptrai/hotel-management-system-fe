@@ -8,7 +8,6 @@ import {
   ServiceItemFormData,
   ServiceGroup,
 } from "@/lib/types/service";
-import { mockServiceCategories } from "@/lib/mock-services";
 import { serviceManagementService } from "@/lib/services";
 import type { Service as ApiService } from "@/lib/types/api";
 import { ApiError } from "@/lib/services/api";
@@ -42,10 +41,8 @@ function mapApiToServiceItem(apiService: ApiService, categories: ServiceCategory
 }
 
 export function useServices() {
-  // Note: Categories are not supported by the API, so we keep them as mock data
-  const [categories, setCategories] = useState<ServiceCategory[]>(
-    mockServiceCategories
-  );
+  // Default empty categories until API is ready
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { mockSurchargeItems } from "@/lib/mock-surcharges";
 import { SurchargeItem, SurchargeFormData } from "@/lib/types/surcharge";
 
 interface Notification {
@@ -12,7 +11,7 @@ interface Notification {
 export function useSurchargePage() {
   // Local state for surcharges (in real app, this would come from API)
   const [surcharges, setSurcharges] =
-    useState<SurchargeItem[]>(mockSurchargeItems);
+    useState<SurchargeItem[]>([]);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);

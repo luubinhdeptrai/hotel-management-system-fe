@@ -4,28 +4,6 @@ import type { CustomerRank } from "@/lib/types/customer-rank";
 export type CustomerType = "Cá nhân" | "Doanh nghiệp";
 export type CustomerStatus = "Hoạt động" | "Đã vô hiệu";
 
-// DEPRECATED: Old hardcoded VIP tier system - replaced by dynamic CustomerRank from Backend
-export type VIPTier = "STANDARD" | "VIP" | "PLATINUM";
-
-// DEPRECATED: Remove these after migration is complete
-export const VIP_TIER_LABELS: Record<VIPTier, string> = {
-  STANDARD: "Khách hàng thường",
-  VIP: "VIP",
-  PLATINUM: "Platinum VIP",
-};
-
-export const VIP_TIER_COLORS: Record<VIPTier, string> = {
-  STANDARD: "bg-gray-100 text-gray-800",
-  VIP: "bg-amber-100 text-amber-800",
-  PLATINUM: "bg-purple-100 text-purple-800",
-};
-
-export const VIP_TIER_THRESHOLDS: Record<VIPTier, number> = {
-  STANDARD: 0,
-  VIP: 10000000,
-  PLATINUM: 50000000,
-};
-
 export interface CustomerHistoryRecord {
   reservationId: string;
   checkInDate: string;
@@ -45,8 +23,6 @@ export interface CustomerRecord {
   address: string;
   nationality: string;
   customerType: CustomerType;
-  isVip: boolean; // DEPRECATED - use rank instead
-  vipTier: VIPTier; // DEPRECATED - use rank instead
   status: CustomerStatus;
   notes?: string;
   createdAt: string;
@@ -69,14 +45,13 @@ export interface CustomerFormData {
   address: string;
   nationality: string;
   customerType: CustomerType;
-  isVip: boolean;
   notes?: string;
 }
 
 export interface CustomerFilters {
   searchQuery: string;
   typeFilter: CustomerType | "Tất cả";
-  vipFilter: "Tất cả" | "VIP" | "Thường";
+  rankFilter: string | "Tất cả"; // rankId or "Tất cả"
 }
 
 export interface CustomerStatistics {

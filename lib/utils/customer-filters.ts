@@ -9,7 +9,7 @@ const normalize = (value: string) => value.toLowerCase().trim();
 export const getDefaultCustomerFilters = (): CustomerFilters => ({
   searchQuery: "",
   typeFilter: "Tất cả",
-  vipFilter: "Tất cả",
+  rankFilter: "Tất cả",
 });
 
 export const filterCustomers = (
@@ -35,12 +35,11 @@ export const filterCustomers = (
       filters.typeFilter === "Tất cả" ||
       customer.customerType === filters.typeFilter;
 
-    const matchesVip =
-      filters.vipFilter === "Tất cả" ||
-      (filters.vipFilter === "VIP" && customer.isVip) ||
-      (filters.vipFilter === "Thường" && !customer.isVip);
+    const matchesRank =
+      filters.rankFilter === "Tất cả" ||
+      customer.rankId === filters.rankFilter;
 
-    return matchesSearch && matchesType && matchesVip;
+    return matchesSearch && matchesType && matchesRank;
   });
 };
 
@@ -48,7 +47,7 @@ export const hasCustomerFilters = (filters: CustomerFilters): boolean =>
   Boolean(
     filters.searchQuery.trim() ||
       filters.typeFilter !== "Tất cả" ||
-      filters.vipFilter !== "Tất cả"
+      filters.rankFilter !== "Tất cả"
   );
 
 export const calculateCustomerStatistics = (
@@ -58,7 +57,7 @@ export const calculateCustomerStatistics = (
     (acc, customer) => {
       acc.totalCustomers += 1;
       acc.totalLifetimeValue += customer.totalSpent;
-      if (customer.isVip) acc.vipCustomers += 1;
+      if (customer.rank) acc.vipCustomers += 1; // Count customers with ranks as VIP
       if (customer.customerType === "Doanh nghiệp") acc.corporateCustomers += 1;
       if (customer.status === "Đã vô hiệu") acc.inactiveCustomers += 1;
       return acc;

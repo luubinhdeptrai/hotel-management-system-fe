@@ -25,7 +25,6 @@ import {
 import { ICONS } from "@/src/constants/icons.enum";
 import type { Reservation } from "@/lib/types/reservation";
 import type { CheckInFormData } from "@/lib/types/checkin-checkout";
-import { mockRooms } from "@/lib/mock-rooms";
 import type { Room } from "@/lib/types/room";
 import { NguoioFormModal } from "@/components/nguoio/nguoio-form-modal";
 
@@ -57,37 +56,9 @@ export function CheckInModal({
   const getAvailableRoomsForDetail = (
     detail: Reservation["details"][0]
   ): Room[] => {
-    if (!reservation) return [];
-
-    // Get already selected room IDs (excluding current detail)
-    const selectedRoomIDs = roomAssignments
-      .filter((a) => a.detailID !== detail.detailID)
-      .map((a) => a.roomID);
-
-    return mockRooms.filter((room) => {
-      // Condition 1: Is this the currently assigned room in reservation?
-      const isOriginalRoom = room.roomID === detail.roomID;
-
-      // Condition 2: Matches Room Type?
-      const matchesType =
-        room.roomTypeID === detail.roomTypeID ||
-        (detail.roomTypeName &&
-          room.roomType?.roomTypeName === detail.roomTypeName);
-
-      // Condition 3: Is Ready or is already assigned to this detail?
-      const isReady = room.roomStatus === "Sẵn sàng";
-      const isCurrentlyAssigned = roomAssignments.find(
-        (a) => a.detailID === detail.detailID && a.roomID === room.roomID
-      );
-
-      // Condition 4: Not selected for another room
-      const notSelectedElsewhere = !selectedRoomIDs.includes(room.roomID);
-
-      // Logic: Include if matches type AND (is ready OR is original OR is currently assigned) AND not selected elsewhere
-      if (isOriginalRoom) return true;
-      if (isCurrentlyAssigned) return true;
-      return matchesType && isReady && notSelectedElsewhere;
-    });
+    // TODO: Fetch available rooms from API
+    // For now return empty array until API is implemented
+    return [];
   };
 
   // Initialize room assignments when reservation changes or modal opens

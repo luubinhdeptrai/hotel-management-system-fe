@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
 import type { RoomType } from "@/lib/types/room";
 import type { PricingPolicy, PricingPolicyFormData } from "@/lib/types/pricing";
-import { mockPricingPolicies } from "@/lib/mock-pricing-policies";
 import { PricingPoliciesTable } from "./pricing-policies-table";
 import { PricingPolicyFormModal } from "./pricing-policy-form-modal";
 import { formatCurrency } from "@/lib/utils";
@@ -17,7 +16,7 @@ interface PricingEngineTabProps {
 }
 
 export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
-  const [policies, setPolicies] = useState<PricingPolicy[]>(mockPricingPolicies);
+  const [policies, setPolicies] = useState<PricingPolicy[]>([]); // TODO: Fetch from API
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<PricingPolicy | null>(null);
 
