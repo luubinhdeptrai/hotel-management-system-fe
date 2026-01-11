@@ -79,6 +79,11 @@ const serviceManagement = [
     icon: ICONS.UTENSILS,
   },
   {
+    title: "Sự Kiện & Lịch",
+    url: "/calendar-events",
+    icon: ICONS.CALENDAR,
+  },
+  {
     title: "Khuyến Mại",
     url: "/promotions",
     icon: ICONS.TAG,

@@ -42,17 +42,53 @@ export enum AdjustmentType {
 }
 
 /**
+ * Event type enum - Matches Backend EventType
+ */
+export enum EventType {
+  HOLIDAY = "HOLIDAY", // Lễ, Tết (Thường priority cao)
+  SEASONAL = "SEASONAL", // Mùa vụ (Hè, Mưa)
+  SPECIAL_EVENT = "SPECIAL_EVENT", // Sự kiện (Blackpink, Pháo hoa)
+}
+
+/**
  * Calendar Event for pricing rules
+ * Matches Backend CalendarEvent model exactly
  */
 export interface CalendarEvent {
   id: string;
-  name: string;
+  name: string; // "Tết Nguyên Đán 2026", "Mùa Hè 2026"
   description: string | null;
-  startDate: string; // ISO date string
-  endDate: string; // ISO date string
-  color: string; // Hex color for UI
+  type: EventType; // HOLIDAY | SEASONAL | SPECIAL_EVENT
+  startDate: string; // ISO datetime string
+  endDate: string; // ISO datetime string
+  rrule: string | null; // RFC 5545 recurring pattern (e.g., "FREQ=YEARLY;BYMONTH=4;BYMONTHDAY=30")
+  pricingRules?: PricingRule[]; // Optional relation
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Request body for creating a calendar event
+ */
+export interface CreateCalendarEventRequest {
+  name: string;
+  description?: string | null;
+  type: EventType;
+  startDate: string; // ISO datetime or YYYY-MM-DD
+  endDate: string; // ISO datetime or YYYY-MM-DD
+  rrule?: string | null; // RFC 5545 recurring pattern
+}
+
+/**
+ * Request body for updating a calendar event
+ */
+export interface UpdateCalendarEventRequest {
+  name?: string;
+  description?: string | null;
+  type?: EventType;
+  startDate?: string;
+  endDate?: string;
+  rrule?: string | null;
 }
 
 /**
