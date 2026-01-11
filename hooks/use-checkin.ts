@@ -180,9 +180,20 @@ export function useCheckIn() {
       logger.log("Booking created:", bookingResponse);
 
       // Step 2: CRITICAL - Confirm booking first and WAIT for completion
-      // Backend requires booking rooms to be CONFIRMED status before check-in
+      // ⚠️ KNOWN ISSUE: Backend does NOT have API `/employee/bookings/:id/confirm`
+      // This call uses a mock fallback in bookingService.confirmBooking()
+      // The booking will remain in PENDING status, causing check-in to FAIL
+      // 
+      // SOLUTION NEEDED:
+      // - Option A: Backend adds manual confirmation API
+      // - Option B: Use Transaction API to create a payment transaction
+      //             which will automatically confirm the booking
+      // 
+      // Current workaround attempts confirmBooking but it returns mock data.
+      // TODO: Replace with Transaction API for actual payment/confirmation
       await bookingService.confirmBooking(bookingResponse.bookingId);
       logger.log("Booking confirmed:", bookingResponse.bookingId);
+      logger.warn("⚠️ confirmBooking used mock response - booking may still be PENDING");
       
       // Step 3: AFTER confirmation, fetch fresh booking data with updated status
       const confirmedBooking = await bookingService.getBookingById(bookingResponse.bookingId);

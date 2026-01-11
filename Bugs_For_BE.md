@@ -1,3 +1,192 @@
+# 🐛 Backend Issues & Feature Requests
+
+**Maintained by:** Frontend Team  
+**Last Updated:** 2026-01-11 (Check-in Analysis)  
+**Purpose:** Track backend issues discovered during frontend development
+
+---
+
+## 🔴 CRITICAL ISSUES (NEW - Check-in Related)
+
+### Issue CHECKIN-1: Missing API - Manual Booking Confirmation
+
+**Severity:** 🔴 **CRITICAL**  
+**Discovery Date:** 2026-01-11  
+**Component:** Check-in Flow
+
+**Endpoint Needed:** `POST /employee/bookings/:id/confirm` (hoặc `PATCH /employee/bookings/:id/confirm`)
+
+**Current Situation:**
+- Booking status chỉ có thể chuyển sang CONFIRMED thông qua Transaction (payment)
+- KHÔNG CÓ API để employee manual confirm booking mà không qua payment flow
+- Frontend walk-in flow bị broken vì không thể confirm booking trước check-in
+
+**Impact:**
+- ❌ Walk-in check-in flow HOÀN TOÀN KHÔNG HOẠT ĐỘNG
+- ❌ Employee không thể confirm bookings cho pre-arranged payments (chuyển khoản đang chờ)
+- ❌ Không handle được special cases (VIP, company accounts, complimentary stays)
+- ❌ User experience rất tệ: tạo booking thành công nhưng không thể check-in ngay
+
+**Use Cases Cannot Be Fulfilled:**
+1. **Walk-in Guest:** Khách đến trực tiếp, muốn check-in ngay lập tức
+   - Hiện tại: Phải tạo booking → Tạo transaction → Đợi confirm → Mới check-in được
+   - Mong muốn: Tạo booking → Manual confirm → Check-in ngay
+2. **Pre-payment by Bank Transfer:** Khách chuyển khoản trước, đến khách sạn check-in
+   - Hiện tại: Không thể confirm cho đến khi transaction record được tạo
+   - Mong muốn: Employee xác nhận đã nhận tiền → Manual confirm → Check-in
+3. **Special Arrangements:** Booking cho VIP, partner, không cần payment
+   - Hiện tại: Không có cách nào confirm
+   - Mong muốn: Manual confirm với note/reason
+
+**Current Frontend Workaround:**
+Frontend service có mock fallback cho `confirmBooking()` nhưng chỉ return fake data, booking vẫn PENDING ở backend.
+
+**Proposed Backend Solution:**
+
+**1. Route Definition:**
+```typescript
+// src/routes/v1/employee/booking.route.ts
+router.post(
+  '/:id/confirm',
+  authEmployee,
+  authorize('update', 'Booking'),
+  validate(bookingValidation.confirmBooking),
+  employeeBookingController.confirmBooking
+);
+```
+
+**2. Validation:**
+```typescript
+// src/validations/booking.validation.ts
+const confirmBooking = {
+  params: Joi.object().keys({
+    id: Joi.string().required()
+  }),
+  body: Joi.object().keys({
+    note: Joi.string().optional()  // Optional reason/note for audit
+  })
+};
+```
+
+**3. Service Logic:**
+```typescript
+// src/services/booking.service.ts
+async confirmBooking(input: { bookingId: string; employeeId: string; note?: string }) {
+  const { bookingId, employeeId, note } = input;
+
+  // 1. Validate booking
+  const booking = await this.prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { bookingRooms: true }
+  });
+
+  if (!booking) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Booking not found');
+  }
+
+  if (booking.status !== BookingStatus.PENDING) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST, 
+      `Cannot confirm booking with status ${booking.status}`
+    );
+  }
+
+  // 2. Update in transaction
+  return await this.prisma.$transaction(async (tx) => {
+    // Update booking
+    const updatedBooking = await tx.booking.update({
+      where: { id: bookingId },
+      data: { status: BookingStatus.CONFIRMED }
+    });
+
+    // Update all booking rooms
+    await tx.bookingRoom.updateMany({
+      where: { bookingId },
+      data: { status: BookingStatus.CONFIRMED }
+    });
+
+    // Update room status to RESERVED
+    const roomIds = booking.bookingRooms.map(br => br.roomId);
+    await tx.room.updateMany({
+      where: { id: { in: roomIds } },
+      data: { status: RoomStatus.RESERVED }
+    });
+
+    // Log activity
+    await this.activityService.createActivity(
+      ActivityType.UPDATE_BOOKING,
+      employeeId,
+      bookingId,
+      { action: 'manual_confirmation', note },
+      tx
+    );
+
+    return updatedBooking;
+  });
+
+  // 3. Send email async
+  this.emailService.sendBookingConfirmation(bookingId).catch(console.error);
+}
+```
+
+**Benefits:**
+- ✅ Enables complete walk-in flow
+- ✅ Flexible payment arrangements
+- ✅ Better employee UX
+- ✅ Audit trail maintained
+- ✅ Consistent with existing patterns
+
+---
+
+### Issue CHECKIN-2: Missing BookingCustomers in List API
+
+**Severity:** 🟡 **MEDIUM** (Performance & UX)  
+**Discovery Date:** 2026-01-11  
+**Component:** Booking List
+
+**Endpoint:** `GET /employee/bookings`
+
+**Current Situation:**
+- List API returns `bookingRooms` WITHOUT `bookingCustomers` relation
+- Frontend must make N+1 queries to get guest info for each booking
+
+**Problem:**
+1. **Performance:** List 10 bookings = 1 list call + 10 detail calls = 11 API calls
+2. **UX:** Cannot show guest names in list/cards without loading
+3. **Development:** More complex code with multiple loading states
+
+**Proposed Solution:**
+
+Include `bookingCustomers` in list response:
+
+```typescript
+// src/services/booking.service.ts - getBookings()
+include: {
+  bookingRooms: {
+    include: {
+      room: true,
+      roomType: true,
+      bookingCustomers: {  // ← ADD THIS
+        include: {
+          customer: {
+            select: { id: true, fullName: true, phone: true }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Benefits:**
+- ✅ 11 API calls → 1 API call (10x performance improvement)
+- ✅ Immediate guest info display
+- ✅ Enables filtering by guest name
+- ⚠️ Slightly larger response (acceptable trade-off)
+
+---
+
+## 🟠 EXISTING MEDIUM PRIORITY ISSUES
 
 ## Issue 0: UpdateBooking() - Validation Schema vs Implementation Mismatch
 
@@ -332,7 +521,188 @@ async cancelBooking(id: string) {
 
 ---
 
-## Issue 4: BookingCustomer Relationship Not Managed During Create/Update
+## Issue 4: updateBooking() Does NOT Update BookingRoom.checkInDate/checkOutDate
+
+**Severity:** 🔴 **CRITICAL** (Data Inconsistency)
+
+**Location:** `src/services/booking.service.ts` line 708-734 (updateBooking method)
+
+### The Problem
+
+Backend has separate `checkInDate`/`checkOutDate` for:
+1. **Booking table** (applies to whole booking)
+2. **BookingRoom table** (individual room can have different dates)
+
+But `updateBooking()` only updates **Booking** table fields, NOT **BookingRoom** fields.
+
+**Evidence from Data Model:**
+```prisma
+model Booking {
+  checkInDate  DateTime   // ← Update here only
+  checkOutDate DateTime   // ← Update here only
+  bookingRooms BookingRoom[]
+}
+
+model BookingRoom {
+  checkInDate    DateTime   // ← NOT updated by updateBooking()
+  checkOutDate   DateTime   // ← NOT updated by updateBooking()
+  bookingId      String
+  booking        Booking @relation(...)
+}
+```
+
+### Backend updateBooking() Implementation
+
+**File:** `src/services/booking.service.ts` (line 708-734)
+
+```typescript
+async updateBooking(id: string, updateBody: any) {
+  const booking = await this.getBookingById(id);
+  const oldStatus = booking.status;
+
+  // Validate status
+  if (
+    booking.status === BookingStatus.CANCELLED ||
+    booking.status === BookingStatus.CHECKED_OUT
+  ) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot update cancelled or checked-out booking');
+  }
+
+  // ❌ Only updates Booking table - NOT BookingRoom
+  const updatedBooking = await this.prisma.booking.update({
+    where: { id },
+    data: updateBody,  // updateBody contains checkInDate, checkOutDate
+    include: {
+      bookingRooms: true
+    }
+  });
+
+  return updatedBooking;
+}
+```
+
+**What Actually Happens:**
+- ✅ `Booking.checkInDate` updated to new value
+- ✅ `Booking.checkOutDate` updated to new value
+- ❌ `BookingRoom[0].checkInDate` NOT changed (still has OLD value)
+- ❌ `BookingRoom[1].checkOutDate` NOT changed (still has OLD value)
+- ❌ Data inconsistency: Parent dates ≠ child dates
+
+### Concrete Example
+
+```
+Initial State:
+  Booking.checkInDate = 2026-01-15
+  Booking.checkOutDate = 2026-01-18
+  BookingRoom[0].checkInDate = 2026-01-15
+  BookingRoom[0].checkOutDate = 2026-01-18
+
+User edits booking to:
+  checkInDate = 2026-01-20
+  checkOutDate = 2026-01-25
+
+After updateBooking() call:
+  ✅ Booking.checkInDate = 2026-01-20
+  ✅ Booking.checkOutDate = 2026-01-25
+  ❌ BookingRoom[0].checkInDate = 2026-01-15 (WRONG!)
+  ❌ BookingRoom[0].checkOutDate = 2026-01-18 (WRONG!)
+
+Result: Data inconsistency - booking dates don't match room dates
+```
+
+### Why This Is a Problem
+
+1. **Check-in calculation broken:**
+   - Staff checks in using `BookingRoom.checkInDate`
+   - But that's now different from `Booking.checkInDate`
+   - Which date is correct?
+
+2. **Night count calculation wrong:**
+   - System calculates nights from `Booking.checkOutDate - Booking.checkInDate`
+   - But charges based on `BookingRoom.checkInDate - BookingRoom.checkOutDate`
+   - Financial calculations inconsistent
+
+3. **Availability validation broken:**
+   - When other bookings check for conflicts, they query `BookingRoom` dates
+   - If `BookingRoom` has old dates, conflicts won't be detected for new dates
+   - Multiple bookings can be assigned to same room on overlapping dates
+
+### Frontend Current Implementation
+
+**File:** `hooks/use-reservations.ts` (line 680-695)
+
+```typescript
+// Frontend sends ONLY Booking-level dates
+await bookingService.updateBooking(selectedReservation.reservationID, {
+  checkInDate: checkInISO,        // Goes to Booking table
+  checkOutDate: checkOutISO,      // Goes to Booking table
+  totalGuests: totalGuests || undefined,
+});
+
+// ❌ Frontend has NO way to update BookingRoom.checkInDate/checkOutDate
+// ❌ No separate API exists for updating per-room dates
+```
+
+Frontend correctly sends only what Backend supports, but Backend implementation is incomplete.
+
+### Requirement to Fix
+
+Backend needs to handle date changes properly in `updateBooking()`:
+
+```typescript
+async updateBooking(id: string, updateBody: any) {
+  const booking = await this.getBookingById(id);
+  
+  // If dates changed, update BOTH Booking AND all BookingRooms
+  if (updateBody.checkInDate || updateBody.checkOutDate) {
+    const newCheckIn = updateBody.checkInDate || booking.checkInDate;
+    const newCheckOut = updateBody.checkOutDate || booking.checkOutDate;
+    
+    // Update ALL BookingRooms with new dates
+    await this.prisma.bookingRoom.updateMany({
+      where: { bookingId: booking.id },
+      data: {
+        checkInDate: newCheckIn,
+        checkOutDate: newCheckOut
+      }
+    });
+  }
+  
+  // Then update Booking
+  const updated = await this.prisma.booking.update({
+    where: { id },
+    data: updateBody,
+    include: { bookingRooms: true }
+  });
+  
+  return updated;
+}
+```
+
+### Frontend Impact
+
+- ✅ FE correctly sends only supported fields
+- ❌ FE cannot know that BookingRoom dates are not being updated
+- ❌ FE has no way to validate this
+- ❌ Data inconsistency only discovered at check-in time
+
+### Summary
+
+| Aspect | Current | Required |
+|--------|---------|----------|
+| **Update Booking.checkInDate** | ✅ Done | ✅ OK |
+| **Update Booking.checkOutDate** | ✅ Done | ✅ OK |
+| **Update BookingRoom[].checkInDate** | ❌ Not done | ✅ Required |
+| **Update BookingRoom[].checkOutDate** | ❌ Not done | ✅ Required |
+| **Data consistency** | ❌ Broken | ✅ Needed |
+
+This is a **Backend bug** - when Booking dates change, ALL BookingRooms must be updated too.
+
+**Date Reported:** 2026-01-11
+
+---
+
+## Issue 5: BookingCustomer Relationship Not Managed During Create/Update
 
 **Severity:** 🟡 **LOW** (Feature Gap)
 

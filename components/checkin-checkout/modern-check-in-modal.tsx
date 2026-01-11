@@ -108,7 +108,38 @@ export function ModernCheckInModal({
   // Customer assignment helpers removed — backend list endpoint doesn't provide bookingCustomers yet.
 
   const handleConfirm = async () => {
-    if (!booking || selectedRooms.size === 0) return;
+    if (!booking || selectedRooms.size === 0) {
+      alert("Vui lòng chọn ít nhất một phòng để check-in!");
+      return;
+    }
+
+    // ✅ FIX #4: Validate customerIds not empty
+    const roomsWithoutGuests = checkInStates
+      .filter((state) => selectedRooms.has(state.bookingRoomId))
+      .filter((state) => !state.customerIds || state.customerIds.length === 0);
+    
+    if (roomsWithoutGuests.length > 0) {
+      alert("Vui lòng gán ít nhất một khách cho mỗi phòng được chọn!");
+      return;
+    }
+
+    // ✅ FIX #5: Validate room capacity
+    const overCapacityRooms = checkInStates
+      .filter((state) => selectedRooms.has(state.bookingRoomId))
+      .filter((state) => {
+        const room = booking.bookingRooms?.find(br => br.id === state.bookingRoomId);
+        const capacity = room?.roomType?.capacity || 999;
+        return state.customerIds.length > capacity;
+      });
+    
+    if (overCapacityRooms.length > 0) {
+      const roomDetails = overCapacityRooms.map(state => {
+        const room = booking.bookingRooms?.find(br => br.id === state.bookingRoomId);
+        return `${room?.room?.roomNumber || 'Unknown'} (capacity: ${room?.roomType?.capacity || 0}, assigned: ${state.customerIds.length})`;
+      }).join(", ");
+      alert(`Một số phòng vượt quá sức chứa! ${roomDetails}\n\nVui lòng điều chỉnh số lượng khách.`);
+      return;
+    }
 
     const checkInInfo = checkInStates
       .filter((state) => selectedRooms.has(state.bookingRoomId))
@@ -126,6 +157,14 @@ export function ModernCheckInModal({
       handleOpenChange(false);
     } catch (error) {
       console.error("Check-in failed:", error);
+      // Show user-friendly error message
+      alert(
+        "Check-in thất bại! Vui lòng kiểm tra:\n" +
+        "- Tất cả phòng đã ở trạng thái \"Đã xác nhận\"\n" +
+        "- Phòng đang sẵn sàng (không bị chiếm hoặc đang dọn dẹp)\n" +
+        "- Thông tin khách hàng hợp lệ\n\n" +
+        "Chi tiết lỗi: " + (error instanceof Error ? error.message : "Unknown error")
+      );
     }
   };
 
@@ -149,8 +188,14 @@ export function ModernCheckInModal({
     });
   };
 
+  // ✅ FIX: Only show CONFIRMED rooms per Backend validation
+  // Backend check-in API ONLY accepts rooms with status = CONFIRMED
   const confirmedRooms =
-    booking.bookingRooms?.filter((br) => br.status === "CONFIRMED" || br.status === "PARTIALLY_CHECKED_OUT" || br.status === "CHECKED_IN") || [];
+    booking.bookingRooms?.filter((br) => br.status === "CONFIRMED") || [];
+  
+  // Track already checked-in rooms for info display
+  const checkedInRooms = 
+    booking.bookingRooms?.filter((br) => br.status === "CHECKED_IN") || [];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -291,6 +336,47 @@ export function ModernCheckInModal({
                 Select Rooms to Check-in
               </h3>
             </div>
+            
+            {/* Info alert for already checked-in rooms */}
+            {checkedInRooms.length > 0 && (
+              <Card className="mb-4 border-2 border-blue-200 bg-blue-50">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-sm font-bold">ℹ</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-blue-900 mb-1">
+                        {checkedInRooms.length} room(s) already checked in
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        These rooms are not shown in the list below as they have already been checked in. 
+                        Only rooms with CONFIRMED status can be checked in.
+                      </p>
+                      {checkedInRooms.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {checkedInRooms.slice(0, 5).map((room) => (
+                            <Badge 
+                              key={room.id} 
+                              variant="secondary" 
+                              className="bg-blue-100 text-blue-700 text-xs"
+                            >
+                              {room.room?.roomNumber || room.roomId}
+                            </Badge>
+                          ))}
+                          {checkedInRooms.length > 5 && (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                              +{checkedInRooms.length - 5} more
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="space-y-3">
               {confirmedRooms.map((bookingRoom) => {
                 const isSelected = selectedRooms.has(bookingRoom.id);

@@ -420,7 +420,7 @@ export default function RoomsPage() {
                 {searchTerm && (
                   <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-100">
                     <Search className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-700">"{searchTerm}"</span>
+                    <span className="text-sm font-medium text-blue-700">&quot;{searchTerm}&quot;</span>
                   </div>
                 )}
               </div>
