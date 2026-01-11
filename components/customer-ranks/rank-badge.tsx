@@ -9,7 +9,7 @@ import type { CustomerRank } from "@/lib/types/customer-rank";
 import { getRankColor } from "@/lib/types/customer-rank";
 
 interface RankBadgeProps {
-  rank: CustomerRank | null;
+  rank?: CustomerRank | null;
   className?: string;
   showIcon?: boolean;
   size?: "sm" | "md" | "lg";

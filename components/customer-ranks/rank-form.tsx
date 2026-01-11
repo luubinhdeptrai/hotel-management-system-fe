@@ -90,7 +90,9 @@ export function RankForm({ rank, onSubmit, onCancel, loading }: RankFormProps) {
   };
 
   const [formData, setFormData] = useState({
+    name: rank?.name || "",
     displayName: rank?.displayName || "",
+    description: rank?.description || "",
     minSpending: rank?.minSpending?.toString() || "",
     maxSpending: rank?.maxSpending?.toString() || "",
     benefitsList: rank?.benefits ? parseBenefits(rank.benefits) : [],
@@ -102,6 +104,10 @@ export function RankForm({ rank, onSubmit, onCancel, loading }: RankFormProps) {
 
   const validate = () => {
     const newErrors: FormError[] = [];
+
+    if (!formData.name.trim()) {
+      newErrors.push({ field: "name", message: "Tên hệ thống là bắt buộc" });
+    }
 
     if (!formData.displayName.trim()) {
       newErrors.push({ field: "displayName", message: "Tên hạng là bắt buộc" });
@@ -139,12 +145,10 @@ export function RankForm({ rank, onSubmit, onCancel, loading }: RankFormProps) {
       return acc;
     }, {});
 
-    // Generate name from displayName (remove spaces, lowercase)
-    const nameValue = formData.displayName.trim().toLowerCase().replace(/\s+/g, '-');
-
     const data: any = {
-      name: nameValue,
+      name: formData.name.trim(),
       displayName: formData.displayName.trim(),
+      description: formData.description.trim() || undefined,
       minSpending: parseFloat(formData.minSpending),
       benefits: JSON.stringify(benefits),
       color: formData.color,
@@ -163,11 +167,39 @@ export function RankForm({ rank, onSubmit, onCancel, loading }: RankFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* System Name */}
+      <div className="space-y-2">
+        <Label htmlFor="name" className="text-sm font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+          Tên hệ thống <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) =>
+            setFormData({ ...formData, name: e.target.value })
+          }
+          placeholder="VD: vip-gold, khach-hang-bac, etc."
+          disabled={loading}
+          className={`transition-colors ${
+            getFieldError("name") 
+              ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
+              : "border-slate-200 focus:border-indigo-500 focus:ring-indigo-200"
+          }`}
+        />
+        {getFieldError("name") && (
+          <div className="flex items-center gap-2 text-red-600 text-sm">
+            <AlertCircle className="h-4 w-4" />
+            {getFieldError("name")?.message}
+          </div>
+        )}
+        <p className="text-xs text-slate-500">Sử dụng chữ thường, gạch ngang (-) và số</p>
+      </div>
+
       {/* Display Name */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="displayName" className="text-sm font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
-            Tên hạng <span className="text-red-500">*</span>
+            Tên hiển thị <span className="text-red-500">*</span>
           </Label>
         </div>
         <Input
@@ -190,6 +222,25 @@ export function RankForm({ rank, onSubmit, onCancel, loading }: RankFormProps) {
             {getFieldError("displayName")?.message}
           </div>
         )}
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm font-semibold text-slate-700">
+          Mô tả hạng
+        </Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          placeholder="Mô tả chi tiết về hạng này (tùy chọn)"
+          disabled={loading}
+          className="transition-colors border-slate-200 focus:border-indigo-500 focus:ring-indigo-200 resize-none"
+          rows={3}
+        />
+        <p className="text-xs text-slate-500">Tối đa 500 ký tự</p>
       </div>
 
       {/* Spending Range */}

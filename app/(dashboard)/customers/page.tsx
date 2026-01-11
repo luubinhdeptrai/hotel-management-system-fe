@@ -47,6 +47,7 @@ import {
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { BookingDetailsModal } from "@/components/customers/booking-details-modal";
 import { customerService } from "@/lib/services/customer.service";
+import { RankBadge } from "@/components/customer-ranks/rank-badge";
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from "@/lib/types/api";
 import { toast } from "sonner";
 
@@ -370,6 +371,12 @@ export default function CustomersPage() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </div>
+
+                  {/* Rank Badge */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 font-semibold mb-2 uppercase">Hạng thành viên</p>
+                    <RankBadge rank={customer.rank} />
                   </div>
 
                   {/* Contact Info */}
