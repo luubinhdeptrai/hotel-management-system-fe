@@ -70,7 +70,7 @@ export function AddServiceModal({
         const converted: Service[] = apiServices.map((s: ApiService) => ({
           serviceID: s.id,
           serviceName: s.name,
-          price: parseFloat(s.price) || 0,
+          price: s.price || 0, // Already a number from API
           unit: s.unit || "lần",
           category: "Dịch vụ", // API doesn't have category, use default
         }));

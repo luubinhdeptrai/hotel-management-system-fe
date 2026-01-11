@@ -1,5 +1,6 @@
 import { logger } from "@/lib/utils/logger";
 import { useState, useMemo, useEffect } from "react";
+import { getRoomTypePrice } from "@/lib/utils";
 import {
   Reservation,
   ReservationStatus,
@@ -11,6 +12,7 @@ import { bookingService } from "@/lib/services/booking.service";
 import { transactionService } from "@/lib/services/transaction.service";
 import { customerService } from "@/lib/services/customer.service";
 import type { CreateBookingRequest, Booking } from "@/lib/types/api";
+import { useAuth } from "@/hooks/use-auth";
 
 type ViewMode = "calendar" | "list";
 
@@ -24,11 +26,16 @@ function convertReservationsToEvents(
 
   reservations.forEach((reservation) => {
     reservation.details.forEach((detail) => {
+      // Normalize roomName - ensure it's always in consistent format
+      const normalizedRoomName = detail.roomName 
+        ? String(detail.roomName).trim()
+        : `Phòng ${detail.roomID}`;
+      
       events.push({
         id: detail.detailID,
         reservationID: reservation.reservationID,
         roomID: detail.roomID,
-        roomName: detail.roomName,
+        roomName: normalizedRoomName,
         customerName: reservation.customer.customerName,
         start: new Date(detail.checkInDate),
         end: new Date(detail.checkOutDate),
@@ -56,6 +63,7 @@ function convertBookingToReservation(booking: Booking): Reservation {
     PENDING: "Chờ xác nhận",
     CONFIRMED: "Đã xác nhận",
     CHECKED_IN: "Đã nhận phòng",
+    PARTIALLY_CHECKED_OUT: "Trả phòng một phần",
     CHECKED_OUT: "Đã trả phòng",
     CANCELLED: "Đã hủy",
   };
@@ -77,27 +85,32 @@ function convertBookingToReservation(booking: Booking): Reservation {
       detailID: br.id,
       reservationID: booking.id,
       roomID: br.roomId,
-      roomName: br.room?.roomNumber || "Room",
+      roomName: br.room?.roomNumber || `Phòng ${br.roomId}` || "Room",
       roomTypeID: br.roomTypeId,
       roomTypeName: br.roomType?.name || "Standard",
       checkInDate: checkInDate.toISOString().split("T")[0],
       checkOutDate: checkOutDate.toISOString().split("T")[0],
-      status: statusMap[booking.status] || "Chờ xác nhận",
-      numberOfGuests: Math.ceil(
-        booking.totalGuests / (booking.bookingRooms?.length || 1)
-      ),
-      pricePerNight:
-        parseInt(booking.totalAmount || "0") /
-        numberOfNights /
-        (booking.bookingRooms?.length || 1),
+      status: statusMap[br.status] || statusMap[booking.status] || "Chờ xác nhận",
+      // Use actual guest count from BookingCustomers if available, otherwise distribute evenly
+      numberOfGuests: br.bookingCustomers?.length || 
+        Math.ceil(booking.totalGuests / (booking.bookingRooms?.length || 1)),
+      // Use actual pricePerNight from backend (includes dynamic pricing)
+      pricePerNight: parseFloat(br.pricePerNight || "0"),
     })),
-    totalAmount: parseInt(booking.totalAmount || "0"),
-    depositAmount: parseInt(booking.depositRequired || "0"),
+    // Use actual totalAmount from backend (sum of all BookingRoom.totalAmount)
+    totalAmount: parseFloat(booking.totalAmount || "0"),
+    // Backend calculates depositRequired = totalAmount * depositPercentage (from AppSettings)
+    // Default depositPercentage = 30% (can be configured via AppSetting)
+    depositAmount: parseFloat(booking.depositRequired || "0"),
     status: statusMap[booking.status] || "Chờ xác nhận",
+    // Store backend data for accurate deposit logic
+    backendStatus: booking.status, // "PENDING", "CONFIRMED", etc. - used for logic checks
+    backendData: booking, // Full booking data from backend
   };
 }
 
 export function useReservations() {
+  const { user, isLoading: authLoading } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,6 +119,11 @@ export function useReservations() {
   // Load bookings from backend on mount
   useEffect(() => {
     const loadBookings = async () => {
+      // Skip if authentication is still loading or user is not authenticated
+      if (authLoading || !user) {
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -129,7 +147,7 @@ export function useReservations() {
     };
 
     loadBookings();
-  }, []);
+  }, [authLoading, user]);
 
   // Filters
   const [checkInDate, setCheckInDate] = useState("");
@@ -147,7 +165,7 @@ export function useReservations() {
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
-  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
 
   // Room selection state (for optional specific room selection during booking)
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -221,7 +239,7 @@ export function useReservations() {
         roomType: {
           roomTypeID: r.roomType.id,
           roomTypeName: r.roomType.name,
-          price: parseInt(r.roomType.pricePerNight),
+          price: getRoomTypePrice(r.roomType),
           capacity: r.roomType.capacity,
         },
         roomStatus: "Sẵn sàng" as const,
@@ -291,6 +309,26 @@ export function useReservations() {
 
   // Handle edit reservation
   const handleEdit = (reservation: Reservation) => {
+    // VALIDATION: Check if booking can be edited (match Backend logic)
+    // Backend constraints from booking.service.ts line 713-716:
+    // - Cannot update if status = CANCELLED
+    // - Cannot update if status = CHECKED_OUT
+    // - Can update if status = PENDING, CONFIRMED, CHECKED_IN, PARTIALLY_CHECKED_OUT
+    // MUST use backendStatus (not UI status labels) for accurate checks
+    const cannotEditBackendStatuses = ["CANCELLED", "CHECKED_OUT"];
+
+    if (cannotEditBackendStatuses.includes(reservation.backendStatus || "")) {
+      logger.error(
+        "Cannot edit booking with backend status:",
+        reservation.backendStatus
+      );
+      alert(
+        `Không thể chỉnh sửa đặt phòng ở trạng thái "${reservation.status}". ` +
+        `Chỉ có thể chỉnh sửa đặt phòng ở trạng thái "Chờ xác nhận", "Đã xác nhận", hoặc "Đã nhận phòng".`
+      );
+      return;
+    }
+
     setSelectedReservation(reservation);
     setFormMode("edit");
     setIsFormModalOpen(true);
@@ -303,22 +341,44 @@ export function useReservations() {
   };
 
   const handleConfirmCancel = async (reason?: string) => {
-    if (selectedReservation) {
-      try {
-        // Call cancel API with reason
-        await bookingService.cancelBooking(
-          selectedReservation.reservationID,
-          reason || "Hủy theo yêu cầu"
-        );
-        logger.log(
-          "Booking cancelled via API:",
-          selectedReservation.reservationID
-        );
-      } catch (error) {
-        logger.error("Cancel API failed, updating local state:", error);
-      }
+    if (!selectedReservation) return;
 
-      // Update local state regardless of API success (mock fallback in service)
+    // VALIDATION: Check if booking can be cancelled (match Backend logic)
+    // Backend constraints from booking.service.ts line 664-673:
+    // - Cannot cancel if status = CANCELLED
+    // - Cannot cancel if status = CHECKED_IN
+    // - Cannot cancel if status = CHECKED_OUT
+    // MUST use backendStatus (not UI status labels) for accurate checks
+    const cannotCancelBackendStatuses = [
+      "CANCELLED",
+      "CHECKED_IN",
+      "CHECKED_OUT",
+      "PARTIALLY_CHECKED_OUT"
+    ];
+
+    if (cannotCancelBackendStatuses.includes(selectedReservation.backendStatus || "")) {
+      logger.error(
+        "Cannot cancel booking with backend status:",
+        selectedReservation.backendStatus
+      );
+      alert(
+        `Không thể hủy đặt phòng ở trạng thái "${selectedReservation.status}". ` +
+        `Chỉ có thể hủy đặt phòng ở trạng thái "Chờ xác nhận" hoặc "Đã xác nhận".`
+      );
+      return;
+    }
+
+    try {
+      // Call cancel API (Backend does NOT accept reason parameter)
+      await bookingService.cancelBooking(
+        selectedReservation.reservationID
+      );
+      logger.log(
+        "Booking cancelled successfully:",
+        selectedReservation.reservationID
+      );
+
+      // Update local state after successful cancellation
       setReservations((prev) =>
         prev.map((r) =>
           r.reservationID === selectedReservation.reservationID
@@ -328,11 +388,22 @@ export function useReservations() {
       );
       setIsCancelModalOpen(false);
       setSelectedReservation(null);
+    } catch (error) {
+      logger.error("Failed to cancel booking:", error);
+      alert(
+        "Không thể hủy đặt phòng. " +
+        (error instanceof Error ? error.message : "Vui lòng thử lại.")
+      );
     }
   };
 
   // Handle save reservation
   const handleSaveReservation = async (data: ReservationFormData) => {
+    // Don't allow saving in view mode
+    if (formMode === "view") {
+      return;
+    }
+
     if (formMode === "create") {
       // Create new reservation with multi-room support
       const roomSelections = data.roomSelections || [];
@@ -377,25 +448,47 @@ export function useReservations() {
           return date.toISOString();
         };
 
-        // Use same time for both to avoid time-based comparison issues
-        // Backend should compare dates, not datetime
-        const checkInISO = parseToISO(checkInDateStr, 0);
-        const checkOutISO = parseToISO(checkOutDateStr, 23);
+        // Use backend's standard times: check-in at 14:00, check-out at 12:00
+        // This matches backend business rules for standard check-in/check-out times
+        const checkInISO = parseToISO(checkInDateStr, 14);
+        const checkOutISO = parseToISO(checkOutDateStr, 12);
+
+        // Validate that roomSelections have roomIDs (from user selection in room-selector component)
+        // The new component already provides specific roomIDs - no need for auto-selection
+        const roomSelectionsWithIds = roomSelections.map((sel) => {
+          if (!sel.roomID) {
+            throw new Error(
+              `Room selection for ${sel.roomTypeName} is missing roomID. ` +
+              `Please select a specific room from the room selector.`
+            );
+          }
+          return sel;
+        });
 
         // Transform to backend-compatible CreateBookingRequest
+        // Support both existing customer (customerId) and new customer (customer object)
+        // Backend expects array of specific roomIds (not room types + count)
         const createBookingRequest: CreateBookingRequest = {
-          // Include customer info for new booking (required by backend)
-          customer: {
-            fullName: data.customerName,
-            phone: data.phoneNumber,
-            idNumber: data.identityCard,
-            email: data.email,
-            address: data.address,
-          },
-          rooms: roomSelections.map((sel) => ({
-            roomTypeId: sel.roomTypeID,
-            count: sel.quantity,
-          })),
+          // Include customer selection data:
+          // - If useExisting = true: use customerId (backend will lookup)
+          // - If useExisting = false: use customer object (backend will create or merge by phone)
+          ...(data.customerSelection?.useExisting
+            ? { customerId: data.customerSelection.customerId }
+            : {
+                customer: {
+                  fullName: data.customerName,
+                  phone: data.phoneNumber,
+                  idNumber: data.identityCard,
+                  email: data.email,
+                  address: data.address,
+                },
+              }),
+          rooms: (() => {
+            // Use auto-selected roomIDs (from either user selection or auto-search above)
+            return roomSelectionsWithIds.map((sel) => ({
+              roomId: sel.roomID!,
+            }));
+          })(),
           checkInDate: checkInISO,
           checkOutDate: checkOutISO,
           totalGuests: roomSelections.reduce(
@@ -472,7 +565,12 @@ export function useReservations() {
           reservationDate: new Date().toISOString().split("T")[0],
           totalRooms,
           totalAmount,
-          depositAmount: data.depositAmount,
+          // Use backend's actual depositRequired (calculated by backend based on AppSettings)
+          // Backend: depositRequired = totalAmount * depositPercentage (default 30%)
+          // If backend response has totalAmount, calculate from that; otherwise use local totalAmount
+          depositAmount: response.totalAmount 
+            ? parseFloat(String(response.totalAmount)) * 0.3  // Backend's totalAmount × 30%
+            : Math.round(totalAmount * 0.3),                   // Fallback: local totalAmount × 30%
           notes: data.notes,
           status: data.depositConfirmed ? "Đã xác nhận" : "Đã đặt",
           details,
@@ -483,12 +581,12 @@ export function useReservations() {
         // If deposit was confirmed in the form, create deposit transaction
         if (data.depositConfirmed && data.depositPaymentMethod) {
           try {
-            const bookingId = response.id || newReservation.reservationID;
+            const bookingId = response.bookingId || newReservation.reservationID;
             logger.log("Creating deposit transaction for booking:", bookingId);
 
             await transactionService.createTransaction({
               bookingId,
-              paymentMethod: data.depositPaymentMethod,
+              paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
             });
 
@@ -557,12 +655,11 @@ export function useReservations() {
                 0
               );
 
-        // Check if deposit was already confirmed (status is not PENDING)
-        const wasDepositConfirmed =
-          selectedReservation.status === "Đã xác nhận" ||
-          selectedReservation.status === "Đã đặt" ||
-          selectedReservation.status === "Đã nhận phòng" ||
-          selectedReservation.status === "Đã nhận";
+        // Check if deposit was already confirmed using backend status (not Vietnamese labels)
+        // Backend logic: Deposit confirmed when status !== PENDING
+        // See DEPOSIT_CONFIRMATION_ANALYSIS.md for details
+        const wasDepositConfirmed = 
+          selectedReservation.backendStatus !== "PENDING";
 
         // Update customer information first (if changed)
         try {
@@ -591,11 +688,16 @@ export function useReservations() {
           // The error will be logged but won't block the reservation update
         }
 
-        // Call update API (without status - status changes via transaction API)
+        // Call update API - Backend only supports: checkInDate, checkOutDate, totalGuests
+        // ⚠️ CRITICAL CONSTRAINT: Backend does NOT support changing rooms via update API
+        // Rooms are IMMUTABLE after booking creation (Backend validation allows `rooms` field 
+        // but service doesn't implement the logic - see booking.service.ts updateBooking())
+        // Status is managed by system (transactions, check-in/out), NOT directly editable
         await bookingService.updateBooking(selectedReservation.reservationID, {
           checkInDate: checkInISO,
           checkOutDate: checkOutISO,
           totalGuests: totalGuests || undefined,
+          // ❌ NOT SUPPORTED: rooms, status (removed - backend ignores these)
         });
 
         logger.log(
@@ -606,11 +708,21 @@ export function useReservations() {
         // Track if we successfully confirmed deposit
         let depositConfirmedSuccessfully = false;
 
+        // Check if deposit payment is still needed (using backend data)
+        const depositStillNeeded = (() => {
+          if (!selectedReservation.backendData) return true;
+          const totalDeposit = parseFloat(selectedReservation.backendData.totalDeposit || "0");
+          const depositRequired = parseFloat(selectedReservation.backendData.depositRequired || "0");
+          return totalDeposit < depositRequired;
+        })();
+
         // If deposit was newly confirmed (checkbox checked and wasn't confirmed before), create deposit transaction
         // The transaction API will change the status from PENDING to CONFIRMED on the backend
+        // Only create transaction if deposit is still needed (idempotent check)
         if (
           data.depositConfirmed &&
           !wasDepositConfirmed &&
+          depositStillNeeded &&
           data.depositPaymentMethod
         ) {
           try {
@@ -621,7 +733,7 @@ export function useReservations() {
 
             await transactionService.createTransaction({
               bookingId: selectedReservation.reservationID,
-              paymentMethod: data.depositPaymentMethod,
+              paymentMethod: data.depositPaymentMethod as "CASH" | "CREDIT_CARD" | "BANK_TRANSFER" | "E_WALLET",
               transactionType: "DEPOSIT",
             });
 
@@ -679,6 +791,9 @@ export function useReservations() {
                     : r.paidDeposit,
                   notes: data.notes,
                   status: newStatus,
+                  // Update backend status to match the new status
+                  // When deposit is confirmed, backend status changes to CONFIRMED
+                  backendStatus: depositConfirmedSuccessfully ? "CONFIRMED" : r.backendStatus,
                   totalAmount,
                   totalRooms:
                     roomSelections.length > 0
@@ -723,10 +838,10 @@ export function useReservations() {
     }
   };
 
-  // Handle view details
+  // Handle view details - always open in view-only mode to see details without editing
   const handleViewDetails = (reservation: Reservation) => {
     setSelectedReservation(reservation);
-    setFormMode("edit");
+    setFormMode("view");
     setIsFormModalOpen(true);
   };
 

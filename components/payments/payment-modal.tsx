@@ -114,9 +114,10 @@ export function PaymentModal({
                   <SelectValue placeholder="Chọn phương thức" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Tiền mặt">Tiền mặt</SelectItem>
-                  <SelectItem value="Thẻ tín dụng">Thẻ tín dụng</SelectItem>
-                  <SelectItem value="Chuyển khoản">Chuyển khoản</SelectItem>
+                  <SelectItem value="CASH">Tiền mặt</SelectItem>
+                  <SelectItem value="CREDIT_CARD">Thẻ tín dụng</SelectItem>
+                  <SelectItem value="BANK_TRANSFER">Chuyển khoản</SelectItem>
+                  <SelectItem value="E_WALLET">Ví điện tử</SelectItem>
                 </SelectContent>
               </Select>
             </div>

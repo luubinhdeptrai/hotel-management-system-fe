@@ -112,14 +112,8 @@ export function VoidTransactionModal({
                         <span>-</span>
                         <span>{TRANSACTION_TYPE_LABELS[txn.type]}</span>
                         <span>-</span>
-                        <span
-                          className={
-                            txn.debit > 0 ? "text-red-600" : "text-green-600"
-                          }
-                        >
-                          {formatCurrency(
-                            txn.debit > 0 ? txn.debit : txn.credit
-                          )}
+                        <span className="text-gray-900">
+                          {formatCurrency(txn.amount)}
                         </span>
                       </div>
                     </SelectItem>
@@ -143,19 +137,23 @@ export function VoidTransactionModal({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Số tiền:</span>
-                  <span
-                    className={`font-bold ${
-                      selectedTransaction.debit > 0
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {formatCurrency(
-                      selectedTransaction.debit > 0
-                        ? selectedTransaction.debit
-                        : selectedTransaction.credit
-                    )}
+                  <span className="text-sm text-gray-500">Số tiền gốc:</span>
+                  <span className="font-medium">
+                    {formatCurrency(selectedTransaction.baseAmount)}
+                  </span>
+                </div>
+                {selectedTransaction.discountAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Giảm giá:</span>
+                    <span className="text-success-600">
+                      -{formatCurrency(selectedTransaction.discountAmount)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Thành tiền:</span>
+                  <span className="font-bold text-gray-900">
+                    {formatCurrency(selectedTransaction.amount)}
                   </span>
                 </div>
                 <div className="flex justify-between">

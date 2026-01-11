@@ -21,12 +21,11 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ICONS } from "@/src/constants/icons.enum";
-import type { RoomRequest } from "@/lib/types/api";
 import { mockRoomTypes } from "@/lib/mock-room-types";
 import type { RoomType } from "@/lib/types/room";
 
 export interface BookingFormData {
-  rooms: RoomRequest[];
+  rooms: Array<{ roomId: string }>;
   checkInDate: string;
   checkOutDate: string;
   totalGuests: number;
@@ -165,17 +164,15 @@ export function BookingFormModal({
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    const data: BookingFormData = {
-      rooms: roomSelections.map((r) => ({
-        roomTypeId: r.roomTypeId,
-        count: r.count,
-      })),
-      checkInDate,
-      checkOutDate,
-      totalGuests: parseInt(totalGuests),
-    };
-
-    await onSubmit(data);
+    // NOTE: This component is deprecated. Use ReservationFormModal instead.
+    // This is kept for backward compatibility but won't work properly
+    // because the old booking format (roomTypeId + count) is no longer supported.
+    // Backend now requires specific roomIds.
+    
+    throw new Error(
+      'BookingFormModal is deprecated. Use ReservationFormModal instead. ' +
+      'Backend requires specific room IDs, not room types.'
+    );
   };
 
   const calculateTotal = (): number => {

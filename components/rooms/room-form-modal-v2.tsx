@@ -224,11 +224,15 @@ export function RoomFormModalV2({
                   <SelectValue placeholder="Chọn loại phòng" />
                 </SelectTrigger>
                 <SelectContent>
-                  {roomTypes.map((rt) => (
-                    <SelectItem key={rt.id} value={rt.id}>
-                      {rt.name} - {parseInt(rt.pricePerNight).toLocaleString("vi-VN")}đ
-                    </SelectItem>
-                  ))}
+                  {roomTypes.map((rt) => {
+                    const priceValue = (rt as any).pricePerNight || (rt as any).basePrice;
+                    const price = priceValue ? parseInt(String(priceValue)) : 0;
+                    return (
+                      <SelectItem key={rt.id} value={rt.id}>
+                        {rt.name} - {price.toLocaleString("vi-VN")}đ
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               {errors.roomTypeId && (

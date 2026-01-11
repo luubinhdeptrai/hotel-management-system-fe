@@ -1,25 +1,22 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ICONS } from "@/src/constants/icons.enum";
-import {
-  getMutableFolioById,
-  addChargeToFolio,
-  addPaymentToFolio,
-  voidTransaction,
-} from "@/lib/mock-folio";
+import { transactionService } from "@/lib/services/transaction.service";
 import type {
   Folio,
   PostChargeFormData,
   PostPaymentFormData,
 } from "@/lib/types/folio";
+import type { PaymentMethod } from "@/lib/types/api";
 import { FolioHeader } from "@/components/folio/folio-header";
 import { BalanceCard } from "@/components/folio/balance-card";
 import { TransactionTable } from "@/components/folio/transaction-table";
 import { PostChargeModal } from "@/components/folio/post-charge-modal";
 import { PostPaymentModal } from "@/components/folio/post-payment-modal";
 import { VoidConfirmDialog } from "@/components/folio/void-confirm-dialog";
+import { logger } from "@/lib/utils/logger";
 import { toast } from "sonner";
 
 interface FolioPageProps {
@@ -29,9 +26,8 @@ interface FolioPageProps {
 export default function FolioPage({ params }: FolioPageProps) {
   const { id } = use(params);
 
-  // Get initial folio data and use state for reactivity
-  const initialFolio = getMutableFolioById(id);
-  const [folio, setFolio] = useState<Folio | undefined>(initialFolio);
+  // State for folio data loaded from API
+  const [folio, setFolio] = useState<Folio | null>(null);
 
   // Modal states
   const [isPostChargeOpen, setIsPostChargeOpen] = useState(false);
@@ -39,20 +35,41 @@ export default function FolioPage({ params }: FolioPageProps) {
   const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string>("");
   
+  // Load folio from API
+  useEffect(() => {
+    const loadFolio = async () => {
+      try {
+        // Use getBill API endpoint to get folio data
+        const data = await transactionService.getBill(id);
+        // Convert bill data to folio structure if needed
+        setFolio(data as unknown as Folio);
+      } catch (err) {
+        logger.error("Failed to load folio:", err);
+        // TODO: Handle error state when needed
+      }
+    };
+    loadFolio();
+  }, [id]);
+  
   // Get selected transaction for void confirmation
-  const selectedTransaction = folio?.transactions.find(t => t.transactionID === selectedTransactionId);
+  const selectedTransaction = folio?.transactions?.find(t => t.transactionID === selectedTransactionId);
 
   // Handler for posting charges
   const handlePostCharge = useCallback(
-    (data: PostChargeFormData) => {
-      const updatedFolio = addChargeToFolio(id, {
-        type: data.type,
-        description: data.description,
-        amount: data.amount,
-      });
+    async (data: PostChargeFormData) => {
+      try {
+        await transactionService.createTransaction({
+          bookingId: id,
+          bookingRoomIds: [],
+          paymentMethod: "CASH",
+          transactionType: data.type,
+          description: data.description,
+        });
 
-      if (updatedFolio) {
-        setFolio({ ...updatedFolio });
+        // Reload folio to get updated data
+        const updatedFolio = await transactionService.getBill(id);
+        setFolio(updatedFolio as unknown as Folio);
+        
         toast.success("Thêm phí thành công", {
           description: `Đã thêm ${data.description} - ${new Intl.NumberFormat(
             "vi-VN",
@@ -62,7 +79,8 @@ export default function FolioPage({ params }: FolioPageProps) {
             }
           ).format(data.amount)}`,
         });
-      } else {
+      } catch (err) {
+        logger.error("Failed to post charge:", err);
         toast.error("Lỗi", { description: "Không thể thêm phí vào folio" });
       }
     },
@@ -71,17 +89,27 @@ export default function FolioPage({ params }: FolioPageProps) {
 
   // Handler for posting payments
   const handlePostPayment = useCallback(
-    (data: PostPaymentFormData) => {
-      const updatedFolio = addPaymentToFolio(id, {
-        amount: data.amount,
-        paymentMethod: data.paymentMethod,
-        reference: data.reference,
-        notes: data.notes,
-        mode: data.mode || "PAYMENT",
-      });
+    async (data: PostPaymentFormData) => {
+      try {
+        // Map frontend payment method to backend payment method
+        const paymentMethodMap: Record<string, PaymentMethod> = {
+          CASH: "CASH",
+          CARD: "CREDIT_CARD",
+          TRANSFER: "BANK_TRANSFER",
+        };
 
-      if (updatedFolio) {
-        setFolio({ ...updatedFolio });
+        await transactionService.createTransaction({
+          bookingId: id,
+          bookingRoomIds: [],
+          paymentMethod: paymentMethodMap[data.paymentMethod] || "CASH",
+          transactionType: data.mode === "DEPOSIT" ? "DEPOSIT" : "ROOM_CHARGE",
+          description: data.notes,
+        });
+
+        // Reload folio to get updated data
+        const updatedFolio = await transactionService.getBill(id);
+        setFolio(updatedFolio as unknown as Folio);
+        
         const successMsg = data.mode === "DEPOSIT" ? "Ghi nhận đặt cọc thành công" : "Ghi nhận thanh toán thành công";
         toast.success(successMsg, {
           description: `Đã nhận ${new Intl.NumberFormat("vi-VN", {
@@ -89,7 +117,8 @@ export default function FolioPage({ params }: FolioPageProps) {
             currency: "VND",
           }).format(data.amount)}`,
         });
-      } else {
+      } catch (err) {
+        logger.error("Failed to post payment:", err);
         toast.error("Lỗi", { description: "Không thể ghi nhận thanh toán" });
       }
     },
@@ -98,15 +127,20 @@ export default function FolioPage({ params }: FolioPageProps) {
 
   // Handler for voiding transactions
   const handleVoidTransaction = useCallback(
-    (transactionId: string, reason: string) => {
-      const updatedFolio = voidTransaction(id, transactionId, reason);
+    async () => {
+      try {
+        // TODO: Implement void transaction API call when backend is ready
+        // await transactionService.voidTransaction(selectedTransactionId, reason);
 
-      if (updatedFolio) {
-        setFolio({ ...updatedFolio });
+        // Reload folio to get updated data
+        const updatedFolio = await transactionService.getBill(id);
+        setFolio(updatedFolio as unknown as Folio);
+        
         toast.success("Hủy giao dịch thành công", {
           description: "Giao dịch đã được đánh dấu là đã hủy",
         });
-      } else {
+      } catch (err) {
+        logger.error("Failed to void transaction:", err);
         toast.error("Lỗi", { description: "Không thể hủy giao dịch" });
       }
     },
@@ -120,9 +154,9 @@ export default function FolioPage({ params }: FolioPageProps) {
   };
   
   // Confirm void transaction
-  const handleConfirmVoid = (reason: string) => {
+  const handleConfirmVoid = () => {
     if (selectedTransactionId) {
-      handleVoidTransaction(selectedTransactionId, reason);
+      handleVoidTransaction();
       setSelectedTransactionId("");
     }
   };

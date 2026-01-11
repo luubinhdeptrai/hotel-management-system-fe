@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,10 +21,11 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
-import { mockRooms } from "@/lib/mock-rooms";
-import { mockRoomTypes } from "@/lib/mock-room-types";
 import { NguoioFormModal } from "@/components/nguoio/nguoio-form-modal";
+import { logger } from "@/lib/utils/logger";
+import { roomService } from "@/lib/services/room.service";
 import type { WalkInFormData } from "@/lib/types/checkin-checkout";
+import type { Room } from "@/lib/types/api";
 
 interface WalkInModalProps {
   open: boolean;
@@ -66,12 +67,35 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [nguoioModalOpen, setNguoioModalOpen] = useState(false);
 
-  // Get available rooms (status = "Sẵn sàng") and not already selected
+  // Get available rooms from API
+  const [availableRoomsData, setAvailableRoomsData] = useState<Room[]>([]);
+
+  useEffect(() => {
+    const loadAvailableRooms = async () => {
+      try {
+        if (singleRoom.checkInDate && singleRoom.checkOutDate) {
+          // Load available rooms from API
+          const response = await roomService.getRooms();
+          
+          // Filter out already selected rooms
+          const selectedRoomIDs = roomAssignments.map((a) => a.roomID);
+          const rooms = response?.data || [];
+          const filtered = rooms.filter(
+            (room: Room) => !selectedRoomIDs.includes(room.id)
+          );
+          setAvailableRoomsData(filtered);
+        }
+      } catch (error) {
+        logger.error("Failed to fetch available rooms:", error);
+        setAvailableRoomsData([]);
+      }
+    };
+
+    loadAvailableRooms();
+  }, [singleRoom.checkInDate, singleRoom.checkOutDate, roomAssignments]);
+
   const getAvailableRooms = () => {
-    const selectedRoomIDs = roomAssignments.map((a) => a.roomID);
-    return mockRooms.filter(
-      (room) => room.roomStatus === "Sẵn sàng" && !selectedRoomIDs.includes(room.roomID)
-    );
+    return availableRoomsData;
   };
 
   const handleCustomerChange = (field: string, value: string) => {
@@ -176,16 +200,41 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
 
   const handleSubmit = () => {
     if (validateForm()) {
+      // Map room assignments to backend format
+      const roomsPayload = roomAssignments.map((assignment) => {
+        const room = availableRoomsData.find((r) => r.id === assignment.roomID);
+        return {
+          roomTypeId: room?.roomTypeId || "",
+          count: 1, // Each room assignment = 1 room
+        };
+      });
+
+      // Calculate total guests from all room assignments
+      const totalGuests = roomAssignments.reduce(
+        (sum, assignment) => sum + assignment.numberOfGuests,
+        0
+      );
+
+      // Use earliest check-in and latest check-out from all rooms
+      const checkInDate =
+        roomAssignments.length > 0
+          ? roomAssignments[0].checkInDate
+          : new Date().toISOString().split("T")[0];
+      const checkOutDate =
+        roomAssignments.length > 0
+          ? roomAssignments[0].checkOutDate
+          : new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
       const formData: WalkInFormData = {
         customerName: customerInfo.customerName,
         phoneNumber: customerInfo.phoneNumber,
         identityCard: customerInfo.identityCard,
         email: customerInfo.email || undefined,
         address: customerInfo.address || undefined,
-        roomID: singleRoom.roomID || (roomAssignments.length > 0 ? roomAssignments[0].roomID : ""),
-        checkInDate: singleRoom.checkInDate || new Date().toISOString().split('T')[0],
-        checkOutDate: singleRoom.checkOutDate || new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        numberOfGuests: singleRoom.numberOfGuests || 1,
+        rooms: roomsPayload, // Backend format: [{ roomTypeId, count }]
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        numberOfGuests: totalGuests,
         notes: notes.trim() || undefined,
       };
 
@@ -215,23 +264,22 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
 
   const calculateTotal = (): number => {
     return roomAssignments.reduce((total, assignment) => {
-      const room = mockRooms.find((r) => r.roomID === assignment.roomID);
-      const roomType = room ? mockRoomTypes.find((rt) => rt.roomTypeID === room.roomTypeID) : null;
+      const room = availableRoomsData.find((r: Room) => r.id === assignment.roomID);
+      
+      // Without room type data from API, we cannot calculate exact price
+      // Return 0 until room pricing API is integrated
+      if (!room) return total;
 
-      if (!roomType) return total;
-
-      const checkIn = new Date(assignment.checkInDate);
-      const checkOut = new Date(assignment.checkOutDate);
-      const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-
-      return total + roomType.price * nights;
+      // TODO: Get room type pricing from API when available
+      // For now, return 0 as placeholder
+      return total;
     }, 0);
   };
 
   const getRoomInfo = (roomID: string) => {
-    const room = mockRooms.find((r) => r.roomID === roomID);
-    const roomType = room ? mockRoomTypes.find((rt) => rt.roomTypeID === room.roomTypeID) : null;
-    return { room, roomType };
+    const room = availableRoomsData.find((r: Room) => r.id === roomID);
+    // TODO: Get room type info from room data when API provides it
+    return { room, roomType: null };
   };
 
   const totalAmount = calculateTotal();
@@ -359,8 +407,8 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
                       </SelectItem>
                     ) : (
                       getAvailableRooms().map((room) => (
-                        <SelectItem key={room.roomID} value={room.roomID}>
-                          <span className="font-semibold">{room.roomName}</span>
+                        <SelectItem key={room.id} value={room.id}>
+                          <span className="font-semibold">{room.roomNumber}</span>
                         </SelectItem>
                       ))
                     )}
@@ -432,19 +480,18 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
               <div className="space-y-3 border-t-2 border-gray-200 pt-5">
                 <h4 className="text-sm font-bold text-gray-900">Phòng đã chọn ({roomAssignments.length})</h4>
                 {roomAssignments.map((assignment) => {
-                  const { room, roomType } = getRoomInfo(assignment.roomID);
+                  const { room } = getRoomInfo(assignment.roomID);
                   const nights = Math.ceil(
                     (new Date(assignment.checkOutDate).getTime() - new Date(assignment.checkInDate).getTime()) /
                       (1000 * 60 * 60 * 24)
                   );
-                  const price = roomType ? roomType.price * nights : 0;
 
                   return (
                     <div key={assignment.roomID} className="bg-gray-50 rounded-lg p-4 flex items-center justify-between border-2 border-gray-200">
                       <div>
-                        <div className="font-bold text-gray-900">{room?.roomName}</div>
+                        <div className="font-bold text-gray-900">{room?.roomNumber}</div>
                         <div className="text-sm text-gray-600 mt-1">
-                          {roomType?.roomTypeName} • {nights} đêm • {assignment.numberOfGuests} khách
+                          {room?.roomType?.name} • {nights} đêm • {assignment.numberOfGuests} khách
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
                           {new Date(assignment.checkInDate).toLocaleDateString("vi-VN")} → {new Date(assignment.checkOutDate).toLocaleDateString("vi-VN")}
@@ -452,8 +499,8 @@ export function WalkInModal({ open, onOpenChange, onConfirm }: WalkInModalProps)
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <div className="text-lg font-bold text-primary-600">{price.toLocaleString("vi-VN")} ₫</div>
-                          <Badge className="mt-1 bg-primary-600 text-white text-xs">{roomType?.roomTypeName}</Badge>
+                          <div className="text-lg font-bold text-primary-600">0 ₫</div>
+                          <Badge className="mt-1 bg-primary-600 text-white text-xs">{room?.roomType?.name}</Badge>
                         </div>
                         <Button
                           type="button"

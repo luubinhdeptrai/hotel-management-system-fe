@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Percent, Edit2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,14 @@ export function DepositSettingsCard({
   const [inputValue, setInputValue] = useState(String(depositPercentage ?? 50));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync state when depositPercentage prop changes
+  useEffect(() => {
+    if (depositPercentage !== null) {
+      setPercentage(depositPercentage);
+      setInputValue(String(depositPercentage));
+    }
+  }, [depositPercentage]);
 
   const handleEdit = () => {
     const initial = depositPercentage ?? 50;

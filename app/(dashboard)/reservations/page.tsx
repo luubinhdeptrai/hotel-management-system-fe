@@ -6,7 +6,7 @@ import { ICONS } from "@/src/constants/icons.enum";
 import { UnifiedReservationsFilter } from "@/components/reservations/unified-reservations-filter";
 import { ReservationCalendar } from "@/components/reservations/reservation-calendar";
 import { ReservationList } from "@/components/reservations/reservation-list";
-import { ReservationFormModal } from "@/components/reservations/reservation-form-modal";
+import { NewReservationFormModal } from "@/components/reservations/new-reservation-form-modal";
 import { CancelReservationDialog } from "@/components/reservations/cancel-reservation-dialog";
 import { AvailableRoomsModal } from "@/components/reservations/available-rooms-modal";
 import { RoomSelectionModal } from "@/components/reservations/room-selection-modal";
@@ -60,6 +60,7 @@ export default function ReservationsPage() {
 
   // Fetch room types from backend API
   const [roomTypes, setRoomTypes] = useState<RoomType[]>(mockRoomTypes);
+  const [showAllReservations, setShowAllReservations] = useState(false);
 
   useEffect(() => {
     const loadRoomTypes = async () => {
@@ -69,14 +70,20 @@ export default function ReservationsPage() {
 
         if (apiRoomTypes.length > 0) {
           // Convert API RoomType to local RoomType format
-          const converted: RoomType[] = apiRoomTypes.map((rt: ApiRoomType) => ({
-            roomTypeID: rt.id,
-            roomTypeName: rt.name,
-            price: parseInt(rt.pricePerNight) || 0,
-            capacity: rt.capacity,
-            totalBed: rt.totalBed,
-            amenities: rt.roomTypeTags?.map((tag) => tag.roomTag.name) || [],
-          }));
+          const converted: RoomType[] = apiRoomTypes.map((rt: ApiRoomType) => {
+            // Handle price from either pricePerNight or basePrice
+            const priceValue = (rt as any).pricePerNight || (rt as any).basePrice;
+            const price = priceValue ? parseInt(String(priceValue)) || 0 : 0;
+            
+            return {
+              roomTypeID: rt.id,
+              roomTypeName: rt.name,
+              price,
+              capacity: rt.capacity,
+              totalBed: rt.totalBed,
+              amenities: rt.roomTypeTags?.map((tag) => tag.roomTag.name) || [],
+            };
+          });
           setRoomTypes(converted);
           console.log("Loaded room types from API:", converted);
         }
@@ -290,7 +297,9 @@ export default function ReservationsPage() {
 
           {/* Bookings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {reservations.slice(0, 6).map((reservation) => {
+            {reservations
+              .slice(0, showAllReservations ? undefined : 6)
+              .map((reservation) => {
               const firstDetail = reservation.details[0];
               const statusColors: Record<string, { bg: string; text: string }> =
                 {
@@ -313,14 +322,29 @@ export default function ReservationsPage() {
                 statusColors[reservation.status] ||
                 statusColors["Chờ xác nhận"];
 
+              // Match backend constraints for edit and cancel
+              const canEdit = (res: typeof reservation) => {
+                // Backend: Cannot update if CANCELLED or CHECKED_OUT
+                const cannotEditStatuses = ["Đã hủy", "Đã trả phòng"];
+                return !cannotEditStatuses.includes(res.status);
+              };
+
+              const canCancel = (res: typeof reservation) => {
+                // Backend: Cannot cancel if CANCELLED, CHECKED_IN, or CHECKED_OUT
+                const cannotCancelStatuses = ["Đã hủy", "Đã nhận phòng", "Đã trả phòng"];
+                return !cannotCancelStatuses.includes(res.status);
+              };
+
               return (
                 <div
                   key={reservation.reservationID}
-                  className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
-                  onClick={() => handleViewDetails(reservation)}
+                  className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all group flex flex-col"
                 >
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="flex items-start justify-between mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <div className="flex-1">
                       <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">
                         Mã đặt
@@ -337,7 +361,10 @@ export default function ReservationsPage() {
                   </div>
 
                   {/* Customer Info */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <div
+                    className="bg-gray-50 rounded-xl p-4 mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <p className="text-sm font-bold text-gray-600">
                       Khách hàng
                     </p>
@@ -350,7 +377,10 @@ export default function ReservationsPage() {
                   </div>
 
                   {/* Room & Dates */}
-                  <div className="space-y-3 mb-4">
+                  <div
+                    className="space-y-3 mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="w-5 h-5 text-blue-600">
                         {ICONS.DOOR_OPEN}
@@ -376,7 +406,10 @@ export default function ReservationsPage() {
                   </div>
 
                   {/* Price */}
-                  <div className="border-t border-gray-200 pt-4 flex items-center justify-between">
+                  <div
+                    className="border-t border-gray-200 pt-4 flex items-center justify-between mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(reservation)}
+                  >
                     <span className="text-xs font-bold text-gray-600 uppercase">
                       Tổng tiền
                     </span>
@@ -388,6 +421,41 @@ export default function ReservationsPage() {
                       }).format(reservation.totalAmount)}
                     </span>
                   </div>
+
+                  {/* Action Buttons */}
+                  <div className="border-t border-gray-200 pt-4 flex gap-3 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDetails(reservation)}
+                      className="h-9 px-4 bg-blue-50 border-2 border-blue-300 text-blue-700 font-bold hover:bg-blue-600 hover:text-white hover:border-blue-700 hover:scale-110 transition-all shadow-sm flex-1 min-w-[100px]"
+                    >
+                      <span className="w-4 h-4 mr-1.5">{ICONS.EYE}</span>
+                      Xem
+                    </Button>
+                    {canEdit(reservation) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(reservation)}
+                        className="h-9 px-4 bg-blue-50 border-2 border-blue-300 text-blue-700 font-bold hover:bg-blue-600 hover:text-white hover:border-blue-700 hover:scale-110 transition-all shadow-sm flex-1 min-w-[100px]"
+                      >
+                        <span className="w-4 h-4 mr-1.5">{ICONS.EDIT}</span>
+                        Sửa
+                      </Button>
+                    )}
+                    {canCancel(reservation) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelClick(reservation)}
+                        className="h-9 px-4 bg-error-50 border-2 border-error-300 text-error-700 font-bold hover:bg-error-600 hover:text-white hover:border-error-700 hover:scale-110 transition-all shadow-sm flex-1 min-w-[100px]"
+                      >
+                        <span className="w-4 h-4 mr-1.5">{ICONS.X_CIRCLE}</span>
+                        Hủy
+                      </Button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -396,10 +464,13 @@ export default function ReservationsPage() {
           {reservations.length > 6 && (
             <div className="text-center pt-4">
               <Button
+                onClick={() => setShowAllReservations(!showAllReservations)}
                 variant="outline"
                 className="h-11 px-6 border-2 border-blue-300 text-blue-600 hover:bg-blue-50 font-bold"
               >
-                Xem tất cả {reservations.length} đặt phòng
+                {showAllReservations
+                  ? "Ẩn các đặt phòng"
+                  : `Xem tất cả ${reservations.length} đặt phòng`}
               </Button>
             </div>
           )}
@@ -561,12 +632,10 @@ export default function ReservationsPage() {
       </Tabs>
 
       {/* Form Modal */}
-      <ReservationFormModal
+      <NewReservationFormModal
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
         onSave={handleSaveReservation}
-        onCancelReservation={handleCancelClick}
-        roomTypes={roomTypes}
         reservation={selectedReservation || undefined}
         mode={formMode}
       />

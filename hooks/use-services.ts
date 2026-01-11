@@ -31,7 +31,7 @@ function mapApiToServiceItem(apiService: ApiService, categories: ServiceCategory
     categoryID: category.categoryID,
     category: category,
     serviceGroup: "F&B" as ServiceGroup,
-    price: parseFloat(apiService.price),
+    price: apiService.price,
     unit: apiService.unit || "lần",
     description: "",
     isOpenPrice: false,

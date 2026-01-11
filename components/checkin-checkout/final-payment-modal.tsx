@@ -25,6 +25,7 @@ import { ICONS } from "@/src/constants/icons.enum";
 import { transactionService } from "@/lib/services";
 import type { PaymentMethod } from "@/lib/types/api";
 import type { BillResponse } from "@/lib/services/transaction.service";
+import { useAuth } from "@/hooks/use-auth";
 
 interface FinalPaymentModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export function FinalPaymentModal({
   bookingId,
   bookingCode,
 }: FinalPaymentModalProps) {
+  const { user } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

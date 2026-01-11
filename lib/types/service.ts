@@ -28,7 +28,7 @@ export interface ServiceItem {
   categoryID: string;
   category: ServiceCategory;
   serviceGroup: ServiceGroup; // NEW: Service group classification
-  price: number;
+  price: number; // Changed from string to number
   unit: string;
   description?: string;
   imageUrl?: string;

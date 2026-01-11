@@ -182,16 +182,22 @@ export const bookingService = {
    * Cancel a booking
    * POST /employee/bookings/{id}/cancel
    *
-   * Note: Uses mock response if API doesn't exist
+   * Backend constraints:
+   * - Cannot cancel if status = CANCELLED (already cancelled)
+   * - Cannot cancel if status = CHECKED_IN (guest already checked in)
+   * - Cannot cancel if status = CHECKED_OUT (booking already completed)
+   * - Can only cancel if status = PENDING or CONFIRMED
+   *
+   * Backend does NOT accept 'reason' parameter - it's ignored.
+   * Validation should be done in FE before calling this API.
    */
   async cancelBooking(
-    bookingId: string,
-    reason?: string
+    bookingId: string
   ): Promise<CancelBookingResponse> {
     try {
       const response = await api.post<ApiResponse<CancelBookingResponse>>(
         `/employee/bookings/${bookingId}/cancel`,
-        { reason } as CancelBookingRequest,
+        {}, // Backend expects empty body - no reason parameter
         { requiresAuth: true }
       );
       const data =
@@ -201,17 +207,10 @@ export const bookingService = {
       return data;
     } catch (error) {
       console.error(
-        "Cancel booking API failed, returning mock response:",
+        "Cancel booking API failed:",
         error
       );
-      // Return mock response for frontend state update
-      return {
-        id: bookingId,
-        bookingCode: "",
-        status: "CANCELLED",
-        cancelledAt: new Date().toISOString(),
-        cancelReason: reason,
-      };
+      throw error; // Don't silently return mock - let caller handle error
     }
   },
 
@@ -277,7 +276,7 @@ export const bookingService = {
       return {
         id: bookingId,
         bookingCode: "",
-        status: data.status || "PENDING",
+        status: "PENDING", // Default status - actual status managed by system
         checkInDate: data.checkInDate || "",
         checkOutDate: data.checkOutDate || "",
         totalGuests: data.totalGuests || 0,
@@ -328,35 +327,15 @@ export const bookingService = {
   // ============================================================================
   // TRANSACTIONS
   // ============================================================================
-
-  /**
-   * Create a transaction for a booking (employee)
-   * POST /employee/bookings/transaction
-   */
-  async createTransaction(
-    data: CreateTransactionRequest
-  ): Promise<BookingResponse> {
-    const response = await api.post<ApiResponse<BookingResponse>>(
-      "/employee/bookings/transaction",
-      data,
-      { requiresAuth: true }
-    );
-    const unwrappedData =
-      response && typeof response === "object" && "data" in response
-        ? (response as ApiResponse<BookingResponse>).data
-        : (response as unknown as BookingResponse);
-    return unwrappedData;
-  },
-
-  // ============================================================================
   // AVAILABLE ROOMS
-  // ============================================================================
+  // =============================================================================
 
   /**
    * Get available rooms for a date range
    * GET /employee/rooms/available?checkInDate=...&checkOutDate=...&roomTypeId=...
    *
    * Note: Uses mock fallback if API doesn't exist
+   * Always returns array (never returns object)
    */
   async getAvailableRooms(
     params: AvailableRoomSearchParams
@@ -365,20 +344,92 @@ export const bookingService = {
       const queryString = buildQueryString(
         params as unknown as { [key: string]: unknown }
       );
-      const response = await api.get<ApiResponse<AvailableRoom[]>>(
+      console.log("📤 Calling API with query:", queryString);
+      const response = await api.get<any>(
         `/employee/rooms/available${queryString}`,
         { requiresAuth: true }
       );
-      const data =
-        response && typeof response === "object" && "data" in response
-          ? (response as ApiResponse<AvailableRoom[]>).data
-          : (response as unknown as AvailableRoom[]);
+      
+      console.log("📥 Raw API response:", JSON.stringify(response, null, 2));
+      
+      let data: AvailableRoom[] = [];
+      
+      // BE returns { data: { data: [...grouped rooms...], total, page, limit, ... } }
+      if (!response) {
+        console.warn("Response is null or undefined");
+        return [];
+      }
+
+      // Navigate through nested structure
+      let groupedArray: any[] | null = null;
+      
+      // Try first unwrap: response.data
+      if (response && typeof response === "object" && "data" in response) {
+        const firstUnwrap = response.data;
+        console.log("After first unwrap (response.data):", firstUnwrap);
+        
+        // Try second unwrap: response.data.data
+        if (firstUnwrap && typeof firstUnwrap === "object" && "data" in firstUnwrap) {
+          groupedArray = firstUnwrap.data;
+          console.log("After second unwrap (response.data.data):", groupedArray);
+        } else if (Array.isArray(firstUnwrap)) {
+          groupedArray = firstUnwrap;
+          console.log("First unwrap is already array");
+        }
+      } else if (Array.isArray(response)) {
+        groupedArray = response;
+        console.log("Response is already array");
+      }
+      
+      if (groupedArray && Array.isArray(groupedArray)) {
+        data = this.flattenGroupedRooms(groupedArray);
+      } else {
+        console.warn("Could not extract array from response");
+      }
+      
+      console.log("✅ Final flattened rooms count:", data.length);
       return data;
     } catch (error) {
-      console.error("Get available rooms failed:", error);
-      // Return empty array - mock fallback handled in hook
+      console.error("❌ Get available rooms failed:", error);
       return [];
     }
+  },
+
+  /**
+   * Flatten grouped rooms response from BE
+   * BE returns: [{ roomType, availableCount, rooms: [...] }, ...]
+   * FE needs: [room1, room2, ...]
+   */
+  flattenGroupedRooms(data: any[]): AvailableRoom[] {
+    if (!Array.isArray(data)) {
+      console.warn("flattenGroupedRooms received non-array:", data);
+      return [];
+    }
+
+    const flattened: AvailableRoom[] = [];
+    
+    data.forEach((group, idx) => {
+      console.log(`Processing group ${idx}:`, group);
+      // Check if this is a grouped response
+      if (group && group.rooms && Array.isArray(group.rooms)) {
+        console.log(`  - Found grouped format with ${group.rooms.length} rooms`);
+        // Grouped format - add roomType to each room
+        group.rooms.forEach((room: any) => {
+          flattened.push({
+            ...room,
+            roomType: group.roomType
+          } as AvailableRoom);
+        });
+      } else if (group && group.id && group.roomNumber) {
+        console.log(`  - Found flat format room: ${group.roomNumber}`);
+        // Flat format - just a room object
+        flattened.push(group as AvailableRoom);
+      } else {
+        console.warn(`  - Skipped unrecognized group format at index ${idx}:`, group);
+      }
+    });
+
+    return flattened;
   },
 
   // ============================================================================
@@ -487,23 +538,16 @@ export const bookingService = {
   /**
    * Preview cancellation and refund amount
    * GET /employee/bookings/{bookingId}/cancellation-preview
+   *
+   * NOTE: This endpoint does NOT exist in Backend.
+   * Backend has NO cancellation policy, penalty, or refund calculation.
+   * Cancellation is simple: just changes status to CANCELLED and releases rooms.
+   * This function is kept for backward compatibility but will throw error.
    */
   async getCancellationPreview(
     bookingId: string
   ): Promise<CancellationPreview> {
-    try {
-      const response = await api.get<ApiResponse<CancellationPreview>>(
-        `/employee/bookings/${bookingId}/cancellation-preview`,
-        { requiresAuth: true }
-      );
-      const data =
-        response && typeof response === "object" && "data" in response
-          ? (response as ApiResponse<CancellationPreview>).data
-          : (response as unknown as CancellationPreview);
-      return data;
-    } catch (error) {
-      console.error("Get cancellation preview failed:", error);
-      throw error;
-    }
+    // Backend does not provide this endpoint
+    throw new Error("Cancellation preview is not supported by Backend. Backend does not have cancellation policy or refund calculation.");
   },
 };

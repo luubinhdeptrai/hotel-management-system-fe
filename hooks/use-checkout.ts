@@ -11,8 +11,10 @@ import type {
 import type { AddSurchargeFormData } from "@/components/checkin-checkout/add-surcharge-modal";
 import { bookingService } from "@/lib/services/booking.service";
 import { checkinCheckoutService } from "@/lib/services/checkin-checkout.service";
+import { useAuth } from "@/hooks/use-auth";
 
-export function useCheckOut() {
+export function useCheckOut() {  
+  const { user, isLoading: authLoading } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Booking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -29,8 +31,13 @@ export function useCheckOut() {
     []
   );
 
-  // Fetch initial bookings on mount
+  // Fetch initial bookings on mount (only after auth is ready)
   const fetchInitialBookings = useCallback(async () => {
+    // Skip if auth is still loading or user is not authenticated
+    if (authLoading || !user) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
       // Fetch all bookings without a search query
@@ -46,7 +53,7 @@ export function useCheckOut() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [authLoading, user]);
 
   useEffect(() => {
     fetchInitialBookings();

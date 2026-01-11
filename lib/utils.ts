@@ -11,3 +11,16 @@ export function formatCurrency(amount: number): string {
     currency: "VND",
   }).format(amount);
 }
+// Helper to safely get room type price from either pricePerNight or basePrice
+export function getRoomTypePrice(roomType: any): number {
+  if (!roomType) return 0;
+  
+  const priceValue = roomType.pricePerNight || roomType.basePrice;
+  if (!priceValue) return 0;
+  
+  const parsed = typeof priceValue === 'string' 
+    ? parseFloat(priceValue) 
+    : Number(priceValue);
+  
+  return isNaN(parsed) ? 0 : parsed;
+}

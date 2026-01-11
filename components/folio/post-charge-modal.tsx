@@ -35,9 +35,7 @@ interface PostChargeModalProps {
 // Only charge types (not payments)
 const CHARGE_TYPES: TransactionType[] = [
   "ROOM_CHARGE",
-  "SERVICE",
-  "SURCHARGE",
-  "PENALTY",
+  "SERVICE_CHARGE",
 ];
 
 export function PostChargeModal({
@@ -45,7 +43,7 @@ export function PostChargeModal({
   onClose,
   onSubmit,
 }: PostChargeModalProps) {
-  const [type, setType] = useState<TransactionType>("SERVICE");
+  const [type, setType] = useState<TransactionType>("SERVICE_CHARGE");
   const [selectedItemId, setSelectedItemId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -74,35 +72,11 @@ export function PostChargeModal({
   const handleItemSelect = (itemId: string) => {
     setSelectedItemId(itemId);
 
-    if (type === "SERVICE") {
+    if (type === "SERVICE_CHARGE") {
       const selectedItem = activeServices.find(s => s.serviceID === itemId);
       if (selectedItem) {
         setDescription(selectedItem.serviceName);
         setAmount(selectedItem.price.toString());
-      }
-    } else if (type === "PENALTY") {
-      const selectedItem = activePenalties.find(p => p.penaltyID === itemId);
-      if (selectedItem) {
-        setDescription(selectedItem.penaltyName);
-        if (selectedItem.isOpenPrice) {
-          setIsCustomAmount(true);
-          setAmount("");
-        } else {
-          setAmount(selectedItem.price.toString());
-          setIsCustomAmount(false);
-        }
-      }
-    } else if (type === "SURCHARGE") {
-      const selectedItem = activeSurcharges.find(s => s.surchargeID === itemId);
-      if (selectedItem) {
-        setDescription(selectedItem.surchargeName);
-        if (selectedItem.isOpenPrice) {
-          setIsCustomAmount(true);
-          setAmount("");
-        } else {
-          setAmount(selectedItem.price.toString());
-          setIsCustomAmount(false);
-        }
       }
     }
   };
@@ -121,7 +95,7 @@ export function PostChargeModal({
     });
 
     // Reset form
-    setType("SERVICE");
+    setType("SERVICE_CHARGE");
     setSelectedItemId("");
     setDescription("");
     setAmount("");
@@ -130,7 +104,7 @@ export function PostChargeModal({
   };
 
   const handleClose = () => {
-    setType("SERVICE");
+    setType("SERVICE_CHARGE");
     setSelectedItemId("");
     setDescription("");
     setAmount("");
@@ -139,7 +113,7 @@ export function PostChargeModal({
   };
 
   // Check if current type needs item selection
-  const needsItemSelection = ["SERVICE", "SURCHARGE", "PENALTY"].includes(type);
+  const needsItemSelection = ["SERVICE_CHARGE"].includes(type);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -171,13 +145,11 @@ export function PostChargeModal({
             </Select>
           </div>
 
-          {/* Show item selection dropdown for SERVICE/SURCHARGE/PENALTY */}
+          {/* Show item selection dropdown for SERVICE_CHARGE */}
           {needsItemSelection && (
             <div className="space-y-2">
               <Label htmlFor="item-select">
-                {type === "SERVICE" && "Chọn dịch vụ"}
-                {type === "SURCHARGE" && "Chọn phụ thu"}
-                {type === "PENALTY" && "Chọn phí phạt"}
+                {type === "SERVICE_CHARGE" && "Chọn dịch vụ"}
               </Label>
               <Select
                 value={selectedItemId}
@@ -185,13 +157,11 @@ export function PostChargeModal({
               >
                 <SelectTrigger id="item-select">
                   <SelectValue placeholder={
-                    type === "SERVICE" ? "Chọn dịch vụ từ danh sách" :
-                    type === "SURCHARGE" ? "Chọn phụ thu từ danh sách" :
-                    "Chọn phí phạt từ danh sách"
+                    type === "SERVICE_CHARGE" ? "Chọn dịch vụ từ danh sách" : "Chọn từ danh sách"
                   } />
                 </SelectTrigger>
                 <SelectContent>
-                  {type === "SERVICE" && activeServices.map((service) => (
+                  {type === "SERVICE_CHARGE" && activeServices.map((service) => (
                     <SelectItem key={service.serviceID} value={service.serviceID}>
                       {service.serviceName} - {new Intl.NumberFormat("vi-VN", {
                         style: "currency",
@@ -199,30 +169,8 @@ export function PostChargeModal({
                       }).format(service.price)}
                     </SelectItem>
                   ))}
-                  {type === "SURCHARGE" && activeSurcharges.map((surcharge) => (
-                    <SelectItem key={surcharge.surchargeID} value={surcharge.surchargeID}>
-                      {surcharge.surchargeName} - {surcharge.isOpenPrice ? "(Giá tự nhập)" : new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(surcharge.price)}
-                    </SelectItem>
-                  ))}
-                  {type === "PENALTY" && activePenalties.map((penalty) => (
-                    <SelectItem key={penalty.penaltyID} value={penalty.penaltyID}>
-                      {penalty.penaltyName} - {penalty.isOpenPrice ? "(Giá tự nhập)" : new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(penalty.price)}
-                    </SelectItem>
-                  ))}
-                  {type === "SERVICE" && activeServices.length === 0 && (
+                  {type === "SERVICE_CHARGE" && activeServices.length === 0 && (
                     <SelectItem value="_empty" disabled>Chưa có dịch vụ nào</SelectItem>
-                  )}
-                  {type === "SURCHARGE" && activeSurcharges.length === 0 && (
-                    <SelectItem value="_empty" disabled>Chưa có phụ thu nào</SelectItem>
-                  )}
-                  {type === "PENALTY" && activePenalties.length === 0 && (
-                    <SelectItem value="_empty" disabled>Chưa có phí phạt nào</SelectItem>
                   )}
                 </SelectContent>
               </Select>

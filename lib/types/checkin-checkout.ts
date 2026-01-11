@@ -6,7 +6,7 @@ export interface Service {
   serviceID: string;
   serviceName: string;
   category: string;
-  price: number;
+  price: number; // Changed from string to number for calculations
 }
 
 export interface Penalty {
@@ -40,8 +40,11 @@ export interface ServiceDetail {
   serviceID: string;
   serviceName: string;
   quantity: number;
-  price: number;
-  total: number;
+  price: number; // Changed from string to number
+  total: number; // Changed from string to number
+  totalPaid?: number; // Added for payment tracking
+  balance?: number; // Added for payment tracking (total - totalPaid)
+  status?: string; // Service usage status
   dateUsed: string;
 }
 
@@ -118,7 +121,10 @@ export interface WalkInFormData {
   identityCard: string;
   email?: string;
   address?: string;
-  roomID: string;
+  rooms: Array<{
+    roomTypeId: string;
+    count: number;
+  }>;
   checkInDate: string;
   checkOutDate: string;
   numberOfGuests: number;
@@ -145,10 +151,10 @@ export interface AddPenaltyFormData {
 
 /**
  * Service Usage Request
- * POST /employee/service/service-usage
+ * POST /employee-api/v1/service/service-usage
  */
 export interface ServiceUsageRequest {
-  bookingId?: string;
+  bookingId?: string; // Optional for guest services
   bookingRoomId?: string;
   serviceId: string;
   quantity: number;
@@ -163,25 +169,28 @@ export interface ServiceUsageResponse {
   bookingRoomId?: string;
   serviceId: string;
   quantity: number;
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
-  totalPrice: string;
+  unitPrice: number; // Added for price tracking
+  totalPrice: number; // Changed from string to number
+  totalPaid: number; // Added for payment tracking
+  balance: number; // Added (totalPrice - totalPaid)
+  status: "PENDING" | "TRANSFERRED" | "COMPLETED" | "CANCELLED";
   createdAt: string;
   updatedAt: string;
   service?: {
     id: string;
     name: string;
-    price: string;
+    price: number; // Changed from string to number
     unit: string;
   };
 }
 
 /**
  * Update Service Usage Request
- * PATCH /employee/service/service-usage/{id}
+ * PATCH /employee-api/v1/service/service-usage/{id}
  */
 export interface UpdateServiceUsageRequest {
   quantity?: number;
-  status?: "PENDING" | "COMPLETED" | "CANCELLED";
+  status?: "PENDING" | "TRANSFERRED" | "COMPLETED" | "CANCELLED";
 }
 
 // ============================================================================

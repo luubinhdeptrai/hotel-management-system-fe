@@ -27,12 +27,23 @@ function mapApiToRoomType(apiType: ApiRoomType): RoomType {
   const tagIds = apiType.roomTypeTags?.map(rtt => rtt.roomTagId) || [];
   const tagDetails = apiType.roomTypeTags?.map(rtt => rtt.roomTag) || [];
 
+  // Handle price from either pricePerNight or basePrice
+  let price: number = 0;
+  const priceValue = (apiType as any).pricePerNight || (apiType as any).basePrice;
+  
+  if (priceValue) {
+    const parsed = typeof priceValue === 'string' 
+      ? parseFloat(priceValue) 
+      : Number(priceValue);
+    price = isNaN(parsed) ? 0 : parsed;
+  }
+
   return {
     roomTypeID: apiType.id,
     roomTypeName: apiType.name,
     capacity: apiType.capacity,
     totalBed: apiType.totalBed,
-    price: parseFloat(apiType.pricePerNight),
+    price,
     tags: tagIds,
     tagDetails: tagDetails,
   };
