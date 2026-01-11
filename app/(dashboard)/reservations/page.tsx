@@ -70,14 +70,20 @@ export default function ReservationsPage() {
 
         if (apiRoomTypes.length > 0) {
           // Convert API RoomType to local RoomType format
-          const converted: RoomType[] = apiRoomTypes.map((rt: ApiRoomType) => ({
-            roomTypeID: rt.id,
-            roomTypeName: rt.name,
-            price: parseInt(rt.pricePerNight) || 0,
-            capacity: rt.capacity,
-            totalBed: rt.totalBed,
-            amenities: rt.roomTypeTags?.map((tag) => tag.roomTag.name) || [],
-          }));
+          const converted: RoomType[] = apiRoomTypes.map((rt: ApiRoomType) => {
+            // Handle price from either pricePerNight or basePrice
+            const priceValue = (rt as any).pricePerNight || (rt as any).basePrice;
+            const price = priceValue ? parseInt(String(priceValue)) || 0 : 0;
+            
+            return {
+              roomTypeID: rt.id,
+              roomTypeName: rt.name,
+              price,
+              capacity: rt.capacity,
+              totalBed: rt.totalBed,
+              amenities: rt.roomTypeTags?.map((tag) => tag.roomTag.name) || [],
+            };
+          });
           setRoomTypes(converted);
           console.log("Loaded room types from API:", converted);
         }

@@ -42,6 +42,11 @@ const STATUS_COLORS: Record<
     text: "text-green-700",
     border: "border-green-300",
   },
+  "Trả phòng một phần": {
+    bg: "bg-orange-100",
+    text: "text-orange-700",
+    border: "border-orange-300",
+  },
   "Đã trả phòng": {
     bg: "bg-purple-100",
     text: "text-purple-700",

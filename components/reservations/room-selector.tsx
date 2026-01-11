@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getRoomTypePrice } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -27,6 +28,8 @@ export interface SelectedRoom extends Room {
   checkOutDate: string;
   numberOfGuests: number;
   pricePerNight: number;
+  nights?: number; // Number of nights
+  totalPrice?: number; // Total price for selected nights
 }
 
 interface RoomSelectorProps {
@@ -43,6 +46,15 @@ interface RoomFilter {
   floor?: number;
   minPrice?: number;
   maxPrice?: number;
+}
+
+interface GroupedAvailableRooms {
+  roomTypeId: string;
+  roomTypeName: string;
+  basePrice: number;
+  capacity: number;
+  availableCount: number;
+  rooms: AvailableRoom[];
 }
 
 export function RoomSelector({
@@ -69,7 +81,19 @@ export function RoomSelector({
   // View mode
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Load available rooms when dates change
+  // Calculate number of nights
+  const calculateNights = () => {
+    if (!checkInDate || !checkOutDate) return 0;
+    const check_in = new Date(checkInDate);
+    const check_out = new Date(checkOutDate);
+    return Math.ceil(
+      (check_out.getTime() - check_in.getTime()) / (1000 * 60 * 60 * 24)
+    );
+  };
+
+  const nights = calculateNights();
+
+  // Load available rooms when dates or filters change
   useEffect(() => {
     if (!checkInDate || !checkOutDate) return;
 
@@ -78,14 +102,44 @@ export function RoomSelector({
       setError(null);
 
       try {
-        const rooms = await bookingService.getAvailableRooms({
+        const params: any = {
           checkInDate,
           checkOutDate,
-          roomTypeId: selectedRoomTypeFilter,
-        });
+          limit: 100, // Max allowed by API validation
+        };
 
-        logger.log("Available rooms loaded:", rooms);
-        setAvailableRooms(rooms);
+        // Add optional filters
+        if (selectedRoomTypeFilter && selectedRoomTypeFilter !== 'all') {
+          params.roomTypeId = selectedRoomTypeFilter;
+          logger.log("🔍 FILTER: Room type filter ID:", selectedRoomTypeFilter);
+        }
+        if (searchRoomNumber) {
+          params.search = searchRoomNumber;
+        }
+        if (selectedFloor && selectedFloor !== 'all') {
+          params.floor = parseInt(selectedFloor);
+          logger.log("🔍 FILTER: Floor filter:", params.floor);
+        }
+        if (minPrice) {
+          params.minPrice = parseInt(minPrice);
+        }
+        if (maxPrice) {
+          params.maxPrice = parseInt(maxPrice);
+        }
+
+        logger.log("📤 Full params sent to API:", JSON.stringify(params, null, 2));
+        const rooms = await bookingService.getAvailableRooms(params);
+
+        logger.log("📥 API returned:", rooms.length, "rooms");
+        logger.log("Available rooms loaded from service:", rooms);
+        logger.log("Rooms array length:", Array.isArray(rooms) ? rooms.length : "not an array");
+        if (Array.isArray(rooms) && rooms.length > 0) {
+          logger.log("First room sample:", rooms[0]);
+          const roomTypeIds = [...new Set(rooms.map(r => r.roomType?.id))];
+          logger.log("Unique room type IDs in response:", roomTypeIds);
+        }
+        logger.log("Available room type IDs from props:", roomTypes.map(rt => rt.roomTypeID));
+        setAvailableRooms(Array.isArray(rooms) ? rooms : []);
       } catch (err) {
         const errorMessage =
           err instanceof Error
@@ -100,41 +154,36 @@ export function RoomSelector({
     };
 
     loadAvailableRooms();
-  }, [checkInDate, checkOutDate, selectedRoomTypeFilter]);
+  }, [checkInDate, checkOutDate, selectedRoomTypeFilter, searchRoomNumber, selectedFloor, minPrice, maxPrice]);
 
-  // Filter rooms
-  const filteredRooms = availableRooms.filter((room) => {
-    // Search by room number
-    if (
-      searchRoomNumber &&
-      !room.roomNumber.toLowerCase().includes(searchRoomNumber.toLowerCase())
-    ) {
-      return false;
-    }
-
-    // Filter by floor
-    if (selectedFloor && room.floor !== parseInt(selectedFloor)) {
-      return false;
-    }
-
-    // Filter by price range
-    const roomPrice = parseInt(room.roomType?.pricePerNight || "0");
-    if (minPrice && roomPrice < parseInt(minPrice)) {
-      return false;
-    }
-    if (maxPrice && roomPrice > parseInt(maxPrice)) {
-      return false;
-    }
-
+  // Filter to exclude already selected rooms (client-side only)
+  const filteredRooms = (Array.isArray(availableRooms) ? availableRooms : []).filter((room) => {
     // Exclude already selected rooms
-    if (
-      selectedRooms.some((sr) => sr.roomID === room.id)
-    ) {
-      return false;
+    return !selectedRooms.some((sr) => sr.roomID === room.id);
+  });
+
+  // Group filtered rooms by room type
+  const groupedRooms = filteredRooms.reduce((acc, room) => {
+    const roomTypeId = room.roomType?.id || "unknown";
+    const existingGroup = acc.find((g) => g.roomTypeId === roomTypeId);
+
+    if (existingGroup) {
+      existingGroup.rooms.push(room);
+    } else {
+      acc.push({
+        roomTypeId,
+        roomTypeName: room.roomType?.name || "Loại phòng không xác định",
+        basePrice: getRoomTypePrice(room.roomType),
+        capacity: room.roomType?.capacity || 0,
+        availableCount: filteredRooms.filter(
+          (r) => r.roomType?.id === roomTypeId
+        ).length,
+        rooms: [room],
+      });
     }
 
-    return true;
-  });
+    return acc;
+  }, [] as GroupedAvailableRooms[]);
 
   const handleSelectRoom = (room: AvailableRoom, numberOfGuests: number = 1) => {
     if (selectedRooms.length >= (maxRooms || 10)) {
@@ -147,6 +196,10 @@ export function RoomSelector({
       return;
     }
 
+    // Use helper function to safely extract price from roomType (handles both basePrice and pricePerNight)
+    const pricePerNight = getRoomTypePrice(room.roomType);
+    const totalPrice = pricePerNight * nights;
+
     const newSelectedRoom: SelectedRoom = {
       roomID: room.id,
       roomName: room.roomNumber,
@@ -154,22 +207,24 @@ export function RoomSelector({
       roomType: {
         roomTypeID: room.roomType.id || "",
         roomTypeName: room.roomType.name,
-        price: parseInt(room.roomType.pricePerNight || "0"),
+        price: pricePerNight,
         capacity: room.roomType.capacity,
       },
-      roomStatus: "Sẵn sàng" as const,  // Set to available since we fetched available rooms
+      roomStatus: "Sẵn sàng",
       floor: room.floor,
       selectedAt: new Date().toISOString(),
       checkInDate,
       checkOutDate,
       numberOfGuests,
-      pricePerNight: parseInt(room.roomType.pricePerNight || "0"),
+      pricePerNight,
+      nights,
+      totalPrice,
     } as SelectedRoom;
 
     const updated = [...selectedRooms, newSelectedRoom];
     onRoomsSelected(updated);
     toast.success(
-      `Đã chọn phòng ${room.roomNumber} (${room.roomType.name})`
+      `Đã chọn phòng ${room.roomNumber} - ${room.roomType.name} (${totalPrice.toLocaleString()}₫)`
     );
   };
 
@@ -193,10 +248,22 @@ export function RoomSelector({
     return Array.from(floors).sort((a, b) => a - b);
   };
 
+  // Extract room types from actual API response instead of props
+  // This ensures we use the correct room type IDs that match the API
+  const getAvailableRoomTypes = (): Array<{ id: string; name: string }> => {
+    const roomTypeMap = new Map<string, string>();
+    availableRooms.forEach((room) => {
+      if (room.roomType?.id && room.roomType?.name) {
+        roomTypeMap.set(room.roomType.id, room.roomType.name);
+      }
+    });
+    return Array.from(roomTypeMap.entries()).map(([id, name]) => ({ id, name }));
+  };
+
   const getPriceRange = (): { min: number; max: number } => {
     if (availableRooms.length === 0) return { min: 0, max: 1000000 };
 
-    const prices = availableRooms.map((r) => parseInt(r.roomType?.pricePerNight || "0"));
+    const prices = availableRooms.map((r) => getRoomTypePrice(r.roomType));
     return {
       min: Math.min(...prices),
       max: Math.max(...prices),
@@ -238,29 +305,51 @@ export function RoomSelector({
       )}
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Lọc phòng</CardTitle>
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-bold text-blue-900 flex items-center gap-2">
+              <span className="text-xl">🔍</span>
+              Bộ lọc phòng
+            </CardTitle>
+            {(selectedRoomTypeFilter ||
+              selectedFloor ||
+              minPrice ||
+              maxPrice ||
+              searchRoomNumber) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+              >
+                ✕ Xóa bộ lọc
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* First row: Room Type, Floor, Search */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Room Type Filter */}
-            <div>
-              <Label className="text-sm">Loại phòng</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                <span className="text-blue-600">🛏️</span> Loại phòng
+              </Label>
               <Select
                 value={selectedRoomTypeFilter || "all"}
                 onValueChange={(val) =>
                   setSelectedRoomTypeFilter(val === "all" ? undefined : val)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-blue-200 hover:border-blue-400">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  {roomTypes.map((rt) => (
-                    <SelectItem key={rt.roomTypeID} value={rt.roomTypeID}>
-                      {rt.roomTypeName}
+                  <SelectItem value="all">Tất cả loại phòng</SelectItem>
+                  {getAvailableRoomTypes().map((rt) => (
+                    <SelectItem key={rt.id} value={rt.id}>
+                      {rt.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -268,76 +357,88 @@ export function RoomSelector({
             </div>
 
             {/* Floor Filter */}
-            <div>
-              <Label className="text-sm">Tầng</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                <span className="text-blue-600">🏢</span> Tầng
+              </Label>
               <Select
                 value={selectedFloor || "all"}
                 onValueChange={(val) =>
                   setSelectedFloor(val === "all" ? undefined : val)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-blue-200 hover:border-blue-400">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  {floors.map((floor) => (
-                    <SelectItem key={floor} value={floor.toString()}>
-                      Tầng {floor}
+                  <SelectItem value="all">Tất cả tầng</SelectItem>
+                  {floors.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      Không có dữ liệu
                     </SelectItem>
-                  ))}
+                  ) : (
+                    floors.map((floor) => (
+                      <SelectItem key={floor} value={floor.toString()}>
+                        Tầng {floor}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Min Price */}
-            <div>
-              <Label className="text-sm">Giá từ</Label>
+            {/* Room Number Search */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                <span className="text-blue-600">🔑</span> Số phòng
+              </Label>
+              <Input
+                placeholder="Nhập số phòng..."
+                value={searchRoomNumber}
+                onChange={(e) => setSearchRoomNumber(e.target.value)}
+                className="bg-white border-blue-200 focus:border-blue-400"
+              />
+            </div>
+          </div>
+
+          {/* Second row: Price Range */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-blue-100">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                <span className="text-blue-600">💰</span> Giá tối thiểu (VNĐ)
+              </Label>
               <Input
                 type="number"
                 placeholder="0"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
+                className="bg-white border-blue-200 focus:border-blue-400"
               />
+              {minPrice && (
+                <p className="text-xs text-blue-600">
+                  Từ {parseInt(minPrice).toLocaleString()} VNĐ/đêm
+                </p>
+              )}
             </div>
 
-            {/* Max Price */}
-            <div>
-              <Label className="text-sm">Giá đến</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                <span className="text-blue-600">💰</span> Giá tối đa (VNĐ)
+              </Label>
               <Input
                 type="number"
                 placeholder="999999"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
+                className="bg-white border-blue-200 focus:border-blue-400"
               />
+              {maxPrice && (
+                <p className="text-xs text-blue-600">
+                  Đến {parseInt(maxPrice).toLocaleString()} VNĐ/đêm
+                </p>
+              )}
             </div>
           </div>
-
-          {/* Room Number Search */}
-          <div>
-            <Label className="text-sm">Tìm kiếm phòng số</Label>
-            <Input
-              placeholder="101, 102, ..."
-              value={searchRoomNumber}
-              onChange={(e) => setSearchRoomNumber(e.target.value)}
-            />
-          </div>
-
-          {/* Clear Filters Button */}
-          {(selectedRoomTypeFilter ||
-            selectedFloor ||
-            minPrice ||
-            maxPrice ||
-            searchRoomNumber) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearFilters}
-              className="w-full"
-            >
-              Xóa bộ lọc
-            </Button>
-          )}
         </CardContent>
       </Card>
 
@@ -350,97 +451,78 @@ export function RoomSelector({
 
       {/* View Mode Tabs */}
       {!isLoading && filteredRooms.length > 0 && (
-        <Tabs
-          value={viewMode}
-          onValueChange={(val) => setViewMode(val as "grid" | "list")}
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="grid">Lưới</TabsTrigger>
-            <TabsTrigger value="list">Danh sách</TabsTrigger>
-          </TabsList>
-
-          {/* Grid View */}
-          <TabsContent value="grid" className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Tìm thấy {filteredRooms.length} phòng có sẵn
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-700 mb-2">
+              Tìm thấy {filteredRooms.length} phòng có sẵn ({nights} đêm)
             </p>
-            <div className="h-[500px] w-full rounded-md border p-4 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredRooms.map((room) => (
-                  <Card key={room.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
+          </div>
+
+          {/* Grouped Display by Room Type */}
+          <div className="space-y-6 max-h-[600px] overflow-y-auto p-2">
+            {groupedRooms.map((group) => (
+              <div key={group.roomTypeId} className="space-y-3">
+                {/* Room Type Header */}
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-blue-900">{group.roomTypeName}</p>
+                      <p className="text-sm text-blue-700">
+                        Sức chứa: {group.capacity} khách | Còn lại: {group.availableCount} phòng
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-blue-600">
+                        {group.basePrice.toLocaleString()}₫
+                      </p>
+                      <p className="text-xs text-blue-600">/đêm</p>
+                      {nights > 0 && (
+                        <p className="text-sm font-semibold text-blue-700">
+                          {(group.basePrice * nights).toLocaleString()}₫ ({nights}đ)
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rooms in this type */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pl-2">
+                  {group.rooms.map((room) => (
+                    <div
+                      key={room.id}
+                      className="border rounded-lg p-3 hover:border-blue-400 hover:shadow-md transition-all bg-white"
+                    >
+                      <div className="space-y-2">
                         <div>
-                          <p className="text-lg font-bold">{room.roomNumber}</p>
-                          <p className="text-sm text-gray-600">
-                            {room.roomType?.name}
+                          <p className="text-lg font-bold text-center">{room.roomNumber}</p>
+                          <p className="text-xs text-gray-600 text-center">Tầng {room.floor}</p>
+                        </div>
+
+                        <div className="bg-gray-50 p-2 rounded text-center">
+                          <p className="text-sm font-semibold text-blue-600">
+                            {(group.basePrice * nights).toLocaleString()}₫
                           </p>
-                        </div>
-
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Tầng {room.floor}</span>
-                          <Badge variant="outline">
-                            Sức chứa: {room.roomType?.capacity}
-                          </Badge>
-                        </div>
-
-                        <div className="border-t pt-3">
-                          <p className="text-sm text-gray-600">Giá mỗi đêm</p>
-                          <p className="text-xl font-bold text-blue-600">
-                            {parseInt(room.roomType?.pricePerNight || "0").toLocaleString()}₫
+                          <p className="text-xs text-gray-600">
+                            {group.basePrice.toLocaleString()}₫ × {nights}đ
                           </p>
                         </div>
 
                         <Button
                           onClick={() => handleSelectRoom(room)}
+                          size="sm"
                           className="w-full"
+                          variant="default"
                         >
-                          Chọn phòng
+                          Chọn
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* List View */}
-          <TabsContent value="list" className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Tìm thấy {filteredRooms.length} phòng có sẵn
-            </p>
-            <div className="h-[500px] w-full rounded-md border overflow-y-auto">
-              <div className="space-y-2 p-4">
-                {filteredRooms.map((room) => (
-                  <div
-                    key={room.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
-                  >
-                    <div className="flex-1">
-                      <p className="font-semibold">{room.roomNumber}</p>
-                      <p className="text-sm text-gray-600">
-                        {room.roomType?.name} • Tầng {room.floor} • Sức chứa:{" "}
-                        {room.roomType?.capacity}
-                      </p>
                     </div>
-                    <div className="text-right space-y-1">
-                      <p className="font-semibold text-blue-600">
-                        {parseInt(room.roomType?.pricePerNight || "0").toLocaleString()}₫
-                      </p>
-                      <Button
-                        onClick={() => handleSelectRoom(room)}
-                        size="sm"
-                      >
-                        Chọn
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Empty State */}
@@ -465,29 +547,49 @@ export function RoomSelector({
 
       {/* Selected Rooms Preview */}
       {selectedRooms.length > 0 && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-green-50 border-green-200">
           <CardHeader>
             <CardTitle className="text-lg">
-              Phòng đã chọn ({selectedRooms.length})
+              ✓ Phòng đã chọn ({selectedRooms.length}/{maxRooms})
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {selectedRooms.map((room) => (
               <div
                 key={room.roomID}
-                className="flex items-center justify-between p-2 bg-white rounded border"
+                className="flex items-center justify-between p-3 bg-white rounded border border-green-100 hover:border-green-300"
               >
-                <span className="font-semibold">{room.roomName}</span>
+                <div className="flex-1">
+                  <p className="font-bold text-lg">{room.roomName}</p>
+                  <p className="text-sm text-gray-600">
+                    {room.roomType.roomTypeName} • Tầng {room.floor}
+                  </p>
+                  {room.totalPrice && (
+                    <p className="text-sm font-semibold text-green-600">
+                      {room.pricePerNight.toLocaleString()}₫ × {nights}đ = {room.totalPrice.toLocaleString()}₫
+                    </p>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveRoom(room.roomID)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   Xóa
                 </Button>
               </div>
             ))}
+            
+            {/* Summary */}
+            <div className="border-t pt-3 mt-3">
+              <div className="flex items-center justify-between font-semibold">
+                <span>Tổng cộng ({selectedRooms.length} phòng × {nights} đêm):</span>
+                <span className="text-lg text-green-600">
+                  {(selectedRooms.reduce((sum, r) => sum + (r.totalPrice || 0), 0)).toLocaleString()}₫
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

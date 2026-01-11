@@ -6,6 +6,7 @@ export type ReservationHeaderStatus =
   | "Chờ xác nhận" // PENDING - Waiting for deposit
   | "Đã xác nhận" // CONFIRMED - Deposit received
   | "Đã nhận phòng" // CHECKED_IN - Guest has checked in (at least 1 room)
+  | "Trả phòng một phần" // PARTIALLY_CHECKED_OUT - Some rooms checked out (multi-room)
   | "Đã trả phòng" // CHECKED_OUT - Guest has checked out (all rooms)
   | "Đã hủy" // CANCELLED - Reservation cancelled
   | "Không đến" // NO_SHOW - Guest didn't show up
@@ -25,6 +26,7 @@ export const HEADER_STATUS_LABELS: Record<ReservationHeaderStatus, string> = {
   "Chờ xác nhận": "⏳ Chờ xác nhận",
   "Đã xác nhận": "✅ Đã xác nhận",
   "Đã nhận phòng": "🏨 Đã nhận phòng",
+  "Trả phòng một phần": "🚪 Trả phòng một phần",
   "Đã trả phòng": "🚪 Đã trả phòng",
   "Đã hủy": "❌ Đã hủy",
   "Không đến": "⚠️ Không đến",

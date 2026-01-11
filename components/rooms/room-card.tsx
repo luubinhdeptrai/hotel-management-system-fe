@@ -195,7 +195,11 @@ export function RoomCard({ room, onEdit, onDelete, isDeleting }: RoomCardProps) 
                   <DoorOpen className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600 font-medium">Giá:</span>
                   <span className="font-bold text-blue-600">
-                    {parseFloat(room.roomType.pricePerNight).toLocaleString('vi-VN')} VNĐ/đêm
+                    {(() => {
+                      const priceValue = (room.roomType as any).pricePerNight || (room.roomType as any).basePrice;
+                      const price = priceValue ? parseFloat(String(priceValue)) : 0;
+                      return price.toLocaleString('vi-VN');
+                    })()} VNĐ/đêm
                   </span>
                 </div>
               </>

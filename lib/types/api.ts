@@ -227,7 +227,8 @@ export interface RoomType {
   name: string;
   capacity: number;
   totalBed: number;
-  pricePerNight: string;
+  basePrice?: string | number;
+  pricePerNight?: string;
   roomTypeTags?: RoomTypeTag[];
   createdAt: string;
   updatedAt: string;
@@ -353,13 +354,16 @@ export interface GetServicesParams {
 // Booking Types
 // ============================================================================
 
+// Backend BookingStatus enum - matches Prisma schema exactly
+// Status progression: PENDING → CONFIRMED → CHECKED_IN → [PARTIALLY_CHECKED_OUT] → CHECKED_OUT
+// Can be CANCELLED at any point (except after CHECKED_OUT)
 export type BookingStatus =
-  | "PENDING"
-  | "CONFIRMED"
-  | "CHECKED_IN"
-  | "PARTIALLY_CHECKED_OUT"
-  | "CHECKED_OUT"
-  | "CANCELLED";
+  | "PENDING"              // Chờ xác nhận - chưa đặt cọc
+  | "CONFIRMED"            // Đã xác nhận - đã đặt cọc (hoặc employee manual confirm)
+  | "CHECKED_IN"           // Đã nhận phòng - at least 1 room checked in
+  | "PARTIALLY_CHECKED_OUT" // Trả phòng một phần - some rooms checked out (multi-room only)
+  | "CHECKED_OUT"          // Đã trả phòng - all rooms checked out
+  | "CANCELLED";           // Đã hủy - cancelled by customer or employee
 
 export type TransactionType =
   | "DEPOSIT"
@@ -623,6 +627,16 @@ export interface AvailableRoomSearchParams {
   checkInDate: string;
   checkOutDate: string;
   roomTypeId?: string;
+  search?: string;
+  floor?: number;
+  minCapacity?: number;
+  maxCapacity?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface AvailableRoom {

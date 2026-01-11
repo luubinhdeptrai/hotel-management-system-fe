@@ -1,5 +1,6 @@
 import { logger } from "@/lib/utils/logger";
 import { useState, useMemo, useEffect } from "react";
+import { getRoomTypePrice } from "@/lib/utils";
 import {
   Reservation,
   ReservationStatus,
@@ -62,6 +63,7 @@ function convertBookingToReservation(booking: Booking): Reservation {
     PENDING: "Chờ xác nhận",
     CONFIRMED: "Đã xác nhận",
     CHECKED_IN: "Đã nhận phòng",
+    PARTIALLY_CHECKED_OUT: "Trả phòng một phần",
     CHECKED_OUT: "Đã trả phòng",
     CANCELLED: "Đã hủy",
   };
@@ -88,17 +90,18 @@ function convertBookingToReservation(booking: Booking): Reservation {
       roomTypeName: br.roomType?.name || "Standard",
       checkInDate: checkInDate.toISOString().split("T")[0],
       checkOutDate: checkOutDate.toISOString().split("T")[0],
-      status: statusMap[booking.status] || "Chờ xác nhận",
-      numberOfGuests: Math.ceil(
-        booking.totalGuests / (booking.bookingRooms?.length || 1)
-      ),
-      pricePerNight:
-        parseInt(booking.totalAmount || "0") /
-        numberOfNights /
-        (booking.bookingRooms?.length || 1),
+      status: statusMap[br.status] || statusMap[booking.status] || "Chờ xác nhận",
+      // Use actual guest count from BookingCustomers if available, otherwise distribute evenly
+      numberOfGuests: br.bookingCustomers?.length || 
+        Math.ceil(booking.totalGuests / (booking.bookingRooms?.length || 1)),
+      // Use actual pricePerNight from backend (includes dynamic pricing)
+      pricePerNight: parseFloat(br.pricePerNight || "0"),
     })),
-    totalAmount: parseInt(booking.totalAmount || "0"),
-    depositAmount: parseInt(booking.depositRequired || "0"),
+    // Use actual totalAmount from backend (sum of all BookingRoom.totalAmount)
+    totalAmount: parseFloat(booking.totalAmount || "0"),
+    // Backend calculates depositRequired = totalAmount * depositPercentage (from AppSettings)
+    // Default depositPercentage = 30% (can be configured via AppSetting)
+    depositAmount: parseFloat(booking.depositRequired || "0"),
     status: statusMap[booking.status] || "Chờ xác nhận",
     // Store backend data for accurate deposit logic
     backendStatus: booking.status, // "PENDING", "CONFIRMED", etc. - used for logic checks
@@ -236,7 +239,7 @@ export function useReservations() {
         roomType: {
           roomTypeID: r.roomType.id,
           roomTypeName: r.roomType.name,
-          price: parseInt(r.roomType.pricePerNight),
+          price: getRoomTypePrice(r.roomType),
           capacity: r.roomType.capacity,
         },
         roomStatus: "Sẵn sàng" as const,
@@ -562,8 +565,12 @@ export function useReservations() {
           reservationDate: new Date().toISOString().split("T")[0],
           totalRooms,
           totalAmount,
-          // Calculate deposit as 30% of backend's total amount
-          depositAmount: Math.round((response.totalAmount || totalAmount) * 0.3),
+          // Use backend's actual depositRequired (calculated by backend based on AppSettings)
+          // Backend: depositRequired = totalAmount * depositPercentage (default 30%)
+          // If backend response has totalAmount, calculate from that; otherwise use local totalAmount
+          depositAmount: response.totalAmount 
+            ? parseFloat(String(response.totalAmount)) * 0.3  // Backend's totalAmount × 30%
+            : Math.round(totalAmount * 0.3),                   // Fallback: local totalAmount × 30%
           notes: data.notes,
           status: data.depositConfirmed ? "Đã xác nhận" : "Đã đặt",
           details,
@@ -682,13 +689,15 @@ export function useReservations() {
         }
 
         // Call update API - Backend only supports: checkInDate, checkOutDate, totalGuests
-        // NOTE: Backend does NOT support changing rooms via update API
-        // Rooms are fixed at booking creation time
-        // NOTE: Status is managed by system (transactions, check-in/out), NOT directly editable
+        // ⚠️ CRITICAL CONSTRAINT: Backend does NOT support changing rooms via update API
+        // Rooms are IMMUTABLE after booking creation (Backend validation allows `rooms` field 
+        // but service doesn't implement the logic - see booking.service.ts updateBooking())
+        // Status is managed by system (transactions, check-in/out), NOT directly editable
         await bookingService.updateBooking(selectedReservation.reservationID, {
           checkInDate: checkInISO,
           checkOutDate: checkOutISO,
           totalGuests: totalGuests || undefined,
+          // ❌ NOT SUPPORTED: rooms, status (removed - backend ignores these)
         });
 
         logger.log(

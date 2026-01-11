@@ -335,6 +335,7 @@ export const bookingService = {
    * GET /employee/rooms/available?checkInDate=...&checkOutDate=...&roomTypeId=...
    *
    * Note: Uses mock fallback if API doesn't exist
+   * Always returns array (never returns object)
    */
   async getAvailableRooms(
     params: AvailableRoomSearchParams
@@ -343,20 +344,92 @@ export const bookingService = {
       const queryString = buildQueryString(
         params as unknown as { [key: string]: unknown }
       );
-      const response = await api.get<ApiResponse<AvailableRoom[]>>(
+      console.log("📤 Calling API with query:", queryString);
+      const response = await api.get<any>(
         `/employee/rooms/available${queryString}`,
         { requiresAuth: true }
       );
-      const data =
-        response && typeof response === "object" && "data" in response
-          ? (response as ApiResponse<AvailableRoom[]>).data
-          : (response as unknown as AvailableRoom[]);
+      
+      console.log("📥 Raw API response:", JSON.stringify(response, null, 2));
+      
+      let data: AvailableRoom[] = [];
+      
+      // BE returns { data: { data: [...grouped rooms...], total, page, limit, ... } }
+      if (!response) {
+        console.warn("Response is null or undefined");
+        return [];
+      }
+
+      // Navigate through nested structure
+      let groupedArray: any[] | null = null;
+      
+      // Try first unwrap: response.data
+      if (response && typeof response === "object" && "data" in response) {
+        const firstUnwrap = response.data;
+        console.log("After first unwrap (response.data):", firstUnwrap);
+        
+        // Try second unwrap: response.data.data
+        if (firstUnwrap && typeof firstUnwrap === "object" && "data" in firstUnwrap) {
+          groupedArray = firstUnwrap.data;
+          console.log("After second unwrap (response.data.data):", groupedArray);
+        } else if (Array.isArray(firstUnwrap)) {
+          groupedArray = firstUnwrap;
+          console.log("First unwrap is already array");
+        }
+      } else if (Array.isArray(response)) {
+        groupedArray = response;
+        console.log("Response is already array");
+      }
+      
+      if (groupedArray && Array.isArray(groupedArray)) {
+        data = this.flattenGroupedRooms(groupedArray);
+      } else {
+        console.warn("Could not extract array from response");
+      }
+      
+      console.log("✅ Final flattened rooms count:", data.length);
       return data;
     } catch (error) {
-      console.error("Get available rooms failed:", error);
-      // Return empty array - mock fallback handled in hook
+      console.error("❌ Get available rooms failed:", error);
       return [];
     }
+  },
+
+  /**
+   * Flatten grouped rooms response from BE
+   * BE returns: [{ roomType, availableCount, rooms: [...] }, ...]
+   * FE needs: [room1, room2, ...]
+   */
+  flattenGroupedRooms(data: any[]): AvailableRoom[] {
+    if (!Array.isArray(data)) {
+      console.warn("flattenGroupedRooms received non-array:", data);
+      return [];
+    }
+
+    const flattened: AvailableRoom[] = [];
+    
+    data.forEach((group, idx) => {
+      console.log(`Processing group ${idx}:`, group);
+      // Check if this is a grouped response
+      if (group && group.rooms && Array.isArray(group.rooms)) {
+        console.log(`  - Found grouped format with ${group.rooms.length} rooms`);
+        // Grouped format - add roomType to each room
+        group.rooms.forEach((room: any) => {
+          flattened.push({
+            ...room,
+            roomType: group.roomType
+          } as AvailableRoom);
+        });
+      } else if (group && group.id && group.roomNumber) {
+        console.log(`  - Found flat format room: ${group.roomNumber}`);
+        // Flat format - just a room object
+        flattened.push(group as AvailableRoom);
+      } else {
+        console.warn(`  - Skipped unrecognized group format at index ${idx}:`, group);
+      }
+    });
+
+    return flattened;
   },
 
   // ============================================================================
