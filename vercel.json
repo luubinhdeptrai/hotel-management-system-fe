@@ -1,7 +1,33 @@
 {
   "version": 2,
-  "env": {
-    "NEXT_PUBLIC_API_URL": "https://your-api-url.com",
-    "NEXT_PUBLIC_ANALYTICS_ID": "your-analytics-id"
-  }
+  "buildCommand": "pnpm run build",
+  "devCommand": "pnpm run dev",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "regions": ["sin1"],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://room-master-dcdsfng4c7h7hwbg.eastasia-01.azurewebsites.net/v1/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
 }
