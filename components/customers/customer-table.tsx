@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { CustomerRecord } from "@/lib/types/customer";
+import { RankBadge } from "@/components/customer-ranks/rank-badge";
 import { ICONS } from "@/src/constants/icons.enum";
 
 interface CustomerTableProps {
@@ -108,11 +109,8 @@ export function CustomerTable({
                     }`}>
                       {customer.customerType}
                     </Badge>
-                    {customer.isVip && (
-                      <Badge className="bg-linear-to-r from-warning-500 to-warning-600 text-white border-0 font-semibold">
-                        VIP
-                      </Badge>
-                    )}
+                    {/* NEW: Display dynamic rank from Backend */}
+                    <RankBadge rank={customer.rank} />
                   </div>
                 </TableCell>
                 <TableCell className="text-gray-600">

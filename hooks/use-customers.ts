@@ -18,15 +18,19 @@ function mapCustomerToRecord(customer: Customer): CustomerRecord {
     address: customer.address || "",
     nationality: "", // Not in API
     customerType: "Cá nhân",
-    isVip: false,
-    vipTier: "STANDARD",
+    isVip: false, // DEPRECATED
+    vipTier: "STANDARD", // DEPRECATED
     status: "Hoạt động",
     notes: "",
     createdAt: customer.createdAt,
     lastVisit: "",
     totalBookings: customer._count?.bookings || 0,
-    totalSpent: 0,
+    totalSpent: customer.totalSpent || 0, // NEW: Get from Backend
     history: [],
+    
+    // NEW: Map dynamic rank from Backend
+    rank: customer.rank || null,
+    rankId: customer.rankId || null,
   };
 }
 

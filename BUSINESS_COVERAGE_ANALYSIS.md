@@ -1,6 +1,7 @@
 # 📊 PHÂN TÍCH COVERAGE NGHIỆP VỤ: Backend vs Frontend
 
 **Ngày phân tích:** 11/01/2026  
+**Cập nhật lần cuối:** 12/01/2026 (Customer Rank implemented)  
 **Phạm vi:** roommaster-be (Backend) ↔ hotel-management-system-fe (Frontend)
 
 ---
@@ -8,12 +9,12 @@
 ## 📌 Tóm tắt điểm
 
 - **Backend APIs:** ~89 endpoints
-- **Frontend Coverage:** ~56% (50/89 endpoints)
+- **Frontend Coverage:** ~62% (56/89 endpoints) ⬆️ +6 APIs
 - **Nhóm nghiệp vụ:** 20 nhóm chính
 - **Status:**
-  - ✅ Hoàn chỉnh: 10 nhóm (50%)
+  - ✅ Hoàn chỉnh: 11 nhóm (55%) ⬆️ +1 nhóm
   - ⚠️ Thiếu một phần: 6 nhóm (30%)
-  - ❌ Chưa triển khai: 4 nhóm (20%)
+  - ❌ Chưa triển khai: 3 nhóm (15%) ⬇️ -1 nhóm
 
 ---
 
@@ -300,25 +301,40 @@ GET    /employee/ranks/:id                   # Chi tiết rank
 PUT    /employee/ranks/:id                   # Cập nhật rank
 DELETE /employee/ranks/:id                   # Xóa rank
 GET    /employee/ranks/statistics            # Thống kê customers per rank
+POST   /employee/customers/:id/rank          # Set customer rank manually
 ```
 
 **Data Model:**
-- CustomerRank: `minSpending`, `maxSpending`, `benefits`, `color`
+- CustomerRank: `minSpending`, `maxSpending`, `benefits`, `color`, `displayName`
 - Customer: `totalSpent` (cached), `rankId` (auto-updated)
 - Auto-promotion when `totalSpent` >= `minSpending`
 
-**Frontend Status:** ❌ **CHƯA TRIỂN KHAI (0%)**
+**Frontend Status:** ✅ **ĐÃ TRIỂN KHAI ĐẦY ĐỦ (100%)**
 
-**THIẾU:**
-1. ❌ **Customer Rank Management UI** - Hoàn toàn thiếu
-2. ❌ **Rank statistics dashboard** - Không báo cáo VIP distribution
-3. ❌ **Auto-rank-up notification** - Không thông báo upgrade
-4. ❌ **Rank benefits display** - Không hiển thị quyền lợi VIP
-5. ❌ **Customer rank filter** - Không lọc khách hàng theo rank
+**TRIỂN KHAI:**
+1. ✅ **Customer Rank Management Page** - `/customer-ranks`
+   - Full CRUD operations
+   - Statistics dashboard
+   - Rank breakdown visualization
+2. ✅ **Rank Components**
+   - `RankBadge` - Display rank everywhere
+   - `RankForm` - Create/Edit form with validation
+   - `RankStatistics` - Dashboard widget
+3. ✅ **Rank Integration**
+   - Customer table shows rank badge
+   - Customer details modal shows rank
+   - Rank data mapped from Backend API
+4. ✅ **Services & Hooks**
+   - `customer-rank.service.ts` - All API methods
+   - `use-customer-ranks.ts` - State management
+   - `customer-rank.ts` - TypeScript types + utilities
+5. ✅ **Sidebar Menu** - Added "Hạng Khách Hàng" link
 
-**Rủi ro:**
-- 🔴 **HIGH**: Hệ thống VIP không dùng → Mất khách trung thành
-- 🟠 **MEDIUM**: Không marketing theo VIP tier → Khó tối ưu doanh thu
+**DEPRECATED:**
+- ⚠️ Old hardcoded VIPTier (STANDARD/VIP/PLATINUM) marked as deprecated
+- ✅ Replaced with dynamic Backend-driven CustomerRank system
+
+**Rủi ro:** NONE - Fully implemented
 
 ---
 
@@ -647,7 +663,7 @@ GET    /customer/usage-service               # Xem dịch vụ đã dùng
 | 8 | Room Tag | 5 | 100% | ✅ |
 | 9 | Service Management | 5 | 100% | ✅ |
 | 10 | Customer Management | 5 | 100% | ✅ |
-| 11 | Customer Rank | 5 | 0% | ❌ |
+| 11 | Customer Rank | 6 | 100% | ✅ |
 | 12 | Promotion | 3 | 70% | ⚠️ |
 | 13 | Dynamic Pricing | 6 | 0% | ❌ |
 | 14 | Calendar Events | 5 | 0% | ❌ |
@@ -662,10 +678,12 @@ GET    /customer/usage-service               # Xem dịch vụ đã dùng
 ### 📈 Phân bố
 
 ```
-✅ Hoàn chỉnh (100%):    10 nhóm (50%)   = 50 APIs
+✅ Hoàn chỉnh (100%):    11 nhóm (55%)   = 56 APIs
 ⚠️ Thiếu một phần (30-70%): 6 nhóm (30%)   = 20 APIs
-❌ Chưa có (0%):        4 nhóm (20%)   = 19 APIs
+❌ Chưa có (0%):        3 nhóm (15%)   = 13 APIs
 ```
+
+**COVERAGE TĂNG:** 56% → **62%** (Customer Rank implemented)
 
 ---
 

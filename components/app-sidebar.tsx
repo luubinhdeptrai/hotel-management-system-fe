@@ -112,6 +112,11 @@ const adminManagement = [
     icon: ICONS.USER,
   },
   {
+    title: "Hạng Khách Hàng",
+    url: "/customer-ranks",
+    icon: ICONS.STAR,
+  },
+  {
     title: "Khách Lưu Trú",
     url: "/nguoio",
     icon: ICONS.USERS,

@@ -161,6 +161,16 @@ export interface Customer {
   address?: string;
   createdAt: string;
   updatedAt: string;
+  totalSpent?: number; // NEW: Total lifetime spending (auto-calculated from completed transactions)
+  rankId?: string | null; // NEW: Customer rank reference
+  rank?: { // NEW: Populated rank data (if included)
+    id: string;
+    displayName: string;
+    minSpending: number;
+    maxSpending: number | null;
+    color: string;
+    benefits: any;
+  } | null;
   _count?: {
     bookings: number;
     customerPromotions: number;

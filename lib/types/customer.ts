@@ -1,11 +1,13 @@
 import type { ReservationStatus } from "@/lib/types/reservation";
+import type { CustomerRank } from "@/lib/types/customer-rank";
 
 export type CustomerType = "Cá nhân" | "Doanh nghiệp";
 export type CustomerStatus = "Hoạt động" | "Đã vô hiệu";
 
-// VIP Tier System
+// DEPRECATED: Old hardcoded VIP tier system - replaced by dynamic CustomerRank from Backend
 export type VIPTier = "STANDARD" | "VIP" | "PLATINUM";
 
+// DEPRECATED: Remove these after migration is complete
 export const VIP_TIER_LABELS: Record<VIPTier, string> = {
   STANDARD: "Khách hàng thường",
   VIP: "VIP",
@@ -18,11 +20,10 @@ export const VIP_TIER_COLORS: Record<VIPTier, string> = {
   PLATINUM: "bg-purple-100 text-purple-800",
 };
 
-// Spending thresholds for tier upgrades
 export const VIP_TIER_THRESHOLDS: Record<VIPTier, number> = {
-  STANDARD: 0, // 0 - 10M VND
-  VIP: 10000000, // 10M - 50M VND
-  PLATINUM: 50000000, // 50M+ VND
+  STANDARD: 0,
+  VIP: 10000000,
+  PLATINUM: 50000000,
 };
 
 export interface CustomerHistoryRecord {
@@ -44,16 +45,20 @@ export interface CustomerRecord {
   address: string;
   nationality: string;
   customerType: CustomerType;
-  isVip: boolean; // Deprecated - use vipTier instead
-  vipTier: VIPTier; // NEW: VIP tier
+  isVip: boolean; // DEPRECATED - use rank instead
+  vipTier: VIPTier; // DEPRECATED - use rank instead
   status: CustomerStatus;
   notes?: string;
   createdAt: string;
   lastVisit: string;
   totalBookings: number;
-  totalSpent: number; // Total lifetime spending
+  totalSpent: number; // Total lifetime spending from Backend
   tags?: string[];
   history: CustomerHistoryRecord[];
+  
+  // NEW: Dynamic rank system from Backend
+  rank: CustomerRank | null; // Customer's current rank (null = no rank)
+  rankId: string | null; // Rank ID reference
 }
 
 export interface CustomerFormData {

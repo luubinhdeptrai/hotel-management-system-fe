@@ -21,6 +21,8 @@ export const mockCustomerRecords: CustomerRecord[] = [
     totalBookings: 18,
     totalSpent: 52000000,
     tags: ["Khách quen", "Ưu tiên phòng tầng cao"],
+    rank: null, // NEW: Dynamic rank from Backend
+    rankId: null, // NEW: No rank assigned yet
     history: [
       {
         reservationId: "DP001",
@@ -59,6 +61,8 @@ export const mockCustomerRecords: CustomerRecord[] = [
     lastVisit: "2025-11-08",
     totalBookings: 12,
     totalSpent: 34000000,
+    rank: null,
+    rankId: null,
     history: [
       {
         reservationId: "DP002",
@@ -98,6 +102,8 @@ export const mockCustomerRecords: CustomerRecord[] = [
     totalBookings: 35,
     totalSpent: 125000000,
     tags: ["Doanh nghiệp", "Đặt đoàn"],
+    rank: null,
+    rankId: null,
     history: [
       {
         reservationId: "DP010",
@@ -135,6 +141,8 @@ export const mockCustomerRecords: CustomerRecord[] = [
     lastVisit: "2025-10-25",
     totalBookings: 6,
     totalSpent: 15000000,
+    rank: null,
+    rankId: null,
     history: [
       {
         reservationId: "DP012",
@@ -161,6 +169,8 @@ export const mockCustomerRecords: CustomerRecord[] = [
     status: "Hoạt động",
     createdAt: "2022-07-03",
     lastVisit: "2025-09-30",
+    rank: null,
+    rankId: null,
     totalBookings: 9,
     totalSpent: 21000000,
     history: [
@@ -191,6 +201,8 @@ export const mockCustomerRecords: CustomerRecord[] = [
     createdAt: "2019-11-01",
     lastVisit: "2025-11-01",
     totalBookings: 40,
+    rank: null,
+    rankId: null,
     totalSpent: 210000000,
     tags: ["VIP", "Thanh toán chậm 30 ngày"],
     history: [
@@ -218,6 +230,8 @@ export const mockCustomerRecords: CustomerRecord[] = [
     vipTier: "STANDARD", // 8M VND - STANDARD tier
     status: "Đã vô hiệu",
     notes: "Bị khóa do nợ thanh toán",
+    rank: null,
+    rankId: null,
     createdAt: "2021-03-19",
     lastVisit: "2024-12-20",
     totalBookings: 5,
