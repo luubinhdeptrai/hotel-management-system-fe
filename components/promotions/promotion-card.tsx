@@ -56,6 +56,7 @@ import {
 import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface PromotionCardProps {
   promotion: Promotion;
@@ -273,37 +274,41 @@ export function PromotionCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {onEdit && (
-                  <DropdownMenuItem
-                    onClick={() => onEdit(promotion)}
-                    className="gap-2 cursor-pointer"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit Promotion
-                  </DropdownMenuItem>
-                )}
+                <PermissionGuard permission="promotion:update">
+                  {onEdit && (
+                    <DropdownMenuItem
+                      onClick={() => onEdit(promotion)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit Promotion
+                    </DropdownMenuItem>
+                  )}
+                </PermissionGuard>
                 <DropdownMenuSeparator />
-                {isDisabled ? (
-                  onEnable && (
-                    <DropdownMenuItem
-                      onClick={() => setShowEnableDialog(true)}
-                      className="gap-2 cursor-pointer text-green-600"
-                    >
-                      <Power className="h-4 w-4" />
-                      Enable Promotion
-                    </DropdownMenuItem>
-                  )
-                ) : (
-                  onDisable && (
-                    <DropdownMenuItem
-                      onClick={() => setShowDisableDialog(true)}
-                      className="gap-2 cursor-pointer text-red-600"
-                    >
-                      <PowerOff className="h-4 w-4" />
-                      Disable Promotion
-                    </DropdownMenuItem>
-                  )
-                )}
+                <PermissionGuard permission="promotion:update">
+                  {isDisabled ? (
+                    onEnable && (
+                      <DropdownMenuItem
+                        onClick={() => setShowEnableDialog(true)}
+                        className="gap-2 cursor-pointer text-green-600"
+                      >
+                        <Power className="h-4 w-4" />
+                        Enable Promotion
+                      </DropdownMenuItem>
+                    )
+                  ) : (
+                    onDisable && (
+                      <DropdownMenuItem
+                        onClick={() => setShowDisableDialog(true)}
+                        className="gap-2 cursor-pointer text-red-600"
+                      >
+                        <PowerOff className="h-4 w-4" />
+                        Disable Promotion
+                      </DropdownMenuItem>
+                    )
+                  )}
+                </PermissionGuard>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

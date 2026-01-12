@@ -148,6 +148,13 @@ export interface GetEmployeesParams {
   sortOrder?: "asc" | "desc";
 }
 
+export interface Permission {
+  permissionId: string;
+  permissionName: string;
+  description: string;
+  module: string;
+}
+
 // ============================================================================
 // Customer Types
 // ============================================================================

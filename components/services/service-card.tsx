@@ -16,6 +16,7 @@ import {
 import { ServiceItem } from "@/lib/types/service";
 import { ICONS } from "@/src/constants/icons.enum";
 import { formatCurrency } from "@/lib/utils";
+import { PermissionGuard } from "@/components/permission-guard";
 
 // Category icons
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
