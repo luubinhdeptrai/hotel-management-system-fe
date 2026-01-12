@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { CustomerRecord } from "@/lib/types/customer";
+import { RankBadge } from "@/components/customer-ranks/rank-badge";
+import { formatSpending } from "@/lib/types/customer-rank";
 import { ICONS } from "@/src/constants/icons.enum";
 
 interface CustomerDetailsModalProps {
@@ -67,11 +69,8 @@ export function CustomerDetailsModal({
                 <Badge className="bg-primary-100 text-primary-700 border-0">
                   {customer.customerType}
                 </Badge>
-                {customer.isVip && (
-                  <Badge className="bg-warning-100 text-warning-700 border-0">
-                    VIP
-                  </Badge>
-                )}
+                {/* NEW: Display dynamic rank from Backend */}
+                <RankBadge rank={customer.rank} />
               </div>
               <Badge
                 className={`${

@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ICONS } from "@/src/constants/icons.enum";
-import { mockRoomTypes } from "@/lib/mock-room-types";
 import type { RoomType } from "@/lib/types/room";
 
 export interface BookingFormData {
@@ -90,11 +89,13 @@ export function BookingFormModal({
       return;
     }
 
-    const roomType = mockRoomTypes.find((rt: RoomType) => rt.roomTypeID === selectedRoomType);
-    if (!roomType) {
-      console.error("Room type not found:", selectedRoomType, "Available:", mockRoomTypes);
-      return;
-    }
+    // TODO: Fetch room types from API
+    // For now, skip room type validation
+    // const roomType = mockRoomTypes.find((rt: RoomType) => rt.roomTypeID === selectedRoomType);
+    // if (!roomType) {
+    //   console.error("Room type not found:", selectedRoomType, "Available:", mockRoomTypes);
+    //   return;
+    // }
 
     // Check if room type already added
     const existingIndex = roomSelections.findIndex((r) => r.roomTypeId === selectedRoomType);
@@ -112,9 +113,9 @@ export function BookingFormModal({
         ...roomSelections,
         {
           roomTypeId: selectedRoomType,
-          roomTypeName: roomType.roomTypeName,
+          roomTypeName: selectedRoomType, // TODO: Get from API
           count,
-          price: roomType.price,
+          price: 0, // TODO: Get from API
         },
       ]);
     }
@@ -270,7 +271,8 @@ export function BookingFormModal({
                     <SelectValue placeholder="Chọn loại phòng" />
                   </SelectTrigger>
                   <SelectContent className="w-full">
-                    {mockRoomTypes.map((rt: RoomType) => (
+                    {/* TODO: Fetch roomTypes from API */}
+                    {[].map((rt: RoomType) => (
                       <SelectItem key={rt.roomTypeID} value={rt.roomTypeID}>
                         <span className="flex items-center gap-2">
                           {rt.roomTypeName} - {formatCurrency(rt.price)}/đêm (Tối đa {rt.capacity} khách)

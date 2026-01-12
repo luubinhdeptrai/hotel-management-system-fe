@@ -30,19 +30,19 @@ const getInitialFormData = (
 ): SurchargeFormData => {
   if (mode === "edit" && surcharge) {
     return {
-      surchargeName: surcharge.surchargeName,
-      price: surcharge.price,
-      description: surcharge.description || "",
-      imageUrl: surcharge.imageUrl || "",
-      isOpenPrice: surcharge.isOpenPrice || false,
+      customPrice: surcharge.customPrice || 0,
+      quantity: surcharge.quantity || 1,
+      reason: surcharge.note || "",
+      bookingId: surcharge.bookingId || "",
+      bookingRoomId: surcharge.bookingRoomId || "",
     };
   }
   return {
-    surchargeName: "",
-    price: 0,
-    description: "",
-    imageUrl: "",
-    isOpenPrice: false,
+    customPrice: 0,
+    quantity: 1,
+    reason: "",
+    bookingId: "",
+    bookingRoomId: "",
   };
 };
 
@@ -74,12 +74,16 @@ export function SurchargeFormModal({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.surchargeName.trim()) {
-      newErrors.surchargeName = "Tên phụ thu không được để trống";
+    if (formData.customPrice <= 0) {
+      newErrors.customPrice = "Giá phụ thu phải lớn hơn 0";
     }
 
-    if (!formData.isOpenPrice && formData.price <= 0) {
-      newErrors.price = "Giá phải lớn hơn 0";
+    if (formData.quantity < 1) {
+      newErrors.quantity = "Số lượng phải từ 1 trở lên";
+    }
+
+    if (!formData.reason.trim()) {
+      newErrors.reason = "Lý do phụ thu không được để trống";
     }
 
     setErrors(newErrors);
@@ -115,7 +119,7 @@ export function SurchargeFormModal({
     <Dialog
       open={open}
       onOpenChange={onClose}
-      key={surcharge?.surchargeID || "new"}
+      key={surcharge?.id || "new"}
     >
       <DialogContent className="max-w-2xl">
         <DialogHeader className="bg-linear-to-br from-warning-600 to-warning-500 -m-6 mb-0 p-6 rounded-t-xl">
@@ -130,105 +134,100 @@ export function SurchargeFormModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5 mt-6">
-          {/* Tên phụ thu */}
+          {/* Giá phụ thu */}
           <div className="space-y-2">
-            <Label htmlFor="surchargeName" className="text-sm font-semibold text-gray-700">
-              Tên phụ thu <span className="text-error-600">*</span>
+            <Label htmlFor="customPrice" className="text-sm font-semibold text-gray-700">
+              Giá phụ thu <span className="text-error-600">*</span>
             </Label>
-            <Input
-              id="surchargeName"
-              value={formData.surchargeName}
-              onChange={(e) =>
-                handleInputChange("surchargeName", e.target.value)
-              }
-              placeholder="VD: Check-in sớm, Check-out muộn, Thú cưng..."
-              className={`h-11 ${errors.surchargeName ? "border-error-600 focus:ring-error-500" : "focus:ring-warning-500"}`}
-            />
-            {errors.surchargeName && (
-              <p className="text-sm text-error-600 font-medium">{errors.surchargeName}</p>
+            <div className="relative">
+              <Input
+                id="customPrice"
+                type="number"
+                value={formData.customPrice}
+                onChange={(e) =>
+                  handleInputChange("customPrice", parseFloat(e.target.value) || 0)
+                }
+                placeholder="Nhập giá phụ thu (VNĐ)"
+                min="0"
+                step="10000"
+                className={`h-11 pr-12 ${errors.customPrice ? "border-error-600 focus:ring-error-500" : "focus:ring-warning-500"}`}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
+                VNĐ
+              </div>
+            </div>
+            {errors.customPrice && (
+              <p className="text-sm text-error-600 font-medium">{errors.customPrice}</p>
             )}
           </div>
 
-          {/* Giá cố định checkbox */}
-          <div className="bg-linear-to-br from-warning-50 to-warning-100/30 rounded-xl p-4 border border-warning-200">
-            <div className="flex items-center space-x-3">
-              <Checkbox
-                id="isOpenPrice"
-                checked={formData.isOpenPrice}
-                onCheckedChange={(checked: boolean) =>
-                  handleInputChange("isOpenPrice", checked === true)
-                }
-                className="data-[state=checked]:bg-warning-600 data-[state=checked]:border-warning-600"
-              />
-              <div>
-                <Label htmlFor="isOpenPrice" className="cursor-pointer font-semibold text-gray-900">
-                  Giá linh hoạt (nhập khi áp dụng)
-                </Label>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  Bật tùy chọn này nếu giá phụ thu thay đổi tùy theo từng trường hợp
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Giá */}
-          {!formData.isOpenPrice && (
-            <div className="space-y-2">
-              <Label htmlFor="price" className="text-sm font-semibold text-gray-700">
-                Giá phụ thu <span className="text-error-600">*</span>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) =>
-                    handleInputChange("price", parseFloat(e.target.value) || 0)
-                  }
-                  placeholder="Nhập giá phụ thu (VNĐ)"
-                  min="0"
-                  step="1000"
-                  className={`h-11 pr-12 ${errors.price ? "border-error-600 focus:ring-error-500" : "focus:ring-warning-500"}`}
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
-                  VNĐ
-                </div>
-              </div>
-              {errors.price && (
-                <p className="text-sm text-error-600 font-medium">{errors.price}</p>
-              )}
-            </div>
-          )}
-
-          {/* Mô tả */}
+          {/* Số lượng */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Mô tả chi tiết</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Mô tả chi tiết về phụ thu, điều kiện áp dụng..."
-              rows={4}
-              className="resize-none focus:ring-warning-500"
-            />
-          </div>
-
-          {/* URL Hình ảnh */}
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl" className="text-sm font-semibold text-gray-700">URL Hình ảnh</Label>
+            <Label htmlFor="quantity" className="text-sm font-semibold text-gray-700">
+              Số lượng <span className="text-error-600">*</span>
+            </Label>
             <Input
-              id="imageUrl"
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => handleInputChange("imageUrl", e.target.value)}
-              placeholder="https://example.com/surcharge.jpg"
+              id="quantity"
+              type="number"
+              value={formData.quantity}
+              onChange={(e) =>
+                handleInputChange("quantity", parseInt(e.target.value) || 1)
+              }
+              placeholder="Nhập số lượng"
+              min="1"
+              className={`h-11 ${errors.quantity ? "border-error-600 focus:ring-error-500" : "focus:ring-warning-500"}`}
+            />
+            {errors.quantity && (
+              <p className="text-sm text-error-600 font-medium">{errors.quantity}</p>
+            )}
+          </div>
+
+          {/* Lý do phụ thu */}
+          <div className="space-y-2">
+            <Label htmlFor="reason" className="text-sm font-semibold text-gray-700">
+              Lý do phụ thu <span className="text-error-600">*</span>
+            </Label>
+            <Textarea
+              id="reason"
+              value={formData.reason}
+              onChange={(e) => handleInputChange("reason", e.target.value)}
+              placeholder="VD: Check-in sớm, Người thêm, Yêu cầu đặc biệt..."
+              className={`min-h-24 resize-none ${errors.reason ? "border-error-600 focus:ring-error-500" : "focus:ring-warning-500"}`}
+            />
+            {errors.reason && (
+              <p className="text-sm text-error-600 font-medium">{errors.reason}</p>
+            )}
+          </div>
+
+          {/* Booking ID */}
+          <div className="space-y-2">
+            <Label htmlFor="bookingId" className="text-sm font-semibold text-gray-700">
+              Booking ID (tùy chọn)
+            </Label>
+            <Input
+              id="bookingId"
+              value={formData.bookingId}
+              onChange={(e) => handleInputChange("bookingId", e.target.value)}
+              placeholder="Nhập Booking ID"
               className="h-11 focus:ring-warning-500"
             />
-            <p className="text-xs text-gray-500">
-              Nhập đường dẫn URL của hình ảnh phụ thu (không bắt buộc)
-            </p>
           </div>
 
+          {/* Booking Room ID */}
+          <div className="space-y-2">
+            <Label htmlFor="bookingRoomId" className="text-sm font-semibold text-gray-700">
+              Booking Room ID (tùy chọn)
+            </Label>
+            <Input
+              id="bookingRoomId"
+              value={formData.bookingRoomId}
+              onChange={(e) => handleInputChange("bookingRoomId", e.target.value)}
+              placeholder="Nhập Booking Room ID"
+              className="h-11 focus:ring-warning-500"
+            />
+          </div>
+
+          {/* Form Actions */}
           <DialogFooter className="gap-2 mt-6">
             <Button 
               type="button" 

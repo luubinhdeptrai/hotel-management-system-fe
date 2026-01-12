@@ -23,24 +23,21 @@ export function PenaltyGrid({
   onCreate,
 }: PenaltyGridProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilter, setActiveFilter] = useState<boolean | null | "openPrice">(null);
+  const [activeFilter, setActiveFilter] = useState<'PENDING' | 'TRANSFERRED' | 'COMPLETED' | null>(null);
 
   const filteredPenalties = useMemo(() => {
     return penalties.filter((penalty) => {
       // Search filter
-      const matchesSearch = penalty.penaltyName
+      const matchesSearch = penalty.serviceName
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-        penalty.description?.toLowerCase().includes(searchTerm.toLowerCase());
+        penalty.note?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        penalty.bookingId?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // Active / Open price filter
+      // Status filter
       let matchesFilter = true;
-      if (activeFilter === true) {
-        matchesFilter = penalty.isActive === true;
-      } else if (activeFilter === false) {
-        matchesFilter = penalty.isActive === false;
-      } else if (activeFilter === "openPrice") {
-        matchesFilter = penalty.isOpenPrice === true;
+      if (activeFilter) {
+        matchesFilter = penalty.status === activeFilter;
       }
 
       return matchesSearch && matchesFilter;
@@ -54,9 +51,9 @@ export function PenaltyGrid({
 
   const stats = {
     total: penalties.length,
-    active: penalties.filter(p => p.isActive).length,
-    inactive: penalties.filter(p => !p.isActive).length,
-    openPrice: penalties.filter(p => p.isOpenPrice).length,
+    pending: penalties.filter(p => p.status === 'PENDING').length,
+    transferred: penalties.filter(p => p.status === 'TRANSFERRED').length,
+    completed: penalties.filter(p => p.status === 'COMPLETED').length,
   };
 
   return (
@@ -86,16 +83,16 @@ export function PenaltyGrid({
             <div className="text-3xl font-bold">{stats.total}</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-            <div className="text-error-100 text-sm mb-1">Hoạt động</div>
-            <div className="text-3xl font-bold">{stats.active}</div>
+            <div className="text-error-100 text-sm mb-1">Chưa xử lý</div>
+            <div className="text-3xl font-bold">{stats.pending}</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-            <div className="text-error-100 text-sm mb-1">Tạm ngưng</div>
-            <div className="text-3xl font-bold">{stats.inactive}</div>
+            <div className="text-error-100 text-sm mb-1">Đã chuyển</div>
+            <div className="text-3xl font-bold">{stats.transferred}</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-            <div className="text-error-100 text-sm mb-1">Giá linh hoạt</div>
-            <div className="text-3xl font-bold">{stats.openPrice}</div>
+            <div className="text-error-100 text-sm mb-1">Hoàn thành</div>
+            <div className="text-3xl font-bold">{stats.completed}</div>
           </div>
         </div>
       </div>
@@ -130,40 +127,39 @@ export function PenaltyGrid({
               Tất cả
             </button>
             <button
-              onClick={() => setActiveFilter(true)}
+              onClick={() => setActiveFilter('PENDING')}
               className={`min-w-max px-5 py-2.5 rounded-full text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 ${
-                activeFilter === true
+                activeFilter === 'PENDING'
+                  ? "bg-warning-600 text-white shadow-md"
+                  : "bg-warning-50 text-warning-700 hover:bg-warning-100"
+              }`}
+            >
+              <span className="w-4 h-4">{ICONS.CLOCK}</span>
+              <span>Chưa xử lý</span>
+            </button>
+            <button
+              onClick={() => setActiveFilter('TRANSFERRED')}
+              className={`min-w-max px-5 py-2.5 rounded-full text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 ${
+                activeFilter === 'TRANSFERRED'
+                  ? "bg-info-600 text-white shadow-md"
+                  : "bg-info-50 text-info-700 hover:bg-info-100"
+              }`}
+            >
+              <span className="w-4 h-4">{ICONS.ARROW_RIGHT_LEFT}</span>
+              <span>Đã chuyển</span>
+            </button>
+            <button
+              onClick={() => setActiveFilter('COMPLETED')}
+              className={`min-w-max px-5 py-2.5 rounded-full text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 ${
+                activeFilter === 'COMPLETED'
                   ? "bg-success-600 text-white shadow-md"
                   : "bg-success-50 text-success-700 hover:bg-success-100"
               }`}
             >
               <span className="w-4 h-4 flex items-center justify-center">{ICONS.CHECK_CIRCLE}</span>
-              <span>Hoạt động</span>
-            </button>
-            <button
-              onClick={() => setActiveFilter(false)}
-              className={`min-w-max px-5 py-2.5 rounded-full text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 ${
-                activeFilter === false
-                  ? "bg-gray-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              <span className="w-4 h-4 flex items-center justify-center">{ICONS.PAUSE}</span>
-              <span>Tạm ngưng</span>
-            </button>
-            <button
-              onClick={() => setActiveFilter(activeFilter === 'openPrice' ? null : 'openPrice')}
-              className={`min-w-max px-5 py-2.5 rounded-full text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 ${
-                activeFilter === 'openPrice'
-                  ? "bg-error-600 text-white shadow-md"
-                  : "bg-error-50 text-error-700 hover:bg-error-100"
-              }`}
-            >
-              <span className="w-4 h-4 flex items-center justify-center">{ICONS.PERCENT}</span>
-              <span>Giá linh hoạt</span>
+              <span>Hoàn thành</span>
             </button>
           </div>
-          {/* Removed duplicate "Xóa lọc" button — "Tất cả" clears filters now */}
         </div>
       </div>
 
@@ -193,11 +189,10 @@ export function PenaltyGrid({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredPenalties.map((penalty) => (
             <PenaltyCard
-              key={penalty.penaltyID}
+              key={penalty.id}
               penalty={penalty}
               onEdit={onEdit}
               onDelete={onDelete}
-              onToggleActive={onToggleActive}
             />
           ))}
         </div>

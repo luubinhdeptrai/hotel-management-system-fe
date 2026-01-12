@@ -203,7 +203,7 @@ export function RoomTable({ rooms, onEdit, onDelete, isDeleting }: RoomTableProp
                     {/* Price */}
                     <TableCell className="text-right">
                       <span className="font-bold text-blue-600 text-lg">
-                        {formatPrice(room.roomType?.pricePerNight || 0)}
+                        {formatPrice(room.roomType?.basePrice || 0)}
                       </span>
                       <span className="text-xs text-gray-500 ml-1">VNĐ</span>
                     </TableCell>

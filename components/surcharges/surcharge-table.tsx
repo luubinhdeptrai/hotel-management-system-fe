@@ -46,7 +46,7 @@ export function SurchargeTable({
 
   const handleConfirmDelete = () => {
     if (selectedSurcharge) {
-      onDelete(selectedSurcharge.surchargeID);
+      onDelete(selectedSurcharge.id);
     }
     setDeleteDialogOpen(false);
     setSelectedSurcharge(null);
@@ -70,10 +70,11 @@ export function SurchargeTable({
   // Filter surcharges
   const filteredSurcharges = surcharges.filter((surcharge) => {
     return (
-      surcharge.surchargeName
+      surcharge.serviceName
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      surcharge.surchargeID.toLowerCase().includes(searchTerm.toLowerCase())
+      surcharge.note?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      surcharge.bookingId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -132,35 +133,33 @@ export function SurchargeTable({
             ) : (
               filteredSurcharges.map((surcharge) => (
                 <TableRow
-                  key={surcharge.surchargeID}
+                  key={surcharge.id}
                   className="hover:bg-gray-50"
                 >
                   <TableCell className="font-medium">
-                    {surcharge.surchargeID}
+                    {surcharge.bookingId || "-"}
                   </TableCell>
                   <TableCell className="font-medium text-gray-900">
-                    {surcharge.surchargeName}
+                    {surcharge.serviceName}
                   </TableCell>
                   <TableCell className="font-semibold text-gray-900">
-                    {surcharge.isOpenPrice ? (
-                      <span className="text-warning-600 italic">
-                        Nhập khi post
-                      </span>
-                    ) : (
-                      formatCurrency(surcharge.price)
-                    )}
+                    {formatCurrency(surcharge.totalPrice)}
                   </TableCell>
                   <TableCell className="text-gray-600 max-w-xs truncate">
-                    {surcharge.description || "-"}
+                    {surcharge.note || "-"}
                   </TableCell>
                   <TableCell>
-                    {surcharge.isActive ? (
-                      <Badge className="bg-success-100 text-success-700 hover:bg-success-100">
-                        Hoạt động
+                    {surcharge.status === 'PENDING' ? (
+                      <Badge className="bg-warning-100 text-warning-700 hover:bg-warning-100">
+                        Chưa xử lý
+                      </Badge>
+                    ) : surcharge.status === 'TRANSFERRED' ? (
+                      <Badge className="bg-info-100 text-info-700 hover:bg-info-100">
+                        Đã chuyển
                       </Badge>
                     ) : (
-                      <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">
-                        Ngừng hoạt động
+                      <Badge className="bg-success-100 text-success-700 hover:bg-success-100">
+                        Hoàn thành
                       </Badge>
                     )}
                   </TableCell>
@@ -204,7 +203,7 @@ export function SurchargeTable({
             <DialogDescription>
               Bạn có chắc chắn muốn xóa phụ thu{" "}
               <span className="font-semibold">
-                {selectedSurcharge?.surchargeName}
+                {selectedSurcharge?.serviceName}
               </span>
               ? Hành động này không thể hoàn tác.
             </DialogDescription>

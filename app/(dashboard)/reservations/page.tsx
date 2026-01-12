@@ -10,7 +10,6 @@ import { NewReservationFormModal } from "@/components/reservations/new-reservati
 import { CancelReservationDialog } from "@/components/reservations/cancel-reservation-dialog";
 import { AvailableRoomsModal } from "@/components/reservations/available-rooms-modal";
 import { RoomSelectionModal } from "@/components/reservations/room-selection-modal";
-import { mockRoomTypes } from "@/lib/mock-room-types";
 import { useReservations } from "@/hooks/use-reservations";
 import { PermissionGuard } from "@/components/permission-guard";
 import { useMemo, useState, useEffect } from "react";
@@ -60,7 +59,7 @@ export default function ReservationsPage() {
   } = useReservations();
 
   // Fetch room types from backend API
-  const [roomTypes, setRoomTypes] = useState<RoomType[]>(mockRoomTypes);
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [showAllReservations, setShowAllReservations] = useState(false);
 
   useEffect(() => {

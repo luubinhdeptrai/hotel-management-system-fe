@@ -46,6 +46,7 @@ import { EmployeeFormModal } from "@/components/staff/employee-form-modal";
 import { employeeService } from "@/lib/services/employee.service";
 import { PermissionGuard } from "@/components/permission-guard";
 import type { Employee, EmployeeRole, CreateEmployeeRequest, UpdateEmployeeRequest } from "@/lib/types/api";
+import { getEmployeeRole } from "@/lib/utils";
 import { toast } from "sonner";
 
 const roleOptions: { value: EmployeeRole | "ALL"; label: string; color: string }[] = [
@@ -187,10 +188,10 @@ export default function StaffPageNew() {
   // Statistics - Always use ALL employees (not filtered)
   const stats = {
     total: allEmployees.length,
-    admin: allEmployees.filter((e) => e.role === "ADMIN").length,
-    receptionist: allEmployees.filter((e) => e.role === "RECEPTIONIST").length,
-    housekeeping: allEmployees.filter((e) => e.role === "HOUSEKEEPING").length,
-    staff: allEmployees.filter((e) => e.role === "STAFF").length,
+    admin: allEmployees.filter((e) => getEmployeeRole(e) === "ADMIN").length,
+    receptionist: allEmployees.filter((e) => getEmployeeRole(e) === "RECEPTIONIST").length,
+    housekeeping: allEmployees.filter((e) => getEmployeeRole(e) === "HOUSEKEEPING").length,
+    staff: allEmployees.filter((e) => getEmployeeRole(e) === "STAFF").length,
   };
 
   const hasFilters = searchQuery || roleFilter !== "ALL";
@@ -401,8 +402,9 @@ export default function StaffPageNew() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {employees.map((employee) => {
-              const avatarUrl = getMockAvatar(employee.name, employee.role);
-              const roleOption = roleOptions.find(r => r.value === employee.role);
+              const employeeRole = getEmployeeRole(employee);
+              const avatarUrl = getMockAvatar(employee.name, employeeRole || "STAFF");
+              const roleOption = roleOptions.find(r => r.value === employeeRole);
               
               return (
                 <div
@@ -465,10 +467,10 @@ export default function StaffPageNew() {
                     <div className="flex items-center justify-center pt-2">
                       <Badge 
                         variant="outline" 
-                        className={`${getRoleBadgeColor(employee.role)} px-4 py-2 text-sm font-bold uppercase tracking-wide`}
+                        className={`${getRoleBadgeColor(employeeRole || "STAFF")} px-4 py-2 text-sm font-bold uppercase tracking-wide`}
                       >
                         <div className={`h-2 w-2 rounded-full ${roleOption?.color} mr-2`} />
-                        {roleOption?.label}
+                        {roleOption?.label || "Không có vai trò"}
                       </Badge>
                     </div>
 

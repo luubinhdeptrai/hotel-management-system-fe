@@ -14,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ICONS } from "@/src/constants/icons.enum";
 import { appSettingsService } from "@/lib/services";
-import { mockRoomTypes } from "@/lib/mock-room-types";
 import { ReservationFormData, Reservation } from "@/lib/types/reservation";
 import { Customer as ApiCustomer } from "@/lib/types/api";
 import { RoomType } from "@/lib/types/room";
@@ -71,8 +70,9 @@ export function NewReservationFormModal({
     const loadRoomTypes = async () => {
       setLoadingRoomTypes(true);
       try {
-        // Use mock room types for now (can be replaced with API call later)
-        setRoomTypes(mockRoomTypes || []);
+        // TODO: Fetch room types from API
+        // For now, set empty array
+        setRoomTypes([]);
       } catch (err) {
         logger.error("Failed to load room types:", err);
       } finally {

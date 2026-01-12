@@ -13,17 +13,17 @@ import { ICONS } from "@/src/constants/icons.enum";
 interface CustomerFiltersProps extends CustomerFilters {
   onSearchChange: (value: string) => void;
   onTypeChange: (value: CustomerFilters["typeFilter"]) => void;
-  onVipChange: (value: CustomerFilters["vipFilter"]) => void;
+  onRankChange: (value: CustomerFilters["rankFilter"]) => void;
   onAddCustomer: () => void;
 }
 
 export function CustomerFilters({
   searchQuery,
   typeFilter,
-  vipFilter,
+  rankFilter,
   onSearchChange,
   onTypeChange,
-  onVipChange,
+  onRankChange,
   onAddCustomer,
 }: CustomerFiltersProps) {
   return (
@@ -80,19 +80,9 @@ export function CustomerFilters({
             <span>Doanh nghiệp</span>
           </button>
 
-          {/* VIP Filter */}
-          <div className="h-6 w-px bg-gray-300 mx-1"></div>
-          <button
-            onClick={() => onVipChange(vipFilter === "VIP" ? "Tất cả" : "VIP")}
-            className={`min-w-max px-5 py-2.5 rounded-full text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 ${
-              vipFilter === "VIP"
-                ? "bg-linear-to-r from-warning-600 to-warning-500 text-white shadow-md"
-                : "bg-warning-50 text-warning-700 hover:bg-warning-100"
-            }`}
-          >
-            <span className="w-4 h-4 flex items-center justify-center">{ICONS.USER_CHECK}</span>
-            <span>VIP</span>
-          </button>
+          {/* Rank Filter - TODO: Implement with dynamic ranks from Backend */}
+          {/* <div className="h-6 w-px bg-gray-300 mx-1"></div> */}
+          {/* <Select value={rankFilter} onValueChange={onRankChange}>...</Select> */}
         </div>
 
         <Button

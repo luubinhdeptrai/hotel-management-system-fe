@@ -8,10 +8,6 @@ import { Eye, EyeOff, Hotel } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { authService } from "@/lib/services/auth.service";
 import { ApiError } from "@/lib/services/api";
-import { mockLogin } from "@/lib/mock-auth";
-
-// Toggle this to use mock login during development when backend is unavailable
-const USE_MOCK_AUTH = false;
 
 interface LoginCredentials {
   username: string;
@@ -34,31 +30,17 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      if (USE_MOCK_AUTH) {
-        // Use mock login for development
-        const response = await mockLogin({
-          username: credentials.username,
-          password: credentials.password,
-        });
+      // Use real API
+      const response = await authService.login(
+        credentials.username,
+        credentials.password
+      );
 
-        if (response.success && response.user) {
-          router.push("/dashboard");
-        } else {
-          setErrorMessage(response.message || "Đăng nhập thất bại");
-        }
-      } else {
-        // Use real API
-        const response = await authService.login(
-          credentials.username,
-          credentials.password
-        );
+      logger.log("Login response:", response);
 
-        logger.log("Login response:", response);
-
-        // If we reach here without error, login was successful
-        // authService.login() throws on failure
-        router.push("/dashboard");
-      }
+      // If we reach here without error, login was successful
+      // authService.login() throws on failure
+      router.push("/dashboard");
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.statusCode === 401) {

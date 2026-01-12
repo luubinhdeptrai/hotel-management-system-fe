@@ -119,11 +119,18 @@ export interface ChangePasswordRequest {
 
 export type EmployeeRole = "ADMIN" | "RECEPTIONIST" | "HOUSEKEEPING" | "STAFF";
 
+export interface Role {
+  id: string;
+  name: string;
+}
+
 export interface Employee {
   id: string;
   name: string;
   username: string;
-  role: EmployeeRole;
+  role?: EmployeeRole;
+  roleId?: string;
+  roleRef?: Role;
   updatedAt: string;
 }
 
@@ -168,6 +175,16 @@ export interface Customer {
   address?: string;
   createdAt: string;
   updatedAt: string;
+  totalSpent?: number; // NEW: Total lifetime spending (auto-calculated from completed transactions)
+  rankId?: string | null; // NEW: Customer rank reference
+  rank?: { // NEW: Populated rank data (if included)
+    id: string;
+    displayName: string;
+    minSpending: number;
+    maxSpending: number | null;
+    color: string;
+    benefits: any;
+  } | null;
   _count?: {
     bookings: number;
     customerPromotions: number;
@@ -522,8 +539,8 @@ export interface BookingRoom {
   checkOutDate: string;
   pricePerNight: string;
   subtotalRoom: string;
+  subtotalService: string;
   totalAmount: string;
-  balance: string;
   status: BookingStatus;
   actualCheckIn?: string;
   actualCheckOut?: string;
@@ -678,4 +695,23 @@ export interface AvailableRoom {
   floor: number;
   status: RoomStatus;
   roomType: RoomType;
+}
+
+// ============================================================================
+// Room Transfer Types (Change Room)
+// ============================================================================
+
+export interface ChangeRoomRequest {
+  newRoomId: string;
+  reason?: string; // Optional reason for room change (max 500 chars)
+}
+
+export interface ChangeRoomResponse {
+  bookingRoom: BookingRoom;
+  priceAdjustment: {
+    oldPricePerNight: number;
+    newPricePerNight: number;
+    remainingNights: number;
+    priceDifference: number; // Positive = upgrade cost, Negative = downgrade credit
+  };
 }

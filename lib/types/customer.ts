@@ -1,29 +1,8 @@
 import type { ReservationStatus } from "@/lib/types/reservation";
+import type { CustomerRank } from "@/lib/types/customer-rank";
 
 export type CustomerType = "Cá nhân" | "Doanh nghiệp";
 export type CustomerStatus = "Hoạt động" | "Đã vô hiệu";
-
-// VIP Tier System
-export type VIPTier = "STANDARD" | "VIP" | "PLATINUM";
-
-export const VIP_TIER_LABELS: Record<VIPTier, string> = {
-  STANDARD: "Khách hàng thường",
-  VIP: "VIP",
-  PLATINUM: "Platinum VIP",
-};
-
-export const VIP_TIER_COLORS: Record<VIPTier, string> = {
-  STANDARD: "bg-gray-100 text-gray-800",
-  VIP: "bg-amber-100 text-amber-800",
-  PLATINUM: "bg-purple-100 text-purple-800",
-};
-
-// Spending thresholds for tier upgrades
-export const VIP_TIER_THRESHOLDS: Record<VIPTier, number> = {
-  STANDARD: 0, // 0 - 10M VND
-  VIP: 10000000, // 10M - 50M VND
-  PLATINUM: 50000000, // 50M+ VND
-};
 
 export interface CustomerHistoryRecord {
   reservationId: string;
@@ -44,16 +23,18 @@ export interface CustomerRecord {
   address: string;
   nationality: string;
   customerType: CustomerType;
-  isVip: boolean; // Deprecated - use vipTier instead
-  vipTier: VIPTier; // NEW: VIP tier
   status: CustomerStatus;
   notes?: string;
   createdAt: string;
   lastVisit: string;
   totalBookings: number;
-  totalSpent: number; // Total lifetime spending
+  totalSpent: number; // Total lifetime spending from Backend
   tags?: string[];
   history: CustomerHistoryRecord[];
+  
+  // NEW: Dynamic rank system from Backend
+  rank: CustomerRank | null; // Customer's current rank (null = no rank)
+  rankId: string | null; // Rank ID reference
 }
 
 export interface CustomerFormData {
@@ -64,14 +45,13 @@ export interface CustomerFormData {
   address: string;
   nationality: string;
   customerType: CustomerType;
-  isVip: boolean;
   notes?: string;
 }
 
 export interface CustomerFilters {
   searchQuery: string;
   typeFilter: CustomerType | "Tất cả";
-  vipFilter: "Tất cả" | "VIP" | "Thường";
+  rankFilter: string | "Tất cả"; // rankId or "Tất cả"
 }
 
 export interface CustomerStatistics {

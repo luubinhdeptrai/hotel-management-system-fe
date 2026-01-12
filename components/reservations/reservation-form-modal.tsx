@@ -31,8 +31,13 @@ import {
   Customer as ReservationCustomer,
 } from "@/lib/types/reservation";
 import { RoomType } from "@/lib/types/room";
-import { checkRoomAvailability } from "@/lib/mock-reservations";
 import { CustomerSelectionCard, type CustomerSelectionData } from "./customer-selection-card";
+
+// Simple room availability check (replace with real API call)
+const checkRoomAvailability = (roomID: string, checkIn: string, checkOut: string): boolean => {
+  // TODO: Implement real availability check with Backend API
+  return true;
+};
 
 interface ReservationDetail {
   roomTypeID?: string;
@@ -378,8 +383,7 @@ export function ReservationFormModal({
     const isAvailable = checkRoomAvailability(
       mockRoomID,
       formData.checkInDate,
-      formData.checkOutDate,
-      reservation?.reservationID
+      formData.checkOutDate
     );
 
     if (!isAvailable) {

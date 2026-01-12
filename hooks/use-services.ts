@@ -8,6 +8,8 @@ import {
   ServiceItemFormData,
   ServiceGroup,
 } from "@/lib/types/service";
+import { serviceAPI } from "@/lib/services/service-unified.service";
+import type { Service } from "@/lib/types/service-unified";
 import { mockServiceCategories } from "@/lib/mock-services";
 import { serviceManagementService } from "@/lib/services";
 import type { Service as ApiService, ServiceImage } from "@/lib/types/api";
@@ -49,10 +51,8 @@ function mapApiToServiceItem(
 }
 
 export function useServices() {
-  // Note: Categories are not supported by the API, so we keep them as mock data
-  const [categories, setCategories] = useState<ServiceCategory[]>(
-    mockServiceCategories
-  );
+  // Default empty categories until API is ready
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -211,7 +211,7 @@ export function useServices() {
         throw new Error("Loại dịch vụ không tồn tại");
       }
 
-      const created = await serviceManagementService.createService({
+      const created = await serviceAPI.createService({
         name: data.serviceName,
         price: data.price,
         unit: data.unit,
@@ -286,7 +286,7 @@ export function useServices() {
         throw new Error("Loại dịch vụ không tồn tại");
       }
 
-      const updated = await serviceManagementService.updateService(id, {
+      const updated = await serviceAPI.updateService(id, {
         name: data.serviceName,
         price: data.price,
         unit: data.unit,
@@ -348,7 +348,7 @@ export function useServices() {
   const softDeleteService = async (id: string) => {
     try {
       setIsLoading(true);
-      await serviceManagementService.updateService(id, { isActive: false });
+      await serviceAPI.updateService(id, { isActive: false });
       setServices(
         services.map((service) =>
           service.serviceID === id
@@ -370,7 +370,7 @@ export function useServices() {
   const deleteService = async (id: string) => {
     try {
       setIsLoading(true);
-      await serviceManagementService.deleteService(id);
+      await serviceAPI.deleteService(id);
       setServices(services.filter((service) => service.serviceID !== id));
       setError(null);
     } catch (err) {

@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Employee } from "@/lib/types/api";
-import {
-  getMockArrivals,
-  getMockDashboardStats,
-  getMockDepartures,
-  getMockRoomStatusData,
-  type DashboardStats,
-  type RoomStatusData,
-} from "@/lib/mock-dashboard";
 import { authService } from "@/lib/services/auth.service";
+
+interface DashboardStats {
+  totalRevenue: number;
+  totalBookings: number;
+  occupancyRate: number;
+  averageRoomRate: number;
+  availableRooms: number;
+  dirtyRooms: number;
+}
+
+interface RoomStatusData {
+  id: string;
+  name: string;
+  status: string;
+  count: number;
+  color: string;
+}
 import type { Arrival } from "@/components/dashboard/arrivals-table";
 import type { Departure } from "@/components/dashboard/departures-table";
 
@@ -30,22 +39,22 @@ export function useDashboardPage(): UseDashboardPageResult {
   const router = useRouter();
   const [user, setUser] = useState<Employee | null>(() => authService.getStoredUser());
 
-  const stats = useMemo(() => getMockDashboardStats(), []);
-  const roomStatusData = useMemo(() => getMockRoomStatusData(), []);
-  const arrivals = useMemo(() => getMockArrivals(), []);
-  const departures = useMemo(() => getMockDepartures(), []);
+  // Default empty data - should be fetched from API in production
+  const stats: DashboardStats = {
+    totalRevenue: 0,
+    totalBookings: 0,
+    occupancyRate: 0,
+    averageRoomRate: 0,
+    availableRooms: 0,
+    dirtyRooms: 0,
+  };
 
-  const occupancyRate = useMemo(() => {
-    if (!stats.totalRooms) return 0;
-    return ((stats.totalRooms - stats.availableRooms) / stats.totalRooms) * 100;
-  }, [stats]);
+  const roomStatusData: RoomStatusData[] = [];
+  const arrivals: Arrival[] = [];
+  const departures: Departure[] = [];
 
-  const roomsNeedingCleaning = useMemo(() => {
-    return (
-      roomStatusData.find((room) => room.status === "Đang dọn dẹp")?.count ?? 0
-    );
-  }, [roomStatusData]);
-
+  const occupancyRate = useMemo(() => stats.occupancyRate, [stats]);
+  const roomsNeedingCleaning = 0;
   const arrivalsCount = useMemo(() => arrivals.length, [arrivals]);
   const departuresCount = useMemo(() => departures.length, [departures]);
 

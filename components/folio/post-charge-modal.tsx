@@ -56,8 +56,8 @@ export function PostChargeModal({
 
   // Get active items based on selected type
   const activeServices = getActiveServices();
-  const activePenalties = penalties.filter(p => p.isActive);
-  const activeSurcharges = surcharges.filter(s => s.isActive);
+  const activePenalties = penalties.filter(p => p.status === 'PENDING');
+  const activeSurcharges = surcharges.filter(s => s.status === 'PENDING');
 
   // Handle type change - reset form
   const handleTypeChange = (newType: TransactionType) => {

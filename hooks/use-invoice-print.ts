@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getCheckoutSummary } from "@/lib/mock-checkin-checkout";
 import type { CheckoutSummary } from "@/lib/types/checkin-checkout";
 
 export function useInvoicePrint() {
@@ -11,8 +10,9 @@ export function useInvoicePrint() {
   const receiptID = params.get("receiptID") ?? "";
 
   const summary: CheckoutSummary | null = useMemo(() => {
+    // TODO: Fetch checkout summary from API using receiptID
     if (!receiptID) return null;
-    return getCheckoutSummary(receiptID);
+    return null; // Placeholder until API is implemented
   }, [receiptID]);
 
   useEffect(() => {

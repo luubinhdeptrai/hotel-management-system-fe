@@ -88,6 +88,11 @@ const serviceManagement = [
     permission: "service:read",
   },
   {
+    title: "Sự Kiện & Lịch",
+    url: "/calendar-events",
+    icon: ICONS.CALENDAR,
+  },
+  {
     title: "Khuyến Mại",
     url: "/promotions",
     icon: ICONS.TAG,
@@ -125,6 +130,11 @@ const adminManagement = [
     url: "/customers",
     icon: ICONS.USER,
     permission: "customer:read",
+  },
+  {
+    title: "Hạng Khách Hàng",
+    url: "/customer-ranks",
+    icon: ICONS.STAR,
   },
   {
     title: "Khách Lưu Trú",

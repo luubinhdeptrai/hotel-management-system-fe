@@ -47,7 +47,7 @@ export function PenaltyTable({
 
   const handleConfirmDelete = () => {
     if (selectedPenalty) {
-      onDelete(selectedPenalty.penaltyID);
+      onDelete(selectedPenalty.id);
     }
     setDeleteDialogOpen(false);
     setSelectedPenalty(null);
@@ -71,8 +71,9 @@ export function PenaltyTable({
   // Filter penalties
   const filteredPenalties = penalties.filter((penalty) => {
     return (
-      penalty.penaltyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      penalty.penaltyID.toLowerCase().includes(searchTerm.toLowerCase())
+      penalty.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      penalty.note?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      penalty.bookingId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -130,33 +131,31 @@ export function PenaltyTable({
               </TableRow>
             ) : (
               filteredPenalties.map((penalty) => (
-                <TableRow key={penalty.penaltyID} className="hover:bg-gray-50">
+                <TableRow key={penalty.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">
-                    {penalty.penaltyID}
+                    {penalty.bookingId || "-"}
                   </TableCell>
                   <TableCell className="font-medium text-gray-900">
-                    {penalty.penaltyName}
+                    {penalty.serviceName}
                   </TableCell>
                   <TableCell className="font-semibold text-gray-900">
-                    {penalty.isOpenPrice ? (
-                      <span className="text-warning-600 italic">
-                        Nhập khi post
-                      </span>
-                    ) : (
-                      formatCurrency(penalty.price)
-                    )}
+                    {formatCurrency(penalty.totalPrice)}
                   </TableCell>
                   <TableCell className="text-gray-600 max-w-xs truncate">
-                    {penalty.description || "-"}
+                    {penalty.note || "-"}
                   </TableCell>
                   <TableCell>
-                    {penalty.isActive ? (
-                      <Badge className="bg-success-100 text-success-700 hover:bg-success-100">
-                        Hoạt động
+                    {penalty.status === 'PENDING' ? (
+                      <Badge className="bg-warning-100 text-warning-700 hover:bg-warning-100">
+                        Chưa xử lý
+                      </Badge>
+                    ) : penalty.status === 'TRANSFERRED' ? (
+                      <Badge className="bg-info-100 text-info-700 hover:bg-info-100">
+                        Đã chuyển
                       </Badge>
                     ) : (
-                      <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">
-                        Ngừng hoạt động
+                      <Badge className="bg-success-100 text-success-700 hover:bg-success-100">
+                        Hoàn thành
                       </Badge>
                     )}
                   </TableCell>
@@ -200,7 +199,7 @@ export function PenaltyTable({
             <DialogDescription>
               Bạn có chắc chắn muốn xóa phí phạt{" "}
               <span className="font-semibold">
-                {selectedPenalty?.penaltyName}
+                {selectedPenalty?.serviceName}
               </span>
               ? Hành động này không thể hoàn tác.
             </DialogDescription>

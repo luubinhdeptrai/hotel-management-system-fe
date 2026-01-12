@@ -2,14 +2,21 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { mockLogout } from "@/lib/mock-auth";
+import { authService } from "@/lib/services/auth.service";
 
 export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    mockLogout();
-    router.push("/login");
+    // Clear authentication data
+    authService.logout();
+    
+    // Redirect to login
+    const timer = setTimeout(() => {
+      router.push("/login");
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [router]);
 
   return (
