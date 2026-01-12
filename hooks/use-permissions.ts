@@ -36,15 +36,72 @@ export function usePermissions(): UsePermissionsReturn {
       // Fallback: If permission endpoint fails, grant permissions based on role
       if (user?.role === "ADMIN") {
         setActions([
-          "employee:create",
-          "employee:update", 
-          "employee:delete",
-          "booking:create",
-          "booking:read",
-          "room:updateStatus"
+          // All permissions for admin
+          "employee:create", "employee:read", "employee:update", "employee:delete",
+          "booking:create", "booking:read", "booking:update", "booking:checkIn", "booking:checkOut", "booking:cancel",
+          "room:create", "room:read", "room:update", "room:updateStatus", "room:delete",
+          "customer:create", "customer:read", "customer:update", "customer:delete",
+          "service:create", "service:read", "service:update", "service:delete",
+          "transaction:create", "transaction:read", "transaction:update", "transaction:delete",
+          "report:create", "report:read", "report:update", "report:delete", "report:view",
+          "promotion:create", "promotion:read", "promotion:update", "promotion:delete",
+          "penalty:create", "penalty:read", "penalty:update", "penalty:delete",
+          "surcharge:create", "surcharge:read", "surcharge:update", "surcharge:delete",
+          "roomType:create", "roomType:read", "roomType:update", "roomType:delete",
+          "roomTag:create", "roomTag:read", "roomTag:update", "roomTag:delete",
+          "appSettings:create", "appSettings:read", "appSettings:update", "appSettings:delete"
         ]);
         setPermissions([
           { action: "manage", subject: "all" } // Admin can do everything
+        ]);
+      } else if (user?.role === "RECEPTIONIST") {
+        setActions([
+          // Receptionist permissions
+          "booking:create", "booking:read", "booking:update", "booking:checkIn", "booking:checkOut", "booking:cancel",
+          "room:read", "room:updateStatus",
+          "customer:create", "customer:read", "customer:update",
+          "service:read",
+          "transaction:create", "transaction:read",
+          "report:view"
+        ]);
+        setPermissions([
+          { action: "read", subject: "Booking" },
+          { action: "create", subject: "Booking" },
+          { action: "update", subject: "Booking" },
+          { action: "read", subject: "Room" },
+          { action: "update", subject: "Room" },
+          { action: "read", subject: "Customer" },
+          { action: "create", subject: "Customer" },
+          { action: "update", subject: "Customer" },
+          { action: "read", subject: "Service" },
+          { action: "read", subject: "Transaction" },
+          { action: "create", subject: "Transaction" },
+          { action: "read", subject: "Report" }
+        ]);
+      } else if (user?.role === "HOUSEKEEPING") {
+        setActions([
+          // Housekeeping permissions
+          "room:read", "room:updateStatus",
+          "booking:read"
+        ]);
+        setPermissions([
+          { action: "read", subject: "Room" },
+          { action: "update", subject: "Room" },
+          { action: "read", subject: "Booking" }
+        ]);
+      } else if (user?.role === "STAFF") {
+        setActions([
+          // Staff permissions (view-only)
+          "booking:read",
+          "room:read",
+          "customer:read",
+          "service:read"
+        ]);
+        setPermissions([
+          { action: "read", subject: "Booking" },
+          { action: "read", subject: "Room" },
+          { action: "read", subject: "Customer" },
+          { action: "read", subject: "Service" }
         ]);
       } else {
         setActions([]);

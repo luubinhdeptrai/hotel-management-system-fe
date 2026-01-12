@@ -32,6 +32,7 @@ import type {
 } from "@/lib/types/promotion";
 import { Plus, Tag, AlertCircle, Sparkles, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PermissionGuard } from "@/components/permission-guard";
 
 export default function PromotionsPage() {
   // Activity refetch callback
@@ -131,14 +132,16 @@ export default function PromotionsPage() {
               Create and manage promotional offers for customers
             </p>
           </div>
-          <Button 
-            size="lg" 
-            onClick={() => setShowCreateDialog(true)}
-            className="bg-white text-orange-600 hover:bg-white/90 font-bold shadow-2xl hover:scale-105 transition-transform h-12 px-6"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Create Promotion
-          </Button>
+          <PermissionGuard permission="promotion:create">
+            <Button 
+              size="lg" 
+              onClick={() => setShowCreateDialog(true)}
+              className="bg-white text-orange-600 hover:bg-white/90 font-bold shadow-2xl hover:scale-105 transition-transform h-12 px-6"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Create Promotion
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 

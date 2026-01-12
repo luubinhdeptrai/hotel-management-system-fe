@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import type { UpdateDepositPercentageRequest } from "@/lib/types/app-settings";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface DepositSettingsCardProps {
   depositPercentage: number | null;
@@ -292,14 +293,16 @@ export function DepositSettingsCard({
                 <X className="h-4 w-4" />
                 Hủy
               </Button>
-              <Button 
-                onClick={handleSave} 
-                disabled={saving}
-                className={`bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold gap-2 shadow-lg hover:shadow-xl transition-all`}
-              >
-                <Save className="h-4 w-4" />
-                {saving ? "Đang lưu..." : "Lưu"}
-              </Button>
+              <PermissionGuard permission="settings:update">
+                <Button 
+                  onClick={handleSave} 
+                  disabled={saving}
+                  className={`bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold gap-2 shadow-lg hover:shadow-xl transition-all`}
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? "Đang lưu..." : "Lưu"}
+                </Button>
+              </PermissionGuard>
             </div>
           </div>
         )}

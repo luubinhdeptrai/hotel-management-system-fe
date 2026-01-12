@@ -12,6 +12,7 @@ import { AvailableRoomsModal } from "@/components/reservations/available-rooms-m
 import { RoomSelectionModal } from "@/components/reservations/room-selection-modal";
 import { mockRoomTypes } from "@/lib/mock-room-types";
 import { useReservations } from "@/hooks/use-reservations";
+import { PermissionGuard } from "@/components/permission-guard";
 import { useMemo, useState, useEffect } from "react";
 import { roomService } from "@/lib/services/room.service";
 import type { RoomType } from "@/lib/types/room";
@@ -187,13 +188,15 @@ export default function ReservationsPage() {
               Tạo, xem, sửa và hủy đặt phòng cho khách hàng
             </p>
           </div>
-          <Button
-            onClick={handleCreateNew}
-            className="h-12 px-6 bg-white text-blue-600 hover:bg-gray-50 hover:scale-105 font-bold shadow-xl transition-all text-base"
-          >
-            <span className="w-5 h-5 mr-2">{ICONS.PLUS}</span>
-            Tạo đặt phòng mới
-          </Button>
+          <PermissionGuard permission="booking:create">
+            <Button
+              onClick={handleCreateNew}
+              className="h-12 px-6 bg-white text-blue-600 hover:bg-gray-50 hover:scale-105 font-bold shadow-xl transition-all text-base"
+            >
+              <span className="w-5 h-5 mr-2">{ICONS.PLUS}</span>
+              Tạo đặt phòng mới
+            </Button>
+          </PermissionGuard>
         </div>
 
         {/* Stats Cards */}

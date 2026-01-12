@@ -16,6 +16,7 @@ import {
 import { ServiceItem } from "@/lib/types/service";
 import { ICONS } from "@/src/constants/icons.enum";
 import { formatCurrency } from "@/lib/utils";
+import { PermissionGuard } from "@/components/permission-guard";
 
 // Specific images for each service item - mapped to actual service IDs and names
 const SERVICE_ITEM_IMAGES: Record<string, string> = {
@@ -151,33 +152,39 @@ export function ServiceCard({
               )}
             </div>
             {onToggleActive && (
-              <Switch
-                checked={service.isActive}
-                onCheckedChange={(checked) => onToggleActive(service.serviceID, checked)}
-                className="data-[state=checked]:bg-success-500"
-              />
+              <PermissionGuard permission="service:update">
+                <Switch
+                  checked={service.isActive}
+                  onCheckedChange={(checked) => onToggleActive(service.serviceID, checked)}
+                  className="data-[state=checked]:bg-success-500"
+                />
+              </PermissionGuard>
             )}
           </div>
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(service)}
-              className="flex-1 h-10 text-sm font-bold text-blue-600 border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all"
-            >
-              <div className="w-4 h-4 mr-1.5 flex items-center justify-center">{ICONS.EDIT}</div>
-              Sửa
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDeleteConfirm(true)}
-              className="h-10 px-3 font-bold text-error-600 border-2 border-error-200 hover:bg-error-50 hover:border-error-400 transition-all"
-            >
-              <div className="w-4 h-4 flex items-center justify-center">{ICONS.TRASH}</div>
-            </Button>
+            <PermissionGuard permission="service:update">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(service)}
+                className="flex-1 h-10 text-sm font-bold text-blue-600 border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all"
+              >
+                <div className="w-4 h-4 mr-1.5 flex items-center justify-center">{ICONS.EDIT}</div>
+                Sửa
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard permission="service:delete">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteConfirm(true)}
+                className="h-10 px-3 font-bold text-error-600 border-2 border-error-200 hover:bg-error-50 hover:border-error-400 transition-all"
+              >
+                <div className="w-4 h-4 flex items-center justify-center">{ICONS.TRASH}</div>
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
       </div>

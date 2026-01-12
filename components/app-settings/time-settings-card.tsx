@@ -23,6 +23,7 @@ import type {
   CheckOutTimeConfig,
   UpdateTimeConfigRequest,
 } from "@/lib/types/app-settings";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface TimeSettingsCardProps {
   title: string;
@@ -267,14 +268,16 @@ export function TimeSettingsCard({
                 <X className="h-4 w-4" />
                 Hủy
               </Button>
-              <Button 
-                onClick={handleSave} 
-                disabled={saving}
-                className={`bg-gradient-to-r ${colors.button} text-white font-semibold gap-2 shadow-lg hover:shadow-xl transition-all`}
-              >
-                <Save className="h-4 w-4" />
-                {saving ? "Đang lưu..." : "Lưu"}
-              </Button>
+              <PermissionGuard permission="settings:update">
+                <Button 
+                  onClick={handleSave} 
+                  disabled={saving}
+                  className={`bg-gradient-to-r ${colors.button} text-white font-semibold gap-2 shadow-lg hover:shadow-xl transition-all`}
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? "Đang lưu..." : "Lưu"}
+                </Button>
+              </PermissionGuard>
             </div>
           </div>
         )}

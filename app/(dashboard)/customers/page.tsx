@@ -47,6 +47,7 @@ import {
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { BookingDetailsModal } from "@/components/customers/booking-details-modal";
 import { customerService } from "@/lib/services/customer.service";
+import { PermissionGuard } from "@/components/permission-guard";
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from "@/lib/types/api";
 import { toast } from "sonner";
 
@@ -194,14 +195,16 @@ export default function CustomersPage() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={handleAddNew}
-            size="lg"
-            className="bg-white text-emerald-600 hover:bg-white/90 shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 h-14 px-8 font-bold"
-          >
-            <Plus className="mr-2 h-6 w-6" />
-            Thêm khách hàng
-          </Button>
+          <PermissionGuard permission="customer:create">
+            <Button
+              onClick={handleAddNew}
+              size="lg"
+              className="bg-white text-emerald-600 hover:bg-white/90 shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 h-14 px-8 font-bold"
+            >
+              <Plus className="mr-2 h-6 w-6" />
+              Thêm khách hàng
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { ICONS } from "@/src/constants/icons.enum";
 import { ServiceCategory } from "@/lib/types/service";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface ServiceCategoryTableProps {
   categories: ServiceCategory[];
@@ -128,24 +129,28 @@ export function ServiceCategoryTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onEdit(category)}
-                        className="h-9 px-4 text-blue-600 border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-400 font-bold transition-all"
-                      >
-                        <div className="w-4 h-4 mr-1.5 flex items-center justify-center">{ICONS.EDIT}</div>
-                        <span>Sửa</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteClick(category)}
-                        className="h-9 px-4 text-error-600 border-2 border-error-200 hover:bg-error-50 hover:border-error-400 font-bold transition-all"
-                      >
-                        <div className="w-4 h-4 mr-1.5 flex items-center justify-center">{ICONS.TRASH}</div>
-                        <span>Xóa</span>
-                      </Button>
+                      <PermissionGuard permission="service:update">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(category)}
+                          className="h-9 px-4 text-blue-600 border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-400 font-bold transition-all"
+                        >
+                          <div className="w-4 h-4 mr-1.5 flex items-center justify-center">{ICONS.EDIT}</div>
+                          <span>Sửa</span>
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="service:delete">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteClick(category)}
+                          className="h-9 px-4 text-error-600 border-2 border-error-200 hover:bg-error-50 hover:border-error-400 font-bold transition-all"
+                        >
+                          <div className="w-4 h-4 mr-1.5 flex items-center justify-center">{ICONS.TRASH}</div>
+                          <span>Xóa</span>
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   </TableCell>
                 </TableRow>

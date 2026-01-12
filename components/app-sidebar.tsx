@@ -26,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PermissionGuard } from "@/components/permission-guard";
 
 // Navigation items based on page-description.md
 const navItems = [
@@ -33,6 +34,7 @@ const navItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: ICONS.DASHBOARD,
+    permission: null, // Dashboard accessible to all roles
   },
 ];
 
@@ -41,16 +43,19 @@ const roomManagement = [
     title: "Quản lý Phòng",
     url: "/rooms",
     icon: ICONS.BED_DOUBLE,
+    permission: "room:read",
   },
   {
     title: "Loại Phòng",
     url: "/room-types",
     icon: ICONS.DOOR_OPEN,
+    permission: "roomType:read",
   },
   {
     title: "Tiện Nghi",
     url: "/room-tags",
     icon: ICONS.TAG,
+    permission: "roomTag:read",
   },
 ];
 
@@ -59,16 +64,19 @@ const bookingManagement = [
     title: "Đặt Phòng",
     url: "/reservations",
     icon: ICONS.CALENDAR,
+    permission: "booking:read",
   },
   {
     title: "Check-in",
     url: "/checkin",
     icon: ICONS.CALENDAR_CHECK,
+    permission: "booking:checkIn",
   },
   {
     title: "Check-out",
     url: "/checkout",
     icon: ICONS.DOOR_OPEN,
+    permission: "booking:checkOut",
   },
 ];
 
@@ -77,31 +85,37 @@ const serviceManagement = [
     title: "Dịch Vụ",
     url: "/services",
     icon: ICONS.UTENSILS,
+    permission: "service:read",
   },
   {
     title: "Khuyến Mại",
     url: "/promotions",
     icon: ICONS.TAG,
+    permission: "promotion:read",
   },
   {
     title: "Phụ Thu",
     url: "/surcharges",
     icon: ICONS.SURCHARGE,
+    permission: "surcharge:read",
   },
   {
     title: "Phí Phạt",
     url: "/penalties",
     icon: ICONS.PENALTY,
+    permission: "penalty:read",
   },
   {
     title: "Folio",
     url: "/folio",
     icon: ICONS.FILE_TEXT,
+    permission: "transaction:read",
   },
   {
     title: "Thanh Toán",
     url: "/payments",
     icon: ICONS.RECEIPT,
+    permission: "transaction:create",
   },
 ];
 
@@ -110,31 +124,37 @@ const adminManagement = [
     title: "Khách hàng",
     url: "/customers",
     icon: ICONS.USER,
+    permission: "customer:read",
   },
   {
     title: "Khách Lưu Trú",
     url: "/nguoio",
     icon: ICONS.USERS,
+    permission: "customer:read",
   },
   {
     title: "Nhân Viên",
     url: "/staff",
     icon: ICONS.USER_COG,
+    permission: "employee:read",
   },
   {
     title: "Hoạt Động",
     url: "/activities",
     icon: ICONS.ACTIVITY,
+    permission: "report:read",
   },
   {
     title: "Báo Cáo",
     url: "/reports",
     icon: ICONS.BAR_CHART,
+    permission: "report:view",
   },
   {
     title: "Cài đặt",
     url: "/app-settings",
     icon: ICONS.SETTINGS,
+    permission: "appSettings:read",
   },
 ];
 
@@ -143,16 +163,19 @@ const operationalManagement = [
     title: "Housekeeping",
     url: "/housekeeping",
     icon: ICONS.CLIPBOARD_LIST,
+    permission: "room:updateStatus",
   },
   {
     title: "Chuyển Phòng",
     url: "/room-move",
     icon: ICONS.DOOR_OPEN,
+    permission: "room:update",
   },
   {
     title: "Quản lý Ca",
     url: "/shift-management",
     icon: ICONS.CLOCK,
+    permission: "employee:read",
   },
 ];
 
@@ -163,6 +186,44 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const renderMenuItems = (items: typeof roomManagement) => {
     return items.map((item) => {
       const isActive = pathname === item.url;
+      
+      // If permission is required, wrap with PermissionGuard
+      if (item.permission) {
+        return (
+          <PermissionGuard key={item.title} permission={item.permission}>
+            <SidebarMenuItem>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuButton
+                    asChild
+                    className={cn(
+                      "transition-all duration-200 h-10 text-sm font-medium mx-2 rounded-lg",
+                      isActive
+                        ? "bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    )}
+                  >
+                    <Link href={item.url} className="flex items-center gap-3 px-2">
+                      <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {item.title}
+                      </span>
+                    </Link>
+                  </SidebarMenuButton>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  className="bg-slate-800 text-white border-slate-700"
+                >
+                  {item.title}
+                </TooltipContent>
+              </Tooltip>
+            </SidebarMenuItem>
+          </PermissionGuard>
+        );
+      }
+      
+      // No permission required, render normally
       return (
         <SidebarMenuItem key={item.title}>
           <Tooltip>
