@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, Loader2, User, Lock, Shield, UserCircle } from "lucide-react";
 import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, EmployeeRole } from "@/lib/types/api";
+import { getEmployeeRole } from "@/lib/utils";
 
 interface EmployeeFormModalProps {
   open: boolean;
@@ -57,11 +58,12 @@ export function EmployeeFormModal({
     if (!open) return;
 
     if (employee) {
+      const employeeRole = getEmployeeRole(employee) || "STAFF";
       setFormData({
         name: employee.name,
         username: employee.username,
         password: "", // Never prefill password
-        role: employee.role,
+        role: employeeRole,
       });
     } else {
       setFormData({

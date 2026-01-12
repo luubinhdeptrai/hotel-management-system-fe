@@ -294,7 +294,11 @@ export function BookingDetailsModal({
                                     Tiền phòng
                                   </p>
                                   <p className="text-sm font-bold text-gray-900">
-                                    {formatCurrency(room.subtotalRoom)}
+                                    {formatCurrency(
+                                      typeof room.subtotalRoom === "string"
+                                        ? parseFloat(room.subtotalRoom)
+                                        : Number(room.subtotalRoom) || 0
+                                    )}
                                   </p>
                                 </div>
                                 <div>
@@ -302,7 +306,11 @@ export function BookingDetailsModal({
                                     Tổng cộng
                                   </p>
                                   <p className="text-sm font-bold text-blue-700">
-                                    {formatCurrency(room.totalAmount)}
+                                    {formatCurrency(
+                                      typeof room.totalAmount === "string"
+                                        ? parseFloat(room.totalAmount)
+                                        : Number(room.totalAmount) || 0
+                                    )}
                                   </p>
                                 </div>
                                 <div>
@@ -311,13 +319,9 @@ export function BookingDetailsModal({
                                   </p>
                                   <p className="text-sm font-bold text-green-700">
                                     {formatCurrency(
-                                      typeof room.totalAmount === "string"
-                                        ? parseFloat(room.totalAmount) -
-                                            parseFloat(room.balance)
-                                        : (room.totalAmount as number) -
-                                            (typeof room.balance === "string"
-                                              ? parseFloat(room.balance)
-                                              : (room.balance as number))
+                                      typeof booking.totalDeposit === "string"
+                                        ? parseFloat(booking.totalDeposit)
+                                        : Number(booking.totalDeposit) || 0
                                     )}
                                   </p>
                                 </div>
@@ -326,7 +330,17 @@ export function BookingDetailsModal({
                                     Còn lại
                                   </p>
                                   <p className="text-sm font-bold text-red-700">
-                                    {formatCurrency(room.balance)}
+                                    {formatCurrency(
+                                      Math.max(
+                                        0,
+                                        (typeof room.totalAmount === "string"
+                                          ? parseFloat(room.totalAmount)
+                                          : Number(room.totalAmount) || 0) -
+                                          (typeof booking.totalDeposit === "string"
+                                            ? parseFloat(booking.totalDeposit)
+                                            : Number(booking.totalDeposit) || 0)
+                                      )
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -370,7 +384,11 @@ export function BookingDetailsModal({
                               Tổng tiền
                             </p>
                             <p className="text-lg font-bold text-green-900">
-                              {formatCurrency(booking.totalAmount)}
+                              {formatCurrency(
+                                typeof booking.totalAmount === "string"
+                                  ? parseFloat(booking.totalAmount)
+                                  : Number(booking.totalAmount) || 0
+                              )}
                             </p>
                           </div>
                           <div>
@@ -378,7 +396,11 @@ export function BookingDetailsModal({
                               Đặt cọc
                             </p>
                             <p className="text-lg font-bold text-green-900">
-                              {formatCurrency(booking.depositRequired)}
+                              {formatCurrency(
+                                typeof booking.depositRequired === "string"
+                                  ? parseFloat(booking.depositRequired)
+                                  : Number(booking.depositRequired) || 0
+                              )}
                             </p>
                           </div>
                           <div>
@@ -387,13 +409,9 @@ export function BookingDetailsModal({
                             </p>
                             <p className="text-lg font-bold text-green-700">
                               {formatCurrency(
-                                typeof booking.totalAmount === "string"
-                                  ? parseFloat(booking.totalAmount) -
-                                      parseFloat(booking.balance)
-                                  : (booking.totalAmount as number) -
-                                      (typeof booking.balance === "string"
-                                        ? parseFloat(booking.balance)
-                                        : (booking.balance as number))
+                                typeof booking.totalDeposit === "string"
+                                  ? parseFloat(booking.totalDeposit)
+                                  : Number(booking.totalDeposit) || 0
                               )}
                             </p>
                           </div>
@@ -402,7 +420,17 @@ export function BookingDetailsModal({
                               Còn lại
                             </p>
                             <p className="text-lg font-bold text-red-700">
-                              {formatCurrency(booking.balance)}
+                              {formatCurrency(
+                                Math.max(
+                                  0,
+                                  (typeof booking.totalAmount === "string"
+                                    ? parseFloat(booking.totalAmount)
+                                    : Number(booking.totalAmount) || 0) -
+                                    (typeof booking.totalDeposit === "string"
+                                      ? parseFloat(booking.totalDeposit)
+                                      : Number(booking.totalDeposit) || 0)
+                                )
+                              )}
                             </p>
                           </div>
                         </div>

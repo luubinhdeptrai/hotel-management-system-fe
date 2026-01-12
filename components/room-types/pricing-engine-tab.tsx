@@ -65,7 +65,6 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
                 tích hợp <strong className="text-violet-900">Calendar Events</strong>, và hỗ trợ{" "}
                 <strong className="text-violet-900">RRule patterns</strong> (RFC 5545). 
                 Quy tắc có thứ tự cao hơn được áp dụng trước theo chiến lược{" "}
-                <strong className="text-fuchsia-700">&quot;Top of List Wins&quot;</strong>.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <Badge className="bg-gradient-to-r from-violet-600 to-purple-600 text-white px-5 py-2 text-sm font-bold shadow-lg">
@@ -310,7 +309,7 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
               <div className="space-y-4">
                 <h4 className="text-lg font-black text-violet-900 flex items-center gap-2">
                   <span className="w-8 h-8 bg-violet-600 text-white rounded-lg flex items-center justify-center text-sm font-black">1</span>
-                  Chiến lược &quotTop of List Wins&quot
+                  Chiến lược &quot;Top of List Wins&quot;
                 </h4>
                 <p className="text-gray-700 leading-relaxed pl-10">
                   Quy tắc ở <strong className="text-violet-600">vị trí cao nhất</strong> (rank thấp) trong danh sách sẽ được ưu tiên áp dụng trước. 

@@ -119,11 +119,18 @@ export interface ChangePasswordRequest {
 
 export type EmployeeRole = "ADMIN" | "RECEPTIONIST" | "HOUSEKEEPING" | "STAFF";
 
+export interface Role {
+  id: string;
+  name: string;
+}
+
 export interface Employee {
   id: string;
   name: string;
   username: string;
-  role: EmployeeRole;
+  role?: EmployeeRole;
+  roleId?: string;
+  roleRef?: Role;
   updatedAt: string;
 }
 
@@ -499,8 +506,8 @@ export interface BookingRoom {
   checkOutDate: string;
   pricePerNight: string;
   subtotalRoom: string;
+  subtotalService: string;
   totalAmount: string;
-  balance: string;
   status: BookingStatus;
   actualCheckIn?: string;
   actualCheckOut?: string;

@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Key, Mail, Shield, Edit2, Save, X, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { Employee } from "@/lib/types/api";
+import { getEmployeeRole } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -258,13 +259,15 @@ export default function ProfilePage() {
                     Vai Trò
                   </Label>
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold border-2 ${getRoleBadgeColor(
-                        profile.role
-                      )}`}
-                    >
-                      {profile.role}
-                    </span>
+                    {profile && (
+                      <span
+                        className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold border-2 ${getRoleBadgeColor(
+                          getEmployeeRole(profile) || "STAFF"
+                        )}`}
+                      >
+                        {getEmployeeRole(profile) || "Không có vai trò"}
+                      </span>
+                    )}
                   </div>
                 </div>
 
