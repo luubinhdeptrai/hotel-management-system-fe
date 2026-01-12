@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PenaltyItem } from "@/lib/types/penalty";
-import { penaltyAPI, serviceAPI } from "@/lib/services/service-unified.service";
+import { PenaltyItem, PenaltyFormData } from "@/lib/types/penalty";
+import { penaltyAPI } from "@/lib/services/service-unified.service";
 
 interface Notification {
   type: "success" | "error";
@@ -10,50 +10,55 @@ interface Notification {
 }
 
 export function usePenaltyPage() {
-  // Load penalty service info
   const [penalties, setPenalties] = useState<PenaltyItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  const [selectedPenalty, setSelectedPenalty] = useState<
-    PenaltyItem | undefined
-  >();
+  const [selectedPenalty, setSelectedPenalty] = useState<PenaltyItem | undefined>();
 
   // Notification State
   const [notification, setNotification] = useState<Notification | null>(null);
 
-  // Load penalty service info on mount
+  // Load penalty usages on mount
   useEffect(() => {
-    loadPenaltyInfo();
+    loadPenaltyUsages();
   }, []);
 
-  const loadPenaltyInfo = async () => {
+  const loadPenaltyUsages = async () => {
     try {
       setLoading(true);
-      console.log('📡 [usePenaltyPage] Loading penalty service info...');
+      console.log('📡 [usePenaltyPage] Loading penalty usages...');
       
-      const penaltyService = await serviceAPI.getPenaltyService();
-      console.log('✅ [usePenaltyPage] Penalty service loaded:', penaltyService);
+      // Get all penalty service usages from Backend
+      const penaltyUsages = await penaltyAPI.getPenaltyUsages();
+      console.log('✅ [usePenaltyPage] Penalty usages loaded:', penaltyUsages);
       
-      if (penaltyService) {
-        const penaltyItem: PenaltyItem = {
-          penaltyID: penaltyService.id,
-          penaltyName: penaltyService.name,
-          price: parseFloat(penaltyService.price as any),
-          description: `Dịch vụ phạt hệ thống - Giá mặc định: ${penaltyService.price} VND`,
-          isActive: penaltyService.isActive,
-          createdAt: new Date(penaltyService.createdAt),
-          updatedAt: new Date(penaltyService.updatedAt),
-        };
-        setPenalties([penaltyItem]);
-      }
+      // Map ServiceUsage to PenaltyItem for display
+      const items: PenaltyItem[] = penaltyUsages.map((usage) => ({
+        id: usage.id,
+        bookingId: usage.bookingId || undefined,
+        bookingRoomId: usage.bookingRoomId || undefined,
+        serviceId: usage.serviceId,
+        serviceName: usage.service?.name || 'Phạt',
+        quantity: usage.quantity,
+        unitPrice: parseFloat(usage.unitPrice?.toString() || '0'),
+        customPrice: parseFloat(usage.customPrice?.toString() || '0'),
+        totalPrice: parseFloat(usage.totalPrice?.toString() || '0'),
+        note: usage.note || '',
+        status: usage.status as 'PENDING' | 'TRANSFERRED' | 'COMPLETED',
+        employeeId: usage.employeeId,
+        createdAt: new Date(usage.createdAt),
+        updatedAt: new Date(usage.updatedAt),
+      }));
+      
+      setPenalties(items);
     } catch (error) {
-      console.error('❌ [usePenaltyPage] Failed to load penalty info:', error);
+      console.error('❌ [usePenaltyPage] Failed to load penalties:', error);
       setNotification({
         type: "error",
-        message: "Không thể tải thông tin phạt"
+        message: "Không thể tải danh sách phạt"
       });
     } finally {
       setLoading(false);
@@ -62,54 +67,47 @@ export function usePenaltyPage() {
 
   // Handlers
   const handleAddPenalty = () => {
-    setSelectedPenalty(undefined);
     setModalMode("create");
+    setSelectedPenalty(undefined);
     setModalOpen(true);
   };
 
   const handleEditPenalty = (penalty: PenaltyItem) => {
-    // Edit không được support khi chỉ hiển thị service info
-    console.warn('⚠️ [usePenaltyPage] Edit not supported for service info. Need booking context to edit usage records.');
-    setNotification({
-      type: "error",
-      message: "Chỉnh sửa chỉ có sẵn khi xem lịch sử phạt trong booking."
-    });
+    setModalMode("edit");
+    setSelectedPenalty(penalty);
+    setModalOpen(true);
   };
 
-  const handlePenaltySubmit = async (data: any) => {
+  const handlePenaltySubmit = async (data: PenaltyFormData) => {
     try {
       setLoading(true);
       
-      // Convert form data to Backend format
-      const backendData = {
-        bookingRoomId: "DEFAULT",  // TODO: Get from booking context
-        customPrice: data.price,
-        reason: data.penaltyName || data.description,
-        quantity: 1,
-        employeeId: "current-user"  // TODO: Get from auth context
-      };
-      
       if (modalMode === "create") {
-        console.log('📡 [usePenaltyPage] Creating penalty:', backendData);
-        await penaltyAPI.applyPenalty(backendData);
+        // Create new penalty
+        console.log('📝 [usePenaltyPage] Creating penalty:', data);
+        await penaltyAPI.applyPenalty(data);
+        
         setNotification({
           type: "success",
           message: "Thêm phạt thành công"
         });
-      } else {
-        console.log('📡 [usePenaltyPage] Updating penalty:', backendData);
-        await penaltyAPI.updatePenalty(selectedPenalty!.penaltyID, {
-          quantity: backendData.quantity,
-          status: "PENDING"
+      } else if (selectedPenalty && modalMode === "edit") {
+        // Update penalty status
+        console.log('✏️ [usePenaltyPage] Updating penalty:', selectedPenalty.id);
+        await penaltyAPI.updatePenalty(selectedPenalty.id, {
+          quantity: data.quantity,
+          status: 'PENDING'
         });
+        
         setNotification({
           type: "success",
           message: "Cập nhật phạt thành công"
         });
       }
-
+      
       setModalOpen(false);
-      await loadPenaltyInfo();
+      setSelectedPenalty(undefined);
+      await loadPenaltyUsages();
     } catch (error) {
       console.error('❌ [usePenaltyPage] Error:', error);
       setNotification({
@@ -122,12 +120,27 @@ export function usePenaltyPage() {
   };
 
   const handleDeletePenalty = async (penaltyID: string) => {
-    // Delete không được support khi chỉ hiển thị service info
-    console.warn('⚠️ [usePenaltyPage] Delete not supported for service info. Need booking context to delete usage records.');
-    setNotification({
-      type: "error",
-      message: "Xóa chỉ có sẵn khi xem lịch sử phạt trong booking."
-    });
+    try {
+      setLoading(true);
+      console.log('🗑️ [usePenaltyPage] Deleting penalty:', penaltyID);
+      
+      await penaltyAPI.deletePenalty(penaltyID);
+      
+      setNotification({
+        type: "success",
+        message: "Xóa phạt thành công"
+      });
+      
+      await loadPenaltyUsages();
+    } catch (error) {
+      console.error('❌ [usePenaltyPage] Error deleting penalty:', error);
+      setNotification({
+        type: "error",
+        message: error instanceof Error ? error.message : "Không thể xóa phạt"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCloseModal = () => {

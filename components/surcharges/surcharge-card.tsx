@@ -30,7 +30,7 @@ interface SurchargeCardProps {
   surcharge: SurchargeItem;
   onEdit: (surcharge: SurchargeItem) => void;
   onDelete: (surchargeID: string) => void;
-  onToggleActive?: (surchargeID: string, isActive: boolean) => void;
+  onToggleActive?: (surchargeID: string, status: string) => void;
 }
 
 export function SurchargeCard({
@@ -40,99 +40,90 @@ export function SurchargeCard({
   onToggleActive,
 }: SurchargeCardProps) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  const imageUrl = SURCHARGE_ITEM_IMAGES[surcharge.surchargeID] || SURCHARGE_ITEM_IMAGES.DEFAULT;
 
   const handleDeleteConfirm = () => {
-    onDelete(surcharge.surchargeID);
+    onDelete(surcharge.id);
     setDeleteConfirm(false);
+  };
+
+  const statusBadgeColor = {
+    'PENDING': 'bg-warning-100 text-warning-700 border-warning-200',
+    'TRANSFERRED': 'bg-info-100 text-info-700 border-info-200',
+    'COMPLETED': 'bg-success-100 text-success-700 border-success-200',
   };
 
   return (
     <>
       <div className="group relative bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-        {/* Image Header */}
-        <div className="relative h-40 overflow-hidden">
-          {!imageError ? (
-            <Image
-              src={imageUrl}
-              alt={surcharge.surchargeName}
-              fill
-              className="object-cover group-hover:scale-110 transition-transform duration-700"
-              onError={() => setImageError(true)}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-            />
-          ) : (
-            <div className="w-full h-full bg-linear-to-br from-warning-100 via-warning-50 to-warning-100 flex items-center justify-center">
-              <span className="w-14 h-14 text-warning-400">{ICONS.SURCHARGE}</span>
+        {/* Header with Status */}
+        <div className="bg-linear-to-r from-warning-50 to-warning-100 p-5 border-b border-warning-200">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <h3 className="font-bold text-lg text-gray-900">
+                {surcharge.serviceName}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {surcharge.bookingId && `Booking: ${surcharge.bookingId}`}
+                {surcharge.bookingRoomId && ` | Room: ${surcharge.bookingRoomId}`}
+              </p>
             </div>
-          )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
-          
-          {/* Status badge */}
-          <div className="absolute top-3 left-3">
-            <Badge className={surcharge.isActive 
-              ? "bg-linear-to-r from-success-600 to-success-500 text-white text-xs font-semibold shadow-lg border-0" 
-              : "bg-linear-to-r from-gray-600 to-gray-500 text-white text-xs font-semibold shadow-lg border-0"
-            }>
-              {surcharge.isActive ? "Hoạt động" : "Tạm ngưng"}
+            <Badge className={`${statusBadgeColor[surcharge.status]} border`}>
+              {surcharge.status}
             </Badge>
           </div>
-
-          {/* Open price indicator */}
-          {surcharge.isOpenPrice && (
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-linear-to-r from-warning-500 to-warning-600 text-white text-xs font-semibold shadow-lg border-0">
-                <span className="w-3 h-3 mr-1">{ICONS.PERCENT}</span>
-                Giá linh hoạt
-              </Badge>
-            </div>
-          )}
         </div>
 
         {/* Content */}
         <div className="p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base text-gray-900 truncate group-hover:text-warning-600 transition-colors mb-1">
-                {surcharge.surchargeName}
-              </h3>
-              <p className="text-xs text-gray-500 font-medium">
-                Mã: {surcharge.surchargeID}
+          <div className="space-y-3">
+            {/* Reason */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Lý do</p>
+              <p className="text-sm text-gray-900">{surcharge.note}</p>
+            </div>
+
+            {/* Price Details */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Giá/Đơn vị</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {formatCurrency(surcharge.unitPrice)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Số lượng</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {surcharge.quantity}
+                </p>
+              </div>
+            </div>
+
+            {/* Custom Price if different */}
+            {surcharge.customPrice && surcharge.customPrice !== surcharge.unitPrice && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Giá tùy chỉnh</p>
+                <p className="text-sm font-bold text-warning-600">
+                  {formatCurrency(surcharge.customPrice)}
+                </p>
+              </div>
+            )}
+
+            {/* Total */}
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Tổng cộng</p>
+              <p className="text-lg font-bold text-gray-900">
+                {formatCurrency(surcharge.totalPrice)}
               </p>
             </div>
-          </div>
 
-          {surcharge.description && (
-            <p className="text-sm text-gray-600 line-clamp-2 mb-4 leading-relaxed">
-              {surcharge.description}
-            </p>
-          )}
-
-          {/* Price Section */}
-          <div className="bg-linear-to-br from-warning-50 to-warning-100/50 rounded-xl p-3 mb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-warning-700 font-medium mb-1">Giá phụ thu</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-bold text-warning-700">
-                    {surcharge.isOpenPrice ? "Tùy chỉnh" : formatCurrency(surcharge.price)}
-                  </span>
-                </div>
-              </div>
-              {onToggleActive && (
-                <Switch
-                  checked={surcharge.isActive}
-                  onCheckedChange={(checked) => onToggleActive(surcharge.surchargeID, checked)}
-                  className="data-[state=checked]:bg-success-600"
-                />
-              )}
+            {/* Timestamp */}
+            <div className="text-xs text-gray-500">
+              Tạo: {new Date(surcharge.createdAt).toLocaleDateString('vi-VN')}
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-5">
             <Button
               variant="outline"
               size="sm"
@@ -170,12 +161,12 @@ export function SurchargeCard({
                   <span className="w-7 h-7 text-white">{ICONS.SURCHARGE}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-base mb-1">{surcharge.surchargeName}</p>
+                  <p className="font-bold text-gray-900 text-base mb-1">{surcharge.serviceName}</p>
                   <p className="text-sm text-warning-700 font-semibold">
-                    {surcharge.isOpenPrice ? "Giá tùy chỉnh" : formatCurrency(surcharge.price)}
+                    {formatCurrency(surcharge.totalPrice)}
                   </p>
                   <p className="text-xs text-gray-600 mt-1">
-                    Mã: {surcharge.surchargeID}
+                    {surcharge.note}
                   </p>
                 </div>
               </div>

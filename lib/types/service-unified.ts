@@ -122,6 +122,7 @@ export interface CreateServiceUsageRequest {
 
 /**
  * Create penalty/surcharge usage
+ * Backend endpoints: POST /employee/service/penalty | POST /employee/service/surcharge
  * Requires customPrice and reason
  */
 export interface CreatePenaltySurchargeRequest {
@@ -130,7 +131,7 @@ export interface CreatePenaltySurchargeRequest {
   customPrice: number;      // Required: Custom price for this penalty/surcharge
   quantity: number;
   reason: string;           // Required: Reason/description (saved to note)
-  employeeId: string;
+  employeeId?: string;      // Optional: Backend will use req.employee.id if not provided
 }
 
 /**

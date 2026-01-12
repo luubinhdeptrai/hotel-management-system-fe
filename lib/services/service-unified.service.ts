@@ -43,10 +43,10 @@ export const serviceAPI = {
    */
   async getAllServices(): Promise<Service[]> {
     try {
-      const endpoint = `${API_BASE}/services`;
+      const endpoint = `${API_BASE}/employee/services`;
       console.log('📡 [serviceAPI.getAllServices] Calling:', endpoint);
       
-      const response = await api.get(`${API_BASE}/services`, {
+      const response = await api.get(`${API_BASE}/employee/services`, {
         requiresAuth: true
       });
       
@@ -125,7 +125,7 @@ export const serviceAPI = {
    */
   async getServiceById(id: string): Promise<Service> {
     try {
-      const response = await api.get(`${API_BASE}/services/${id}`, {
+      const response = await api.get(`${API_BASE}/employee/services/${id}`, {
         requiresAuth: true
       });
       
@@ -149,7 +149,7 @@ export const serviceAPI = {
         throw new Error('Cannot create penalty or surcharge service. Those are system services.');
       }
       
-      const response = await api.post(`${API_BASE}/services`, data, {
+      const response = await api.post(`${API_BASE}/employee/services`, data, {
         requiresAuth: true
       });
       
@@ -168,7 +168,7 @@ export const serviceAPI = {
    */
   async updateService(id: string, data: UpdateServiceRequest): Promise<Service> {
     try {
-      const response = await api.put(`${API_BASE}/services/${id}`, data, {
+      const response = await api.put(`${API_BASE}/employee/services/${id}`, data, {
         requiresAuth: true
       });
       
@@ -187,7 +187,7 @@ export const serviceAPI = {
    */
   async deleteService(id: string): Promise<void> {
     try {
-      await api.delete(`${API_BASE}/services/${id}`, {
+      await api.delete(`${API_BASE}/employee/services/${id}`, {
         requiresAuth: true
       });
     } catch (error) {
@@ -344,19 +344,16 @@ export const penaltyAPI = {
 
   /**
    * Apply penalty (create ServiceUsage with customPrice)
-   * Backend endpoint: POST /employee/service/service-usage
+   * Backend endpoint: POST /employee/service/penalty
    */
   async applyPenalty(data: CreatePenaltySurchargeRequest): Promise<ServiceUsage> {
     try {
-      const penaltyServiceId = await this.getPenaltyServiceId();
-      
-      const response = await api.post(`${API_BASE}/service/service-usage`, {
-        serviceId: penaltyServiceId,
+      const response = await api.post(`${API_BASE}/service/penalty`, {
+        bookingId: data.bookingId,
         bookingRoomId: data.bookingRoomId,
-        quantity: data.quantity || 1,
         customPrice: data.customPrice,
-        note: data.reason,
-        employeeId: data.employeeId
+        quantity: data.quantity || 1,
+        reason: data.reason
       }, {
         requiresAuth: true
       });
@@ -448,19 +445,16 @@ export const surchargeAPI = {
 
   /**
    * Apply surcharge (create ServiceUsage with customPrice)
-   * Backend endpoint: POST /employee/service/service-usage
+   * Backend endpoint: POST /employee/service/surcharge
    */
   async applySurcharge(data: CreatePenaltySurchargeRequest): Promise<ServiceUsage> {
     try {
-      const surchargeServiceId = await this.getSurchargeServiceId();
-      
-      const response = await api.post(`${API_BASE}/service/service-usage`, {
-        serviceId: surchargeServiceId,
+      const response = await api.post(`${API_BASE}/service/surcharge`, {
+        bookingId: data.bookingId,
         bookingRoomId: data.bookingRoomId,
-        quantity: data.quantity || 1,
         customPrice: data.customPrice,
-        note: data.reason,
-        employeeId: data.employeeId
+        quantity: data.quantity || 1,
+        reason: data.reason
       }, {
         requiresAuth: true
       });
