@@ -2,111 +2,46 @@
 
 import { useState } from "react";
 import { useServices } from "@/hooks/use-services";
-import {
-  ServiceCategory,
-  ServiceItem,
-  ServiceCategoryFormData,
-  ServiceItemFormData,
-} from "@/lib/types/service";
+import { servicesApi } from "@/lib/api/services.api";
+import type { Service } from "@/lib/types/api";
 
 interface Notification {
   type: "success" | "error";
   message: string;
 }
 
+interface ServiceFormData {
+  name: string;
+  price: number;
+  unit?: string;
+  isActive?: boolean;
+}
+
+/**
+ * useServicePage Hook
+ * 
+ * ✅ Backend-compatible implementation
+ * - No categories support (Backend doesn't have this)
+ * - Direct service CRUD operations
+ * - Automatic filtering of penalty/surcharge services
+ * - Simple notification system
+ * - Image upload to Cloudinary via Backend
+ */
 export function useServicePage() {
-  const {
-    categories,
-    services,
-    addCategory,
-    updateCategory,
-    softDeleteCategory,
-    addService,
-    updateService,
-    softDeleteService,
-  } = useServices();
+  const { services, isLoading, error, createService, updateService, deleteService, refresh } =
+    useServices();
 
-  // Filter out Phụ thu and Phí phạt categories (they have their own dedicated pages)
-  const filteredCategories = categories.filter(
-    (cat) => cat.categoryName !== "Phụ thu" && cat.categoryName !== "Phí phạt"
+  // Filter out "Phạt" and "Phụ thu" services (hard-coded names in Backend)
+  const filteredServices = services.filter(
+    (svc) => svc.name !== "Phạt" && svc.name !== "Phụ thu"
   );
-
-  // Category Modal State
-  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">(
-    "create"
-  );
-  const [selectedCategory, setSelectedCategory] = useState<
-    ServiceCategory | undefined
-  >();
-
   // Service Modal State
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
-  const [serviceModalMode, setServiceModalMode] = useState<"create" | "edit">(
-    "create"
-  );
-  const [selectedService, setSelectedService] = useState<
-    ServiceItem | undefined
-  >();
+  const [serviceModalMode, setServiceModalMode] = useState<"create" | "edit">("create");
+  const [selectedService, setSelectedService] = useState<Service | undefined>();
 
   // Notification State
   const [notification, setNotification] = useState<Notification | null>(null);
-
-  // Category Handlers
-  const handleAddCategory = () => {
-    setSelectedCategory(undefined);
-    setCategoryModalMode("create");
-    setCategoryModalOpen(true);
-  };
-
-  const handleEditCategory = (category: ServiceCategory) => {
-    setSelectedCategory(category);
-    setCategoryModalMode("edit");
-    setCategoryModalOpen(true);
-  };
-
-  const handleCategorySubmit = (data: ServiceCategoryFormData) => {
-    try {
-      if (categoryModalMode === "create") {
-        addCategory(data);
-        setNotification({
-          type: "success",
-          message: "Thêm loại dịch vụ thành công",
-        });
-      } else if (selectedCategory) {
-        updateCategory(selectedCategory.categoryID, data);
-        setNotification({
-          type: "success",
-          message: "Cập nhật loại dịch vụ thành công",
-        });
-      }
-      setCategoryModalOpen(false);
-    } catch (error) {
-      setNotification({
-        type: "error",
-        message: error instanceof Error ? error.message : "Có lỗi xảy ra",
-      });
-    }
-  };
-
-  const handleDeleteCategory = (id: string) => {
-    try {
-      softDeleteCategory(id);
-      setNotification({
-        type: "success",
-        message: "Xóa loại dịch vụ thành công",
-      });
-    } catch (error) {
-      setNotification({
-        type: "error",
-        message: error instanceof Error ? error.message : "Có lỗi xảy ra",
-      });
-    }
-  };
-
-  const handleCloseCategoryModal = () => {
-    setCategoryModalOpen(false);
-  };
 
   // Service Handlers
   const handleAddService = () => {
@@ -115,27 +50,64 @@ export function useServicePage() {
     setServiceModalOpen(true);
   };
 
-  const handleEditService = (service: ServiceItem) => {
+  const handleEditService = (service: Service) => {
     setSelectedService(service);
     setServiceModalMode("edit");
     setServiceModalOpen(true);
   };
 
-  const handleServiceSubmit = (data: ServiceItemFormData, files?: File[]) => {
+  const handleServiceSubmit = async (data: ServiceFormData, files?: File[]) => {
     try {
+      let serviceId: string;
+      
       if (serviceModalMode === "create") {
-        addService(data, files);
-        setNotification({
-          type: "success",
-          message: "Thêm dịch vụ thành công",
-        });
+        const newService = await createService(data);
+        serviceId = newService.id;
       } else if (selectedService) {
-        updateService(selectedService.serviceID, data, files);
-        setNotification({
-          type: "success",
-          message: "Cập nhật dịch vụ thành công",
-        });
+        await updateService(selectedService.id, data);
+        serviceId = selectedService.id;
+      } else {
+        throw new Error("Lỗi: không tìm thấy dịch vụ");
       }
+
+      // Upload images if provided
+      let hasImages = false;
+      if (files && files.length > 0) {
+        hasImages = true;
+        for (const file of files) {
+          try {
+            const uploadResponse = await servicesApi.uploadServiceImage(serviceId, file);
+            console.log("✅ Image uploaded:", uploadResponse);
+          } catch (uploadError) {
+            console.error("❌ Lỗi upload ảnh:", uploadError);
+          }
+        }
+        
+        // After uploading images, fetch the service detail to get the images
+        // This ensures serviceImages array is populated
+        try {
+          console.log("🔄 Fetching service detail after upload...");
+          const updatedService = await servicesApi.getServiceById(serviceId);
+          console.log("✅ Service detail fetched:", updatedService);
+          // Update the service in the local list with the one that has images
+          await refresh();
+        } catch (err) {
+          console.error("❌ Lỗi fetch service sau upload:", err);
+          await refresh();
+        }
+      } else {
+        // If no images, just refresh normally
+        await refresh();
+      }
+
+      // Show success notification
+      setNotification({
+        type: "success",
+        message: serviceModalMode === "create" 
+          ? "Thêm dịch vụ thành công" + (hasImages ? " và upload ảnh thành công" : "")
+          : "Cập nhật dịch vụ thành công" + (hasImages ? " và upload ảnh thành công" : ""),
+      });
+
       setServiceModalOpen(false);
     } catch (error) {
       setNotification({
@@ -145,9 +117,9 @@ export function useServicePage() {
     }
   };
 
-  const handleDeleteService = (id: string) => {
+  const handleDeleteService = async (id: string) => {
     try {
-      softDeleteService(id);
+      await deleteService(id);
       setNotification({
         type: "success",
         message: "Xóa dịch vụ thành công",
@@ -168,36 +140,23 @@ export function useServicePage() {
     setNotification(null);
   };
 
-  // Statistics - use filtered categories, all services
+  // Statistics
   const statistics = {
-    activeCategoriesCount: filteredCategories.filter((cat) => cat.isActive)
-      .length,
-    activeServicesCount: services.filter((srv) => srv.isActive).length,
+    activeServicesCount: filteredServices.filter((svc) => svc.isActive).length,
+    totalServicesCount: filteredServices.length,
   };
 
   return {
-    // Data - return filtered categories, all services
-    categories: filteredCategories,
-    services,
+    // Data
+    services: filteredServices,
     statistics,
     notification,
-
-    // Category Modal State
-    categoryModalOpen,
-    categoryModalMode,
-    selectedCategory,
+    isLoading,
 
     // Service Modal State
     serviceModalOpen,
     serviceModalMode,
     selectedService,
-
-    // Category Handlers
-    handleAddCategory,
-    handleEditCategory,
-    handleCategorySubmit,
-    handleDeleteCategory,
-    handleCloseCategoryModal,
 
     // Service Handlers
     handleAddService,
@@ -208,5 +167,8 @@ export function useServicePage() {
 
     // Notification Handlers
     handleDismissNotification,
+
+    // Utilities
+    refresh,
   };
 }

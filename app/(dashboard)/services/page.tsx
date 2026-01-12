@@ -9,7 +9,6 @@ import { ICONS } from "@/src/constants/icons.enum";
 
 export default function ServicesPage() {
   const {
-    categories,
     services,
     statistics,
     notification,
@@ -37,7 +36,7 @@ export default function ServicesPage() {
               Quản lý Dịch vụ
             </h1>
             <p className="text-sm text-white/90 mt-1 font-medium">
-              Quản lý danh mục dịch vụ và giá dịch vụ của khách sạn
+              Quản lý dịch vụ khách sạn (Giặt ủi, Massage, v.v...)
             </p>
           </div>
         </div>
@@ -54,14 +53,13 @@ export default function ServicesPage() {
 
       {/* Statistics Cards */}
       <ServiceStatistics
-        activeCategoriesCount={statistics.activeCategoriesCount}
         activeServicesCount={statistics.activeServicesCount}
+        totalServicesCount={statistics.totalServicesCount}
       />
 
       {/* Services Grid */}
       <ServiceGrid
         services={services}
-        categories={categories}
         onEdit={handleEditService}
         onDelete={handleDeleteService}
         onCreate={handleAddService}
@@ -73,7 +71,6 @@ export default function ServicesPage() {
         onClose={handleCloseServiceModal}
         onSubmit={handleServiceSubmit}
         service={selectedService}
-        categories={categories}
         mode={serviceModalMode}
       />
     </div>

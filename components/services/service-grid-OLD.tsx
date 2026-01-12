@@ -5,6 +5,7 @@ import { ServiceCard } from "./service-card";
 import type { Service } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
 import { PermissionGuard } from "@/components/permission-guard";
 
@@ -98,6 +99,38 @@ export function ServiceGrid({
         </div>
       </div>
 
+      {/* Category Filter Pills */}
+      <div className="flex flex-wrap gap-3">
+        <Badge
+          variant={selectedCategory === null ? "default" : "outline"}
+          className={`cursor-pointer transition-all h-10 px-5 text-sm font-bold ${
+            selectedCategory === null 
+              ? "bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-md hover:shadow-lg" 
+              : "hover:bg-blue-50 hover:border-blue-300"
+          }`}
+          onClick={() => setSelectedCategory(null)}
+        >
+          Tất cả ({services.length})
+        </Badge>
+        {categories.map((category) => {
+          const count = services.filter(s => s.categoryID === category.categoryID).length;
+          return (
+            <Badge
+              key={category.categoryID}
+              variant={selectedCategory === category.categoryID ? "default" : "outline"}
+              className={`cursor-pointer transition-all h-10 px-5 text-sm font-bold ${
+                selectedCategory === category.categoryID 
+                  ? "bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-md hover:shadow-lg" 
+                  : "hover:bg-blue-50 hover:border-blue-300"
+              }`}
+              onClick={() => setSelectedCategory(category.categoryID)}
+            >
+              {category.categoryName} ({count})
+            </Badge>
+          );
+        })}
+      </div>
+
       {/* Status Filter */}
       <div className="flex gap-3">
         <Button
@@ -135,7 +168,7 @@ export function ServiceGrid({
         </span>
       </div>
 
-      {/* Service Grid */}
+      {/* Service Grid by Category */}
       {filteredServices.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-linear-to-br from-gray-50 to-white rounded-2xl border-2 border-dashed border-gray-300">
           <div className="w-20 h-20 mb-6 flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-50 rounded-full">
@@ -161,18 +194,46 @@ export function ServiceGrid({
             </Button>
           )}
         </div>
-      ) : (
+      ) : selectedCategory ? (
+        // Show flat grid when category is selected
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredServices.map((service) => (
             <ServiceCard
-              key={service.id}
+              key={service.serviceID}
               service={service}
               onEdit={onEdit}
               onDelete={onDelete}
+              onToggleActive={onToggleActive}
             />
+          ))}
+        </div>
+      ) : (
+        // Show grouped by category
+        <div className="space-y-8">
+          {Object.entries(groupedServices).map(([categoryName, categoryServices]) => (
+            <div key={categoryName}>
+              <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900">{categoryName}</h3>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700 font-bold px-3 py-1">
+                  {categoryServices.length}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {categoryServices.map((service) => (
+                  <ServiceCard
+                    key={service.serviceID}
+                    service={service}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onToggleActive={onToggleActive}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
     </div>
   );
 }
+
