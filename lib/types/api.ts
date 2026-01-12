@@ -221,6 +221,20 @@ export interface RoomTag {
   };
 }
 
+export interface RoomTypeImage {
+  id: string;
+  url: string;
+  secureUrl: string;
+  thumbnailUrl?: string;
+  cloudinaryId: string;
+  width?: number;
+  height?: number;
+  format?: string;
+  sortOrder: number;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 export interface RoomTypeTag {
   id: string;
   name: string;
@@ -237,6 +251,7 @@ export interface RoomType {
   basePrice?: string | number;
   pricePerNight?: string;
   roomTypeTags?: RoomTypeTag[];
+  roomTypeImages?: RoomTypeImage[];
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -319,12 +334,27 @@ export interface GetRoomTypesParams {
 // Service Types
 // ============================================================================
 
+export interface ServiceImage {
+  id: string;
+  url: string;
+  secureUrl: string;
+  thumbnailUrl?: string;
+  cloudinaryId: string;
+  width?: number;
+  height?: number;
+  format?: string;
+  sortOrder: number;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 export interface Service {
   id: string;
   name: string;
   price: number; // Changed from string to number (parse Decimal from backend)
   unit: string;
   isActive: boolean;
+  serviceImages?: ServiceImage[];
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -365,12 +395,12 @@ export interface GetServicesParams {
 // Status progression: PENDING → CONFIRMED → CHECKED_IN → [PARTIALLY_CHECKED_OUT] → CHECKED_OUT
 // Can be CANCELLED at any point (except after CHECKED_OUT)
 export type BookingStatus =
-  | "PENDING"              // Chờ xác nhận - chưa đặt cọc
-  | "CONFIRMED"            // Đã xác nhận - đã đặt cọc (hoặc employee manual confirm)
-  | "CHECKED_IN"           // Đã nhận phòng - at least 1 room checked in
+  | "PENDING" // Chờ xác nhận - chưa đặt cọc
+  | "CONFIRMED" // Đã xác nhận - đã đặt cọc (hoặc employee manual confirm)
+  | "CHECKED_IN" // Đã nhận phòng - at least 1 room checked in
   | "PARTIALLY_CHECKED_OUT" // Trả phòng một phần - some rooms checked out (multi-room only)
-  | "CHECKED_OUT"          // Đã trả phòng - all rooms checked out
-  | "CANCELLED";           // Đã hủy - cancelled by customer or employee
+  | "CHECKED_OUT" // Đã trả phòng - all rooms checked out
+  | "CANCELLED"; // Đã hủy - cancelled by customer or employee
 
 export type TransactionType =
   | "DEPOSIT"
@@ -386,11 +416,7 @@ export type PaymentMethod =
   | "E_WALLET";
 
 // Transaction Status
-export type TransactionStatus =
-  | "PENDING"
-  | "COMPLETED"
-  | "FAILED"
-  | "REFUNDED";
+export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
 
 export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, string> = {
   PENDING: "Chờ xử lý",
@@ -530,8 +556,8 @@ export interface Booking {
   totalGuests: number;
   totalAmount: string;
   depositRequired: string;
-  totalDeposit: string;     // Tiền cọc đã thanh toán (source of truth for deposit confirmation)
-  totalPaid: string;         // Tổng tiền đã thanh toán (bao gồm deposit + các khoản khác)
+  totalDeposit: string; // Tiền cọc đã thanh toán (source of truth for deposit confirmation)
+  totalPaid: string; // Tổng tiền đã thanh toán (bao gồm deposit + các khoản khác)
   balance: string;
   createdAt: string;
   updatedAt: string;
@@ -585,7 +611,7 @@ export interface CreateBookingEmployeeRequest {
 /**
  * Update booking request - for modifying existing booking details
  * PUT /employee/bookings/{id}
- * 
+ *
  * Backend constraints:
  * - Cannot update CANCELLED or CHECKED_OUT bookings
  * - Can only update: checkInDate, checkOutDate, totalGuests
@@ -643,7 +669,7 @@ export interface AvailableRoomSearchParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface AvailableRoom {

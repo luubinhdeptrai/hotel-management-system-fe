@@ -121,16 +121,16 @@ export function useServicePage() {
     setServiceModalOpen(true);
   };
 
-  const handleServiceSubmit = (data: ServiceItemFormData) => {
+  const handleServiceSubmit = (data: ServiceItemFormData, files?: File[]) => {
     try {
       if (serviceModalMode === "create") {
-        addService(data);
+        addService(data, files);
         setNotification({
           type: "success",
           message: "Thêm dịch vụ thành công",
         });
       } else if (selectedService) {
-        updateService(selectedService.serviceID, data);
+        updateService(selectedService.serviceID, data, files);
         setNotification({
           type: "success",
           message: "Cập nhật dịch vụ thành công",

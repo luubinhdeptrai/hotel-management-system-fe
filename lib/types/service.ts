@@ -1,3 +1,5 @@
+import type { ServiceImage } from "./api";
+
 // Service Group Types (per spec 2.7)
 // MINIBAR - Đồ uống và đồ ăn nhẹ trong phòng
 // LAUNDRY - Dịch vụ giặt là
@@ -32,6 +34,7 @@ export interface ServiceItem {
   unit: string;
   description?: string;
   imageUrl?: string;
+  images?: ServiceImage[];
   isActive: boolean;
   isOpenPrice?: boolean; // NEW: For PHUTHU/PHAT - allow open price entry
   createdAt: Date;

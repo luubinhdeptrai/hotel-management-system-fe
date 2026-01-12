@@ -18,13 +18,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RoomType } from "@/hooks/use-room-types";
 import type { RoomTag } from "@/lib/types/api";
 import { Bed, Users, DollarSign, Tag, AlertCircle } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
+import LocalImageUpload from "@/components/LocalImageUpload";
 
 interface RoomTypeFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   roomType?: RoomType | null;
   roomTags: RoomTag[];
-  onSave: (roomType: Partial<RoomType>) => Promise<void>;
+  onSave: (roomType: Partial<RoomType>, files?: File[]) => Promise<void>;
 }
 
 export function RoomTypeFormModal({
@@ -48,6 +50,7 @@ export function RoomTypeFormModal({
     selectedTags: [],
   });
 
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -55,6 +58,7 @@ export function RoomTypeFormModal({
     if (!open) return;
 
     setTimeout(() => {
+      setSelectedFiles([]); // Reset files on open
       if (roomType) {
         setFormData({
           roomTypeName: roomType.roomTypeName,
@@ -86,6 +90,8 @@ export function RoomTypeFormModal({
     const price = parseFloat(formData.price);
     if (!formData.price.trim() || isNaN(price) || price <= 0) {
       newErrors.price = "Giá phải là số dương";
+    } else if (price > 99999999) {
+      newErrors.price = "Giá quá cao (tối đa 99,999,999 VNĐ)";
     }
 
     const capacity = parseInt(formData.capacity);
@@ -119,7 +125,8 @@ export function RoomTypeFormModal({
         roomTypeData.roomTypeID = roomType.roomTypeID;
       }
 
-      await onSave(roomTypeData);
+      // Pass selectedFiles correctly for both creation and update
+      await onSave(roomTypeData, selectedFiles);
       onOpenChange(false);
     } catch (error) {
       logger.error("Error saving room type:", error);
@@ -132,11 +139,11 @@ export function RoomTypeFormModal({
   };
 
   const handleToggleTag = (tagId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       selectedTags: prev.selectedTags.includes(tagId)
-        ? prev.selectedTags.filter(id => id !== tagId)
-        : [...prev.selectedTags, tagId]
+        ? prev.selectedTags.filter((id) => id !== tagId)
+        : [...prev.selectedTags, tagId],
     }));
   };
 
@@ -165,7 +172,10 @@ export function RoomTypeFormModal({
 
           {/* Tên loại phòng */}
           <div className="grid gap-2">
-            <Label htmlFor="roomTypeName" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Label
+              htmlFor="roomTypeName"
+              className="text-sm font-medium text-gray-700 flex items-center gap-2"
+            >
               <Tag className="w-4 h-4" />
               Tên loại phòng <span className="text-error-600">*</span>
             </Label>
@@ -194,7 +204,10 @@ export function RoomTypeFormModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Giá */}
             <div className="grid gap-2">
-              <Label htmlFor="price" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Label
+                htmlFor="price"
+                className="text-sm font-medium text-gray-700 flex items-center gap-2"
+              >
                 <DollarSign className="w-4 h-4" />
                 Giá (VNĐ/đêm) <span className="text-error-600">*</span>
               </Label>
@@ -222,7 +235,10 @@ export function RoomTypeFormModal({
 
             {/* Sức chứa */}
             <div className="grid gap-2">
-              <Label htmlFor="capacity" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Label
+                htmlFor="capacity"
+                className="text-sm font-medium text-gray-700 flex items-center gap-2"
+              >
                 <Users className="w-4 h-4" />
                 Sức chứa (người) <span className="text-error-600">*</span>
               </Label>
@@ -251,7 +267,10 @@ export function RoomTypeFormModal({
 
           {/* Số giường */}
           <div className="grid gap-2">
-            <Label htmlFor="totalBed" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Label
+              htmlFor="totalBed"
+              className="text-sm font-medium text-gray-700 flex items-center gap-2"
+            >
               <Bed className="w-4 h-4" />
               Số giường <span className="text-error-600">*</span>
             </Label>
@@ -310,6 +329,37 @@ export function RoomTypeFormModal({
             <p className="text-xs text-gray-500">
               Chọn các tiện nghi có sẵn trong loại phòng này
             </p>
+          </div>
+
+          {/* Image Management - Always show, but behavior differs for create vs edit */}
+          <div className="grid gap-3 pt-4 border-t border-gray-200">
+            {/* Image Management */}
+            {roomType?.roomTypeID && (
+              <div className="mb-4">
+                <Label className="text-sm font-medium text-gray-700 block mb-2">
+                  Hình ảnh hiện có
+                </Label>
+                <ImageUpload
+                  entityType="roomType"
+                  entityId={roomType.roomTypeID}
+                  disableUpload={true}
+                />
+              </div>
+            )}
+
+            <div>
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                <Tag className="w-4 h-4" />
+                {roomType ? "Thêm ảnh mới" : "Hình ảnh"}
+                <span className="text-xs text-gray-500 font-normal">
+                  (sẽ upload sau khi lưu)
+                </span>
+              </Label>
+              <LocalImageUpload
+                files={selectedFiles}
+                onFilesChange={setSelectedFiles}
+              />
+            </div>
           </div>
         </div>
 
