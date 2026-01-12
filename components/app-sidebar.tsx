@@ -157,12 +157,6 @@ const adminManagement = [
     permission: "report:read",
   },
   {
-    title: "Báo Cáo",
-    url: "/reports",
-    icon: ICONS.BAR_CHART,
-    permission: "report:view",
-  },
-  {
     title: "Cài đặt",
     url: "/app-settings",
     icon: ICONS.SETTINGS,

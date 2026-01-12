@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { bookingsApi } from "@/lib/api/bookings.api";
-import { reportsApi } from "@/lib/api/reports.api";
-
+ 
 interface BookingResponse {
   id: string;
   primaryCustomer?: {
@@ -16,27 +15,6 @@ interface BookingResponse {
   }>;
   checkInDate?: string;
   checkOutDate?: string;
-}
-
-interface OccupancyForecast {
-  forecast: Array<{
-    date: string;
-    period: string;
-    totalRooms: number;
-    occupiedRooms: number;
-    availableRooms: number;
-    occupancyRate: number;
-  }>;
-}
-
-interface OccupancyForecastResult {
-  forecast: Array<{
-    date: string;
-    period: string;
-    totalRooms: number;
-    occupiedRooms: number;
-    occupancyRate: number;
-  }>;
 }
 
 interface Arrival {
@@ -72,7 +50,6 @@ export const useDashboardPage = () => {
     revenuePerAvailableRoom: 0,
   });
 
-  const [occupancyData, setOccupancyData] = useState<OccupancyForecast | null>(null);
   const [arrivalsData, setArrivalsData] = useState<Arrival[]>([]);
   const [departuresData, setDeparturesData] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,57 +62,11 @@ export const useDashboardPage = () => {
     try {
       setLoading(true);
 
-      // Get tomorrow's date to query for seeded bookings
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowISO = tomorrow.toISOString().split("T")[0];
-
-      // Query date range: tomorrow to tomorrow + 30 days
-      const endDate = new Date(tomorrow);
-      endDate.setDate(endDate.getDate() + 30);
-      const endDateISO = endDate.toISOString().split("T")[0];
-
-      const [revenueSummary, occupancyForecast, arrivals, departures] =
+      const [arrivals, departures] =
         await Promise.all([
-          reportsApi.getRevenueSummary({
-            fromDate: tomorrowISO,
-            toDate: tomorrowISO,
-          }),
-          reportsApi.getOccupancyForecast({
-            startDate: tomorrowISO,
-            endDate: endDateISO,
-          }),
           bookingsApi.getArrivalsToday(),
           bookingsApi.getDeparturesToday(),
         ]);
-
-      // Transform revenue data
-      if (revenueSummary?.summary) {
-        const summary = revenueSummary.summary;
-        setStats({
-          availableRooms: 0, // Will be set from room status
-          dirtyRooms: 0, // Will be set from room status
-          occupancyRate: summary.occupancyRate || 0,
-          totalRevenue: summary.totalRevenue || 0,
-          roomRevenue: summary.roomRevenue || 0,
-          serviceRevenue: summary.serviceRevenue || 0,
-          totalBookings: summary.totalBookings || 0,
-          totalRoomNights: summary.totalRoomNights || 0,
-          averageRoomRate: summary.averageDailyRate || 0,
-          revenuePerAvailableRoom: summary.revenuePerAvailableRoom || 0,
-        });
-      }
-
-      // Transform occupancy forecast data
-      if (occupancyForecast) {
-        const transformedForecast: OccupancyForecast = {
-          forecast: occupancyForecast.forecast.map((item) => ({
-            ...item,
-            availableRooms: item.totalRooms - item.occupiedRooms,
-          })),
-        };
-        setOccupancyData(transformedForecast);
-      }
 
       // Transform arrivals
       if (arrivals && Array.isArray(arrivals)) {
@@ -172,7 +103,6 @@ export const useDashboardPage = () => {
 
   return {
     stats,
-    occupancyData,
     arrivalsData,
     departuresData,
     loading,

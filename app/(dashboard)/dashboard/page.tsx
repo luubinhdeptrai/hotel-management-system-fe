@@ -4,7 +4,6 @@ import { useDashboardPage } from "@/hooks/use-dashboard-page";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { KeyMetricsSection } from "@/components/dashboard/key-metrics-section";
 import { RevenueOverviewChart } from "@/components/dashboard/revenue-overview-chart";
-import { OccupancyChart } from "@/components/dashboard/occupancy-chart";
 import { TodaysActivitySection } from "@/components/dashboard/todays-activity-section";
 import { RoomStatusGrid } from "@/components/dashboard/room-status-grid";
 import { QuickStatsCards } from "@/components/dashboard/quick-stats-cards";
@@ -14,7 +13,6 @@ const testUser = { name: "Quản lý Khách sạn" };
 export default function DashboardPage() {
   const {
     stats,
-    occupancyData,
     arrivalsData,
     departuresData,
   } = useDashboardPage();
@@ -27,10 +25,9 @@ export default function DashboardPage() {
       {/* Key Metrics - Top KPIs */}
       <KeyMetricsSection stats={stats} />
 
-      {/* Main Charts - Revenue & Occupancy */}
+      {/* Main Charts - Revenue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RevenueOverviewChart stats={stats} />
-        <OccupancyChart occupancyData={occupancyData} />
       </div>
 
       {/* Quick Stats & Room Status */}
