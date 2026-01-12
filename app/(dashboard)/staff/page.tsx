@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { EmployeeFormModal } from "@/components/staff/employee-form-modal";
 import { employeeService } from "@/lib/services/employee.service";
+import { PermissionGuard } from "@/components/permission-guard";
 import type { Employee, EmployeeRole, CreateEmployeeRequest, UpdateEmployeeRequest } from "@/lib/types/api";
 import { getEmployeeRole } from "@/lib/utils";
 import { toast } from "sonner";
@@ -214,14 +215,16 @@ export default function StaffPageNew() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={handleAddNew}
-            size="lg"
-            className="bg-white text-blue-600 hover:bg-white/90 shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 h-14 px-8 font-bold"
-          >
-            <Plus className="mr-2 h-6 w-6" />
-            Thêm nhân viên
-          </Button>
+          <PermissionGuard permission="employee:create">
+            <Button
+              onClick={handleAddNew}
+              size="lg"
+              className="bg-white text-blue-600 hover:bg-white/90 shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 h-14 px-8 font-bold"
+            >
+              <Plus className="mr-2 h-6 w-6" />
+              Thêm nhân viên
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -388,10 +391,12 @@ export default function StaffPageNew() {
                 : "Thêm nhân viên đầu tiên để bắt đầu"}
             </p>
             {!hasFilters && (
-              <Button onClick={handleAddNew} className="bg-gradient-to-r from-blue-600 to-cyan-600">
-                <Plus className="mr-2 h-4 w-4" />
-                Thêm nhân viên
-              </Button>
+              <PermissionGuard permission="employee:create">
+                <Button onClick={handleAddNew} className="bg-gradient-to-r from-blue-600 to-cyan-600">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm nhân viên
+                </Button>
+              </PermissionGuard>
             )}
           </div>
         ) : (
@@ -439,17 +444,21 @@ export default function StaffPageNew() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(employee)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Chỉnh sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteClick(employee)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Xóa
-                          </DropdownMenuItem>
+                          <PermissionGuard permission="employee:update">
+                            <DropdownMenuItem onClick={() => handleEdit(employee)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
+                          </PermissionGuard>
+                          <PermissionGuard permission="employee:delete">
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClick(employee)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Xóa
+                            </DropdownMenuItem>
+                          </PermissionGuard>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

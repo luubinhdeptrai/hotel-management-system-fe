@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ICONS } from "@/src/constants/icons.enum";
 import type { ReportType } from "@/lib/types/reports";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface ReportFiltersProps {
   reportType: ReportType;
@@ -112,20 +113,24 @@ export function ReportFilters({
 
       {/* Export Buttons Row */}
       <div className="flex flex-wrap gap-3 border-t-2 border-gray-100 pt-4">
-        <Button
-          onClick={onExportPdf}
-          className="h-11 px-6 bg-linear-to-r from-error-500 to-error-600 hover:from-error-600 hover:to-error-700 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg flex items-center gap-2"
-        >
-          <span className="w-5 h-5">{ICONS.DOWNLOAD}</span>
-          <span>Xuất PDF</span>
-        </Button>
-        <Button
-          onClick={onExportExcel}
-          className="h-11 px-6 bg-linear-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg flex items-center gap-2"
-        >
-          <span className="w-5 h-5">{ICONS.DOWNLOAD}</span>
-          <span>Xuất Excel</span>
-        </Button>
+        <PermissionGuard permission="report:export">
+          <Button
+            onClick={onExportPdf}
+            className="h-11 px-6 bg-linear-to-r from-error-500 to-error-600 hover:from-error-600 hover:to-error-700 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg flex items-center gap-2"
+          >
+            <span className="w-5 h-5">{ICONS.DOWNLOAD}</span>
+            <span>Xuất PDF</span>
+          </Button>
+        </PermissionGuard>
+        <PermissionGuard permission="report:export">
+          <Button
+            onClick={onExportExcel}
+            className="h-11 px-6 bg-linear-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg flex items-center gap-2"
+          >
+            <span className="w-5 h-5">{ICONS.DOWNLOAD}</span>
+            <span>Xuất Excel</span>
+          </Button>
+        </PermissionGuard>
       </div>
     </div>
   );

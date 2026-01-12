@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface ServiceGridProps {
   services: ServiceItem[];
@@ -109,13 +110,15 @@ export function ServiceGrid({
               </Button>
             )}
             {onCreate && (
-              <Button 
-                onClick={onCreate} 
-                className="h-12 px-6 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
-              >
-                <div className="w-5 h-5 mr-2 flex items-center justify-center">{ICONS.PLUS}</div>
-                Thêm dịch vụ
-              </Button>
+              <PermissionGuard permission="service:create">
+                <Button 
+                  onClick={onCreate} 
+                  className="h-12 px-6 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                >
+                  <div className="w-5 h-5 mr-2 flex items-center justify-center">{ICONS.PLUS}</div>
+                  Thêm dịch vụ
+                </Button>
+              </PermissionGuard>
             )}
           </div>
         </div>

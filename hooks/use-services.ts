@@ -10,10 +10,19 @@ import {
 } from "@/lib/types/service";
 import { serviceAPI } from "@/lib/services/service-unified.service";
 import type { Service } from "@/lib/types/service-unified";
+import { mockServiceCategories } from "@/lib/mock-services";
+import { serviceManagementService } from "@/lib/services";
+import type { Service as ApiService, ServiceImage } from "@/lib/types/api";
 import { ApiError } from "@/lib/services/api";
+import { logger } from "@/lib/utils/logger";
+import { imageApi } from "@/lib/api/image.api";
+import { compressFiles } from "@/lib/utils/image-compression";
 
-// Map unified Service to legacy ServiceItem format
-function mapApiToServiceItem(apiService: Service, categories: ServiceCategory[]): ServiceItem {
+// Map API Service to local ServiceItem format
+function mapApiToServiceItem(
+  apiService: ApiService,
+  categories: ServiceCategory[]
+): ServiceItem {
   // Try to find a matching category or create a default one
   const category = categories[0] || {
     categoryID: "CAT001",
@@ -35,6 +44,7 @@ function mapApiToServiceItem(apiService: Service, categories: ServiceCategory[])
     description: "",
     isOpenPrice: false,
     isActive: apiService.isActive,
+    images: apiService.serviceImages || [],
     createdAt: new Date(apiService.createdAt),
     updatedAt: new Date(apiService.updatedAt),
   };
@@ -55,15 +65,43 @@ export function useServices() {
   const loadServices = async () => {
     try {
       setIsLoading(true);
-      
-      // ⚠️ IMPORTANT: Get REGULAR services only (exclude "Phạt" and "Phụ thu")
-      // Backend returns ALL services, but we filter to show only regular services
-      const regularServices = await serviceAPI.getRegularServices();
-      
-      setServices(regularServices.map(s => mapApiToServiceItem(s, categories)));
+      const result = await serviceManagementService.getServices({
+        page: 1,
+        limit: 100,
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+
+      const basicServices = result.data.map((s) =>
+        mapApiToServiceItem(s, categories)
+      );
+
+      // Fetch images in parallel
+      const servicesWithImages = await Promise.all(
+        basicServices.map(async (service) => {
+          try {
+            const images = await imageApi.getServiceImages(service.serviceID);
+            return {
+              ...service,
+              images: images || [],
+            };
+          } catch (err) {
+            logger.error(
+              `Failed to load images for service ${service.serviceID}`,
+              err
+            );
+            return service;
+          }
+        })
+      );
+
+      setServices(servicesWithImages);
       setError(null);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể tải danh sách dịch vụ";
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Không thể tải danh sách dịch vụ";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -148,7 +186,20 @@ export function useServices() {
   };
 
   // Service Management
-  const addService = async (data: ServiceItemFormData) => {
+  // Helper to create temp image objects for optimistic UI
+  const createTempImages = (files: File[]): ServiceImage[] => {
+    return files.map((file) => ({
+      id: `temp-${Math.random().toString(36).substr(2, 9)}`,
+      url: URL.createObjectURL(file),
+      secureUrl: URL.createObjectURL(file),
+      cloudinaryId: `temp-${Math.random()}`,
+      sortOrder: 0,
+      isDefault: false,
+      createdAt: new Date().toISOString(),
+    }));
+  };
+
+  const addService = async (data: ServiceItemFormData, files?: File[]) => {
     try {
       setIsLoading(true);
 
@@ -168,13 +219,50 @@ export function useServices() {
       });
 
       const newService = mapApiToServiceItem(created, categories);
+
+      // Optimistic UI update
+      if (files && files.length > 0) {
+        newService.images = createTempImages(files);
+      }
+
       setServices([...services, newService]);
       setError(null);
 
+      // Handle image upload in background
+      if (files && files.length > 0) {
+        (async () => {
+          try {
+            const compressedFiles = await compressFiles(files);
+            await imageApi.uploadServiceImages(created.id, compressedFiles);
+            logger.info(
+              `Uploaded ${files.length} images for new service ${created.id}`
+            );
+
+            // Fetch fresh images
+            const freshImages = await imageApi.getServiceImages(created.id);
+
+            // Update the item in the list with images
+            setServices((prev) =>
+              prev.map((s) =>
+                s.serviceID === created.id
+                  ? { ...s, images: freshImages || [] }
+                  : s
+              )
+            );
+          } catch (bgError) {
+            logger.error("Background upload for new service failed:", bgError);
+          }
+        })();
+      }
+
       return newService;
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 
-        (err instanceof Error ? err.message : "Không thể thêm dịch vụ");
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+          ? err.message
+          : "Không thể thêm dịch vụ";
       setError(message);
       throw err;
     } finally {
@@ -182,7 +270,11 @@ export function useServices() {
     }
   };
 
-  const updateService = async (id: string, data: ServiceItemFormData) => {
+  const updateService = async (
+    id: string,
+    data: ServiceItemFormData,
+    files?: File[]
+  ) => {
     try {
       setIsLoading(true);
 
@@ -200,16 +292,52 @@ export function useServices() {
         unit: data.unit,
       });
 
+      // Update local state immediately (optimistic)
+      const updatedLocal = mapApiToServiceItem(updated, categories);
+
+      // Preserve existing images or add temp ones
+      const existingService = services.find((s) => s.serviceID === id);
+      const newTempImages = files ? createTempImages(files) : [];
+
+      updatedLocal.images = [
+        ...(existingService?.images || []),
+        ...newTempImages,
+      ];
+
       setServices(
         services.map((service) =>
-          service.serviceID === id
-            ? mapApiToServiceItem(updated, categories)
-            : service
+          service.serviceID === id ? updatedLocal : service
         )
       );
       setError(null);
+
+      // Background upload
+      if (files && files.length > 0) {
+        (async () => {
+          try {
+            const compressedFiles = await compressFiles(files);
+            await imageApi.uploadServiceImages(id, compressedFiles);
+            logger.info(`Uploaded ${files.length} images for service ${id}`);
+
+            // Fetch fresh images
+            const freshImages = await imageApi.getServiceImages(id);
+
+            setServices((prev) =>
+              prev.map((s) =>
+                s.serviceID === id ? { ...s, images: freshImages || [] } : s
+              )
+            );
+          } catch (bgError) {
+            logger.error(
+              "Background update for service images failed:",
+              bgError
+            );
+          }
+        })();
+      }
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể cập nhật dịch vụ";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể cập nhật dịch vụ";
       setError(message);
       throw err;
     } finally {
@@ -230,7 +358,8 @@ export function useServices() {
       );
       setError(null);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể vô hiệu hóa dịch vụ";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể vô hiệu hóa dịch vụ";
       setError(message);
       throw err;
     } finally {
@@ -245,7 +374,8 @@ export function useServices() {
       setServices(services.filter((service) => service.serviceID !== id));
       setError(null);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể xóa dịch vụ";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể xóa dịch vụ";
       setError(message);
       throw err;
     } finally {

@@ -33,6 +33,7 @@ import {
 import { RoomCard } from "@/components/rooms/room-card";
 import { RoomTable } from "@/components/rooms/room-table";
 import { RoomFormModal } from "@/components/rooms/room-form-modal";
+import { PermissionGuard } from "@/components/permission-guard";
 import type { RoomStatus } from "@/lib/types/api";
 
 // Status configuration for filters
@@ -172,14 +173,16 @@ export default function RoomsPage() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={handleAddNew}
-            size="lg"
-            className="bg-white text-blue-600 hover:bg-white/90 shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 h-14 px-8 font-bold"
-          >
-            <Plus className="mr-2 h-6 w-6" />
-            Thêm phòng mới
-          </Button>
+          <PermissionGuard permission="room:create">
+            <Button
+              onClick={handleAddNew}
+              size="lg"
+              className="bg-white text-blue-600 hover:bg-white/90 shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 h-14 px-8 font-bold"
+            >
+              <Plus className="mr-2 h-6 w-6" />
+              Thêm phòng mới
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -533,14 +536,16 @@ export default function RoomsPage() {
                   Xóa bộ lọc
                 </Button>
               ) : (
-                <Button
-                  onClick={handleAddNew}
-                  size="lg"
-                  className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg hover:shadow-xl transition-all"
-                >
-                  <Plus className="mr-2 h-5 w-5" />
-                  Thêm phòng đầu tiên
-                </Button>
+                <PermissionGuard permission="room:create">
+                  <Button
+                    onClick={handleAddNew}
+                    size="lg"
+                    className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <Plus className="mr-2 h-5 w-5" />
+                    Thêm phòng đầu tiên
+                  </Button>
+                </PermissionGuard>
               )}
             </div>
           </CardContent>

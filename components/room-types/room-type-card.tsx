@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,15 +16,8 @@ import { RoomType } from "@/hooks/use-room-types";
 import { ICONS } from "@/src/constants/icons.enum";
 import { formatCurrency } from "@/lib/utils";
 
-// Professional hotel room images from Unsplash
-const ROOM_IMAGES: Record<string, string> = {
-  STD: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80",
-  DLX: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&q=80",
-  SUT: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80",
-  FAM: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&q=80",
-  PRE: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
-  DEFAULT: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80",
-};
+// Removed static images for debugging
+// const ROOM_IMAGES: Record<string, string> = { ... };
 
 interface RoomTypeCardProps {
   roomType: RoomType;
@@ -42,7 +35,15 @@ export function RoomTypeCard({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const imageUrl = ROOM_IMAGES[roomType.roomTypeID] || ROOM_IMAGES.DEFAULT;
+  // Strictly use Cloudinary image or nothing
+  const imageUrl =
+    roomType.images && roomType.images.length > 0
+      ? roomType.images[0].secureUrl || roomType.images[0].url
+      : "";
+
+  useEffect(() => {
+    setImageError(false);
+  }, [imageUrl]);
 
   const handleDeleteConfirm = () => {
     onDelete(roomType.roomTypeID);
@@ -54,7 +55,7 @@ export function RoomTypeCard({
       <div className="group relative bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-2xl hover:border-primary-300 transition-all duration-300 hover:-translate-y-2">
         {/* Image Section */}
         <div className="relative h-56 overflow-hidden">
-          {!imageError ? (
+          {!imageError && imageUrl ? (
             <Image
               src={imageUrl}
               alt={roomType.roomTypeName}
@@ -65,13 +66,15 @@ export function RoomTypeCard({
             />
           ) : (
             <div className="w-full h-full bg-linear-to-br from-primary-100 via-blue-100 to-primary-200 flex items-center justify-center">
-              <span className="w-20 h-20 text-primary-400">{ICONS.BED_DOUBLE}</span>
+              <span className="w-20 h-20 text-primary-400">
+                {ICONS.BED_DOUBLE}
+              </span>
             </div>
           )}
-          
+
           {/* Overlay gradient */}
           <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-          
+
           {/* Price badge */}
           <div className="absolute top-4 right-4">
             <Badge className="bg-white/95 backdrop-blur-sm text-primary-700 font-extrabold text-base px-4 py-2 shadow-xl border-2 border-white/50">
@@ -93,11 +96,15 @@ export function RoomTypeCard({
           <div className="flex items-center gap-3 mb-5">
             <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
               <span className="w-5 h-5 text-primary-600">{ICONS.USERS}</span>
-              <span className="font-bold text-sm">{roomType.capacity} khách</span>
+              <span className="font-bold text-sm">
+                {roomType.capacity} khách
+              </span>
             </div>
             <span className="text-gray-300 font-bold">•</span>
             <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
-              <span className="w-5 h-5 text-primary-600">{ICONS.BED_DOUBLE}</span>
+              <span className="w-5 h-5 text-primary-600">
+                {ICONS.BED_DOUBLE}
+              </span>
               <span className="font-bold text-sm">
                 {roomType.totalBed} giường
               </span>
@@ -131,7 +138,9 @@ export function RoomTypeCard({
                   )}
                 </>
               ) : (
-                <span className="text-sm text-gray-500 italic">Chưa có tiện nghi</span>
+                <span className="text-sm text-gray-500 italic">
+                  Chưa có tiện nghi
+                </span>
               )}
             </div>
           </div>
@@ -183,22 +192,31 @@ export function RoomTypeCard({
                   />
                 ) : (
                   <div className="w-full h-full bg-primary-100 flex items-center justify-center">
-                    <span className="w-8 h-8 text-primary-400">{ICONS.BED_DOUBLE}</span>
+                    <span className="w-8 h-8 text-primary-400">
+                      {ICONS.BED_DOUBLE}
+                    </span>
                   </div>
                 )}
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{roomType.roomTypeName}</p>
-                <p className="text-sm text-gray-500">Mã: {roomType.roomTypeID}</p>
-                <p className="text-sm font-medium text-primary-600">{formatCurrency(roomType.price)}/đêm</p>
+                <p className="font-semibold text-gray-900">
+                  {roomType.roomTypeName}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Mã: {roomType.roomTypeID}
+                </p>
+                <p className="text-sm font-medium text-primary-600">
+                  {formatCurrency(roomType.price)}/đêm
+                </p>
               </div>
             </div>
-            
+
             <div className="mt-4 p-3 bg-warning-50 border border-warning-200 rounded-lg">
               <p className="text-sm text-warning-700 flex items-start gap-2">
                 <span className="w-5 h-5 shrink-0 mt-0.5">{ICONS.ALERT}</span>
                 <span>
-                  Bạn có chắc chắn muốn xóa loại phòng này? Tất cả dữ liệu liên quan sẽ bị ảnh hưởng.
+                  Bạn có chắc chắn muốn xóa loại phòng này? Tất cả dữ liệu liên
+                  quan sẽ bị ảnh hưởng.
                 </span>
               </p>
             </div>

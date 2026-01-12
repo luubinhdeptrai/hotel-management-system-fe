@@ -2,14 +2,17 @@ import { logger } from "@/lib/utils/logger";
 import { useState, useEffect, useMemo } from "react";
 import { roomService, roomTagService } from "@/lib/services";
 import { getAccessToken } from "@/lib/services/api";
-import type { 
-  RoomType as ApiRoomType, 
+import type {
+  RoomType as ApiRoomType,
   Room as ApiRoom,
   RoomTag as ApiRoomTag,
+  RoomTypeImage,
   CreateRoomTypeRequest,
-  UpdateRoomTypeRequest
+  UpdateRoomTypeRequest,
 } from "@/lib/types/api";
 import { ApiError } from "@/lib/services/api";
+import { imageApi } from "@/lib/api/image.api";
+import { compressFiles } from "@/lib/utils/image-compression";
 
 // Local RoomType for UI compatibility (temporary - should migrate to API types)
 export interface RoomType {
@@ -20,21 +23,24 @@ export interface RoomType {
   price: number;
   tags: string[]; // Array of tag IDs
   tagDetails?: ApiRoomTag[]; // Full tag objects
+  images: RoomTypeImage[];
 }
 
 // Map API RoomType to local RoomType format
 function mapApiToRoomType(apiType: ApiRoomType): RoomType {
-  const tagIds = apiType.roomTypeTags?.map(rtt => rtt.roomTagId) || [];
-  const tagDetails = apiType.roomTypeTags?.map(rtt => rtt.roomTag) || [];
+  const tagIds = apiType.roomTypeTags?.map((rtt) => rtt.roomTagId) || [];
+  const tagDetails = apiType.roomTypeTags?.map((rtt) => rtt.roomTag) || [];
 
   // Handle price from either pricePerNight or basePrice
   let price: number = 0;
-  const priceValue = (apiType as any).pricePerNight || (apiType as any).basePrice;
-  
+  const priceValue =
+    (apiType as any).pricePerNight || (apiType as any).basePrice;
+
   if (priceValue) {
-    const parsed = typeof priceValue === 'string' 
-      ? parseFloat(priceValue) 
-      : Number(priceValue);
+    const parsed =
+      typeof priceValue === "string"
+        ? parseFloat(priceValue)
+        : Number(priceValue);
     price = isNaN(parsed) ? 0 : parsed;
   }
 
@@ -46,6 +52,7 @@ function mapApiToRoomType(apiType: ApiRoomType): RoomType {
     price,
     tags: tagIds,
     tagDetails: tagDetails,
+    images: apiType.roomTypeImages || [],
   };
 }
 
@@ -85,10 +92,37 @@ export function useRoomTypes() {
         sortBy: "name",
         sortOrder: "asc",
       });
-      setRoomTypes(result.data.map(mapApiToRoomType));
+
+      // Map initial basic data
+      const basicRoomTypes = result.data.map(mapApiToRoomType);
+
+      // Fetch images for each room type in parallel
+      // We do this because the list endpoint might not include the full image relation
+      const roomTypesWithImages = await Promise.all(
+        basicRoomTypes.map(async (rt) => {
+          try {
+            const images = await imageApi.getRoomTypeImages(rt.roomTypeID);
+            return {
+              ...rt,
+              images: images || [],
+            };
+          } catch (err) {
+            logger.error(
+              `Failed to load images for room type ${rt.roomTypeID}`,
+              err
+            );
+            return rt; // Return without images on error
+          }
+        })
+      );
+
+      setRoomTypes(roomTypesWithImages);
       setError(null);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể tải danh sách loại phòng";
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Không thể tải danh sách loại phòng";
       logger.error("Error loading room types:", err);
       setError(message);
     } finally {
@@ -159,8 +193,24 @@ export function useRoomTypes() {
     setModalOpen(true);
   };
 
-  const handleSave = async (roomTypeData: Partial<RoomType>) => {
+  const handleSave = async (
+    roomTypeData: Partial<RoomType>,
+    files?: File[]
+  ) => {
     try {
+      // Helper to create temp image objects for optimistic UI
+      const createTempImages = (files: File[]): RoomTypeImage[] => {
+        return files.map((file) => ({
+          id: `temp-${Math.random().toString(36).substr(2, 9)}`,
+          url: URL.createObjectURL(file),
+          secureUrl: URL.createObjectURL(file),
+          cloudinaryId: `temp-${Math.random()}`,
+          sortOrder: 0,
+          isDefault: false,
+          createdAt: new Date().toISOString(),
+        }));
+      };
+
       if (editingRoomType) {
         // Update existing room type
         const updateData: UpdateRoomTypeRequest = {
@@ -170,10 +220,64 @@ export function useRoomTypes() {
           pricePerNight: roomTypeData.price,
           tagIds: roomTypeData.tags,
         };
-        const updated = await roomService.updateRoomType(editingRoomType.roomTypeID, updateData);
-        setRoomTypes(prev => prev.map(rt => 
-          rt.roomTypeID === editingRoomType.roomTypeID ? mapApiToRoomType(updated) : rt
-        ));
+        const updated = await roomService.updateRoomType(
+          editingRoomType.roomTypeID,
+          updateData
+        );
+
+        // Optimistic UI update: append new temporary images to existing ones
+        const updatedLocal = mapApiToRoomType(updated);
+        const newTempImages = files ? createTempImages(files) : [];
+        updatedLocal.images = [
+          ...(editingRoomType.images || []),
+          ...newTempImages,
+        ];
+
+        setRoomTypes((prev) =>
+          prev.map((rt) =>
+            rt.roomTypeID === editingRoomType.roomTypeID ? updatedLocal : rt
+          )
+        );
+
+        // Close modal immediately
+        setModalOpen(false);
+        setEditingRoomType(null);
+        setError(null);
+
+        // Handle image updates in background
+        (async () => {
+          try {
+            // If files provided, upload them
+            if (files && files.length > 0) {
+              const compressedFiles = await compressFiles(files);
+              await imageApi.uploadRoomTypeImages(
+                editingRoomType.roomTypeID,
+                compressedFiles
+              );
+              logger.info(
+                `Uploaded ${files.length} images for room type ${editingRoomType.roomTypeID}`
+              );
+            }
+
+            // Always fetch fresh images after update to ensure sync
+            const freshImages = await imageApi.getRoomTypeImages(
+              editingRoomType.roomTypeID
+            );
+
+            setRoomTypes((prev) =>
+              prev.map((rt) =>
+                rt.roomTypeID === editingRoomType.roomTypeID
+                  ? { ...rt, images: freshImages || [] }
+                  : rt
+              )
+            );
+          } catch (bgError) {
+            logger.error(
+              "Background update for room type images failed:",
+              bgError
+            );
+          }
+        })();
       } else {
         // Create new room type
         const createData: CreateRoomTypeRequest = {
@@ -184,21 +288,61 @@ export function useRoomTypes() {
           tagIds: roomTypeData.tags,
         };
         const created = await roomService.createRoomType(createData);
-        setRoomTypes(prev => [...prev, mapApiToRoomType(created)]);
+
+        // Optimistic UI update: add to list with temporary images
+        const newLocal = mapApiToRoomType(created);
+        if (files && files.length > 0) {
+          newLocal.images = createTempImages(files);
+        }
+
+        setRoomTypes((prev) => [...prev, newLocal]);
+
+        // Close modal immediately
+        setModalOpen(false);
+        setEditingRoomType(null);
+        setError(null);
+
+        // Handle image upload in background
+        if (files && files.length > 0) {
+          (async () => {
+            try {
+              const compressedFiles = await compressFiles(files);
+              await imageApi.uploadRoomTypeImages(created.id, compressedFiles);
+              logger.info(
+                `Uploaded ${files.length} images for new room type ${created.id}`
+              );
+
+              // Fetch fresh images to get correct URLs
+              const freshImages = await imageApi.getRoomTypeImages(created.id);
+
+              // Update the item in the list with images
+              setRoomTypes((prev) =>
+                prev.map((rt) =>
+                  rt.roomTypeID === created.id
+                    ? { ...rt, images: freshImages || [] }
+                    : rt
+                )
+              );
+            } catch (bgError) {
+              logger.error(
+                "Background upload for new room type failed:",
+                bgError
+              );
+            }
+          })();
+        }
       }
-      setModalOpen(false);
-      setEditingRoomType(null);
-      setError(null);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể lưu loại phòng";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể lưu loại phòng";
       throw new Error(message);
     }
   };
 
   const handleDelete = async (roomTypeID: string) => {
     // Check if room type is in use
-    const roomsUsingType = rooms.filter(r => r.roomTypeId === roomTypeID);
-    
+    const roomsUsingType = rooms.filter((r) => r.roomTypeId === roomTypeID);
+
     if (roomsUsingType.length > 0) {
       setError(
         `Không thể xóa loại phòng này vì đang có ${roomsUsingType.length} phòng sử dụng`
@@ -210,12 +354,16 @@ export function useRoomTypes() {
     try {
       setIsDeleting(roomTypeID);
       await roomService.deleteRoomType(roomTypeID);
-      setRoomTypes(prev => prev.filter((rt) => rt.roomTypeID !== roomTypeID));
+      setRoomTypes((prev) => prev.filter((rt) => rt.roomTypeID !== roomTypeID));
       setError(null);
     } catch (err) {
       logger.error("Error deleting room type:", err);
-      const message = err instanceof ApiError ? err.message : 
-        (err instanceof Error ? err.message : "Không thể xóa loại phòng");
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+          ? err.message
+          : "Không thể xóa loại phòng";
       setError(message);
       setTimeout(() => setError(null), 5000);
     } finally {
@@ -262,7 +410,7 @@ export function useRoomTypes() {
 
     rooms.forEach((room) => {
       const typeId = room.roomTypeId;
-      const roomType = roomTypes.find(rt => rt.roomTypeID === typeId);
+      const roomType = roomTypes.find((rt) => rt.roomTypeID === typeId);
       const typeName = roomType?.roomTypeName || typeId;
 
       if (!roomTypeCounts[typeId]) {
