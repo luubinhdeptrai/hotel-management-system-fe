@@ -138,12 +138,12 @@ export interface CreateEmployeeRequest {
   name: string;
   username: string;
   password: string;
-  role?: EmployeeRole;
+  roleId: string; // Changed from role to roleId - expects UUID from backend
 }
 
 export interface UpdateEmployeeRequest {
   name?: string;
-  role?: EmployeeRole;
+  roleId?: string; // Changed from role to roleId - expects UUID from backend
 }
 
 export interface GetEmployeesParams {
