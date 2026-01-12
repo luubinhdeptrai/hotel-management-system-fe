@@ -28,6 +28,7 @@ import {
   ServiceGroup,
   SERVICE_GROUP_LABELS,
 } from "@/lib/types/service";
+import ImageUpload from "@/components/ImageUpload";
 
 interface ServiceItemFormModalProps {
   isOpen: boolean;
@@ -319,21 +320,30 @@ export function ServiceItemFormModal({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">URL Hình ảnh</Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) =>
-                setFormData({ ...formData, imageUrl: e.target.value })
-              }
-              placeholder="https://example.com/service.jpg"
-            />
-            <p className="text-xs text-gray-500">
-              Nhập đường dẫn URL của hình ảnh dịch vụ (không bắt buộc)
-            </p>
-          </div>
+          {/* Image Management - Show upload component when editing, text input when creating */}
+          {service?.serviceID && mode === "edit" ? (
+            <div className="space-y-2">
+              <Label>Hình ảnh</Label>
+              <ImageUpload entityType="service" entityId={service.serviceID} />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="imageUrl">URL Hình ảnh</Label>
+              <Input
+                id="imageUrl"
+                type="url"
+                value={formData.imageUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, imageUrl: e.target.value })
+                }
+                placeholder="https://example.com/service.jpg"
+              />
+              <p className="text-xs text-gray-500">
+                Nhập đường dẫn URL của hình ảnh dịch vụ (không bắt buộc). Sau
+                khi tạo, bạn có thể upload hình ảnh từ máy tính.
+              </p>
+            </div>
+          )}
 
           <DialogFooter className="gap-3">
             <Button
@@ -348,10 +358,10 @@ export function ServiceItemFormModal({
               type="submit"
               className="h-11 px-6 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 font-bold shadow-lg"
             >
-              <div className="w-4 h-4 mr-2 flex items-center justify-center">{ICONS.SAVE}</div>
-              <span>
-                {mode === "create" ? "Thêm mới" : "Cập nhật"}
-              </span>
+              <div className="w-4 h-4 mr-2 flex items-center justify-center">
+                {ICONS.SAVE}
+              </div>
+              <span>{mode === "create" ? "Thêm mới" : "Cập nhật"}</span>
             </Button>
           </DialogFooter>
         </form>
@@ -359,4 +369,3 @@ export function ServiceItemFormModal({
     </Dialog>
   );
 }
-

@@ -81,13 +81,16 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/employee/auth/refresh-tokens`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/employee/auth/refresh-tokens`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      }
+    );
 
     if (!response.ok) {
       clearTokens();
@@ -95,14 +98,12 @@ async function refreshAccessToken(): Promise<boolean> {
     }
 
     const data = await response.json();
-    const tokenData = (data && typeof data === "object" && "data" in data)
-      ? (data as any).data
-      : data;
+    const tokenData =
+      data && typeof data === "object" && "data" in data
+        ? (data as any).data
+        : data;
 
-    setTokens(
-      tokenData.tokens.access.token,
-      tokenData.tokens.refresh.token
-    );
+    setTokens(tokenData.tokens.access.token, tokenData.tokens.refresh.token);
 
     return true;
   } catch (error) {
@@ -136,6 +137,14 @@ export async function apiFetch<T>(
     "Content-Type": "application/json",
     ...customHeaders,
   };
+
+  // If body is FormData, remove Content-Type header to let browser set it with boundary
+  if (
+    restOptions.body instanceof FormData ||
+    (typeof FormData !== "undefined" && restOptions.body instanceof FormData)
+  ) {
+    delete (headers as Record<string, string>)["Content-Type"];
+  }
 
   // Add authorization header if required
   if (requiresAuth) {

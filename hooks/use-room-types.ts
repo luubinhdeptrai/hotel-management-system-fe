@@ -2,14 +2,16 @@ import { logger } from "@/lib/utils/logger";
 import { useState, useEffect, useMemo } from "react";
 import { roomService, roomTagService } from "@/lib/services";
 import { getAccessToken } from "@/lib/services/api";
-import type { 
-  RoomType as ApiRoomType, 
+import type {
+  RoomType as ApiRoomType,
   Room as ApiRoom,
   RoomTag as ApiRoomTag,
   CreateRoomTypeRequest,
-  UpdateRoomTypeRequest
+  UpdateRoomTypeRequest,
 } from "@/lib/types/api";
 import { ApiError } from "@/lib/services/api";
+import { imageApi } from "@/lib/api/image.api";
+import { compressFiles } from "@/lib/utils/image-compression";
 
 // Local RoomType for UI compatibility (temporary - should migrate to API types)
 export interface RoomType {
@@ -24,17 +26,19 @@ export interface RoomType {
 
 // Map API RoomType to local RoomType format
 function mapApiToRoomType(apiType: ApiRoomType): RoomType {
-  const tagIds = apiType.roomTypeTags?.map(rtt => rtt.roomTagId) || [];
-  const tagDetails = apiType.roomTypeTags?.map(rtt => rtt.roomTag) || [];
+  const tagIds = apiType.roomTypeTags?.map((rtt) => rtt.roomTagId) || [];
+  const tagDetails = apiType.roomTypeTags?.map((rtt) => rtt.roomTag) || [];
 
   // Handle price from either pricePerNight or basePrice
   let price: number = 0;
-  const priceValue = (apiType as any).pricePerNight || (apiType as any).basePrice;
-  
+  const priceValue =
+    (apiType as any).pricePerNight || (apiType as any).basePrice;
+
   if (priceValue) {
-    const parsed = typeof priceValue === 'string' 
-      ? parseFloat(priceValue) 
-      : Number(priceValue);
+    const parsed =
+      typeof priceValue === "string"
+        ? parseFloat(priceValue)
+        : Number(priceValue);
     price = isNaN(parsed) ? 0 : parsed;
   }
 
@@ -88,7 +92,10 @@ export function useRoomTypes() {
       setRoomTypes(result.data.map(mapApiToRoomType));
       setError(null);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể tải danh sách loại phòng";
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Không thể tải danh sách loại phòng";
       logger.error("Error loading room types:", err);
       setError(message);
     } finally {
@@ -159,7 +166,10 @@ export function useRoomTypes() {
     setModalOpen(true);
   };
 
-  const handleSave = async (roomTypeData: Partial<RoomType>) => {
+  const handleSave = async (
+    roomTypeData: Partial<RoomType>,
+    files?: File[]
+  ) => {
     try {
       if (editingRoomType) {
         // Update existing room type
@@ -170,10 +180,17 @@ export function useRoomTypes() {
           pricePerNight: roomTypeData.price,
           tagIds: roomTypeData.tags,
         };
-        const updated = await roomService.updateRoomType(editingRoomType.roomTypeID, updateData);
-        setRoomTypes(prev => prev.map(rt => 
-          rt.roomTypeID === editingRoomType.roomTypeID ? mapApiToRoomType(updated) : rt
-        ));
+        const updated = await roomService.updateRoomType(
+          editingRoomType.roomTypeID,
+          updateData
+        );
+        setRoomTypes((prev) =>
+          prev.map((rt) =>
+            rt.roomTypeID === editingRoomType.roomTypeID
+              ? mapApiToRoomType(updated)
+              : rt
+          )
+        );
       } else {
         // Create new room type
         const createData: CreateRoomTypeRequest = {
@@ -184,21 +201,48 @@ export function useRoomTypes() {
           tagIds: roomTypeData.tags,
         };
         const created = await roomService.createRoomType(createData);
-        setRoomTypes(prev => [...prev, mapApiToRoomType(created)]);
+
+        // If files provided, upload them immediately after creation
+        if (files && files.length > 0) {
+          try {
+            // We need to import imageApi dynamically or statically.
+            // Since we're in a hook, static import is fine but need to add it to top of file
+            // Just importing it here for clarity of the replacement block, but realistically need to add import at top
+            // Assuming imageApi will be imported at top.
+
+            // Compress files before upload
+            const compressedFiles = await compressFiles(files);
+
+            await imageApi.uploadRoomTypeImages(created.id, compressedFiles);
+            logger.info(
+              `Uploaded ${files.length} images for new room type ${created.id}`
+            );
+          } catch (uploadError) {
+            logger.error(
+              "Error uploading images after room type creation:",
+              uploadError
+            );
+            // We don't fail the whole creation if image upload fails, but could show a warning
+            // Or just log it. The user can see the room type created and try uploading again.
+          }
+        }
+
+        setRoomTypes((prev) => [...prev, mapApiToRoomType(created)]);
       }
       setModalOpen(false);
       setEditingRoomType(null);
       setError(null);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Không thể lưu loại phòng";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể lưu loại phòng";
       throw new Error(message);
     }
   };
 
   const handleDelete = async (roomTypeID: string) => {
     // Check if room type is in use
-    const roomsUsingType = rooms.filter(r => r.roomTypeId === roomTypeID);
-    
+    const roomsUsingType = rooms.filter((r) => r.roomTypeId === roomTypeID);
+
     if (roomsUsingType.length > 0) {
       setError(
         `Không thể xóa loại phòng này vì đang có ${roomsUsingType.length} phòng sử dụng`
@@ -210,12 +254,16 @@ export function useRoomTypes() {
     try {
       setIsDeleting(roomTypeID);
       await roomService.deleteRoomType(roomTypeID);
-      setRoomTypes(prev => prev.filter((rt) => rt.roomTypeID !== roomTypeID));
+      setRoomTypes((prev) => prev.filter((rt) => rt.roomTypeID !== roomTypeID));
       setError(null);
     } catch (err) {
       logger.error("Error deleting room type:", err);
-      const message = err instanceof ApiError ? err.message : 
-        (err instanceof Error ? err.message : "Không thể xóa loại phòng");
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+          ? err.message
+          : "Không thể xóa loại phòng";
       setError(message);
       setTimeout(() => setError(null), 5000);
     } finally {
@@ -262,7 +310,7 @@ export function useRoomTypes() {
 
     rooms.forEach((room) => {
       const typeId = room.roomTypeId;
-      const roomType = roomTypes.find(rt => rt.roomTypeID === typeId);
+      const roomType = roomTypes.find((rt) => rt.roomTypeID === typeId);
       const typeName = roomType?.roomTypeName || typeId;
 
       if (!roomTypeCounts[typeId]) {
