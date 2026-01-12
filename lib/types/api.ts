@@ -663,3 +663,22 @@ export interface AvailableRoom {
   status: RoomStatus;
   roomType: RoomType;
 }
+
+// ============================================================================
+// Room Transfer Types (Change Room)
+// ============================================================================
+
+export interface ChangeRoomRequest {
+  newRoomId: string;
+  reason?: string; // Optional reason for room change (max 500 chars)
+}
+
+export interface ChangeRoomResponse {
+  bookingRoom: BookingRoom;
+  priceAdjustment: {
+    oldPricePerNight: number;
+    newPricePerNight: number;
+    remainingNights: number;
+    priceDifference: number; // Positive = upgrade cost, Negative = downgrade credit
+  };
+}

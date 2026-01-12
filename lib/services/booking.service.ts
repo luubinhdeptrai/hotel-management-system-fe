@@ -550,4 +550,47 @@ export const bookingService = {
     // Backend does not provide this endpoint
     throw new Error("Cancellation preview is not supported by Backend. Backend does not have cancellation policy or refund calculation.");
   },
+
+  // ============================================================================
+  // ROOM TRANSFER (CHANGE ROOM)
+  // ============================================================================
+
+  /**
+   * Change room for a checked-in booking room
+   * POST /employee/bookings/rooms/{bookingRoomId}/change-room
+   * 
+   * Business Rules (enforced by Backend):
+   * - Booking room must be CHECKED_IN status
+   * - New room must be different from current room
+   * - New room must be available for remaining stay period
+   * - New room status must not be CLEANING or OCCUPIED
+   * - Price adjustment calculated for remaining nights
+   * - Old room status recalculated (AVAILABLE or RESERVED)
+   * - New room status set to OCCUPIED
+   * - Activity log created automatically
+   * 
+   * @param bookingRoomId - The booking room ID to transfer
+   * @param data - Change room request data (newRoomId, optional reason)
+   * @returns Updated booking room with price adjustment details
+   */
+  async changeRoom(
+    bookingRoomId: string,
+    data: { newRoomId: string; reason?: string }
+  ): Promise<{ bookingRoom: BookingRoom; priceAdjustment: { oldPricePerNight: number; newPricePerNight: number; remainingNights: number; priceDifference: number } }> {
+    try {
+      const response = await api.post<ApiResponse<{ bookingRoom: BookingRoom; priceAdjustment: any }>>(
+        `/employee/bookings/rooms/${bookingRoomId}/change-room`,
+        data,
+        { requiresAuth: true }
+      );
+      const unwrappedData =
+        response && typeof response === "object" && "data" in response
+          ? (response as ApiResponse<{ bookingRoom: BookingRoom; priceAdjustment: any }>).data
+          : (response as unknown as { bookingRoom: BookingRoom; priceAdjustment: any });
+      return unwrappedData;
+    } catch (error) {
+      console.error("Change room failed:", error);
+      throw error;
+    }
+  },
 };
