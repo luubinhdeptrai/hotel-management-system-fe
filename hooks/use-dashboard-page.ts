@@ -37,7 +37,8 @@ interface Departure {
 }
 
 export const useDashboardPage = () => {
-  const [stats, setStats] = useState({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [stats, _setStats] = useState({
     availableRooms: 0,
     dirtyRooms: 0,
     occupancyRate: 0,
