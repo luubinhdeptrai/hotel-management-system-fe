@@ -31,9 +31,9 @@ export function RevenueChart({ data }: RevenueChartProps) {
     );
   }
 
-  const maxRevenue = Math.max(...data.map((d) => d.totalRevenue));
-  const minRevenue = Math.min(...data.map((d) => d.totalRevenue));
-  const avgRevenue = data.reduce((sum, d) => sum + d.totalRevenue, 0) / data.length;
+  const maxRevenue = Math.max(...data.map((d) => d.revenue));
+  const minRevenue = Math.min(...data.map((d) => d.revenue));
+  const avgRevenue = data.reduce((sum, d) => sum + d.revenue, 0) / data.length;
 
   return (
     <div className="rounded-2xl bg-white border-2 border-gray-100 p-6 shadow-lg">
@@ -51,9 +51,9 @@ export function RevenueChart({ data }: RevenueChartProps) {
 
       <div className="space-y-3">
         {data.slice(-10).reverse().map((item, index) => {
-          const barWidth = maxRevenue > 0 ? (item.totalRevenue / maxRevenue) * 100 : 0;
-          const isMax = item.totalRevenue === maxRevenue;
-          const isMin = item.totalRevenue === minRevenue;
+          const barWidth = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
+          const isMax = item.revenue === maxRevenue;
+          const isMin = item.revenue === minRevenue;
           
           return (
             <div key={index} className="space-y-1.5">
@@ -78,7 +78,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                   )}
                 </div>
                 <span className="font-bold text-gray-900">
-                  {new Intl.NumberFormat("vi-VN").format(item.totalRevenue)} ₫
+                  {new Intl.NumberFormat("vi-VN").format(item.revenue)} ₫
                 </span>
               </div>
               <div className="h-10 w-full overflow-hidden rounded-lg bg-gray-100 relative">
@@ -90,10 +90,10 @@ export function RevenueChart({ data }: RevenueChartProps) {
                   }`}
                   style={{ width: `${Math.max(barWidth, 2)}%` }}
                 />
-                {item.totalRevenue > avgRevenue && (
+                {item.revenue > avgRevenue && (
                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
                     <span className="text-xs font-bold text-white">
-                      +{Math.round(((item.totalRevenue - avgRevenue) / avgRevenue) * 100)}%
+                      +{Math.round(((item.revenue - avgRevenue) / avgRevenue) * 100)}%
                     </span>
                   </div>
                 )}

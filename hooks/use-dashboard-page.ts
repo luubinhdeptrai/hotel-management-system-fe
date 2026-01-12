@@ -1,85 +1,180 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { Employee } from "@/lib/types/api";
-import { authService } from "@/lib/services/auth.service";
+import { useEffect, useState } from "react";
+import { bookingsApi } from "@/lib/api/bookings.api";
+import { reportsApi } from "@/lib/api/reports.api";
 
-interface DashboardStats {
-  totalRevenue: number;
-  totalBookings: number;
-  occupancyRate: number;
-  averageRoomRate: number;
-  availableRooms: number;
-  dirtyRooms: number;
+interface BookingResponse {
+  id: string;
+  primaryCustomer?: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+  };
+  bookingRooms?: Array<{
+    room?: {
+      roomNumber: string;
+    };
+  }>;
+  checkInDate?: string;
+  checkOutDate?: string;
 }
 
-interface RoomStatusData {
+interface OccupancyForecast {
+  forecast: Array<{
+    date: string;
+    period: string;
+    totalRooms: number;
+    occupiedRooms: number;
+    availableRooms: number;
+    occupancyRate: number;
+  }>;
+}
+
+interface OccupancyForecastResult {
+  forecast: Array<{
+    date: string;
+    period: string;
+    totalRooms: number;
+    occupiedRooms: number;
+    occupancyRate: number;
+  }>;
+}
+
+interface Arrival {
   id: string;
   name: string;
-  status: string;
-  count: number;
-  color: string;
-}
-import type { Arrival } from "@/components/dashboard/arrivals-table";
-import type { Departure } from "@/components/dashboard/departures-table";
-
-interface UseDashboardPageResult {
-  user: Employee | null;
-  stats: DashboardStats;
-  roomStatusData: RoomStatusData[];
-  arrivals: Arrival[];
-  departures: Departure[];
-  occupancyRate: number;
-  arrivalsCount: number;
-  departuresCount: number;
-  roomsNeedingCleaning: number;
-  handleLogout: () => void;
+  email?: string;
+  phone?: string;
+  roomNumbers?: string[];
+  checkInTime?: string;
+  totalGuests?: number;
 }
 
-export function useDashboardPage(): UseDashboardPageResult {
-  const router = useRouter();
-  const [user, setUser] = useState<Employee | null>(() => authService.getStoredUser());
+interface Departure {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  roomNumbers?: string[];
+  checkOutTime?: string;
+}
 
-  // Default empty data - should be fetched from API in production
-  const stats: DashboardStats = {
-    totalRevenue: 0,
-    totalBookings: 0,
-    occupancyRate: 0,
-    averageRoomRate: 0,
+export const useDashboardPage = () => {
+  const [stats, setStats] = useState({
     availableRooms: 0,
     dirtyRooms: 0,
-  };
+    occupancyRate: 0,
+    totalRevenue: 0,
+    roomRevenue: 0,
+    serviceRevenue: 0,
+    totalBookings: 0,
+    totalRoomNights: 0,
+    averageRoomRate: 0,
+    revenuePerAvailableRoom: 0,
+  });
 
-  const roomStatusData: RoomStatusData[] = [];
-  const arrivals: Arrival[] = [];
-  const departures: Departure[] = [];
-
-  const occupancyRate = useMemo(() => stats.occupancyRate, [stats]);
-  const roomsNeedingCleaning = 0;
-  const arrivalsCount = useMemo(() => arrivals.length, [arrivals]);
-  const departuresCount = useMemo(() => departures.length, [departures]);
+  const [occupancyData, setOccupancyData] = useState<OccupancyForecast | null>(null);
+  const [arrivalsData, setArrivalsData] = useState<Arrival[]>([]);
+  const [departuresData, setDeparturesData] = useState<Departure[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user === null) {
-      router.replace("/login");
-    }
-  }, [router, user]);
+    fetchDashboardData();
+  }, []);
 
-  const handleLogout = useCallback(() => {
-    authService.logout();
-    setUser(null);
-    router.push("/login");
-  }, [router]);
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // Get tomorrow's date to query for seeded bookings
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowISO = tomorrow.toISOString().split("T")[0];
+
+      // Query date range: tomorrow to tomorrow + 30 days
+      const endDate = new Date(tomorrow);
+      endDate.setDate(endDate.getDate() + 30);
+      const endDateISO = endDate.toISOString().split("T")[0];
+
+      const [revenueSummary, occupancyForecast, arrivals, departures] =
+        await Promise.all([
+          reportsApi.getRevenueSummary({
+            fromDate: tomorrowISO,
+            toDate: tomorrowISO,
+          }),
+          reportsApi.getOccupancyForecast({
+            startDate: tomorrowISO,
+            endDate: endDateISO,
+          }),
+          bookingsApi.getArrivalsToday(),
+          bookingsApi.getDeparturesToday(),
+        ]);
+
+      // Transform revenue data
+      if (revenueSummary?.summary) {
+        const summary = revenueSummary.summary;
+        setStats({
+          availableRooms: 0, // Will be set from room status
+          dirtyRooms: 0, // Will be set from room status
+          occupancyRate: summary.occupancyRate || 0,
+          totalRevenue: summary.totalRevenue || 0,
+          roomRevenue: summary.roomRevenue || 0,
+          serviceRevenue: summary.serviceRevenue || 0,
+          totalBookings: summary.totalBookings || 0,
+          totalRoomNights: summary.totalRoomNights || 0,
+          averageRoomRate: summary.averageDailyRate || 0,
+          revenuePerAvailableRoom: summary.revenuePerAvailableRoom || 0,
+        });
+      }
+
+      // Transform occupancy forecast data
+      if (occupancyForecast) {
+        const transformedForecast: OccupancyForecast = {
+          forecast: occupancyForecast.forecast.map((item) => ({
+            ...item,
+            availableRooms: item.totalRooms - item.occupiedRooms,
+          })),
+        };
+        setOccupancyData(transformedForecast);
+      }
+
+      // Transform arrivals
+      if (arrivals && Array.isArray(arrivals)) {
+        const transformedArrivals: Arrival[] = arrivals.map((booking: BookingResponse) => ({
+          id: booking.id,
+          name: booking.primaryCustomer?.fullName || "N/A",
+          email: booking.primaryCustomer?.email || "",
+          phone: booking.primaryCustomer?.phone || "",
+          roomNumbers: booking.bookingRooms?.map((br) => br.room?.roomNumber).filter(Boolean) as string[] || [],
+          checkInTime: booking.checkInDate || "",
+          totalGuests: booking.bookingRooms?.length || 0,
+        }));
+        setArrivalsData(transformedArrivals);
+      }
+
+      // Transform departures
+      if (departures && Array.isArray(departures)) {
+        const transformedDepartures: Departure[] = departures.map((booking: BookingResponse) => ({
+          id: booking.id,
+          name: booking.primaryCustomer?.fullName || "N/A",
+          email: booking.primaryCustomer?.email || "",
+          phone: booking.primaryCustomer?.phone || "",
+          roomNumbers: booking.bookingRooms?.map((br) => br.room?.roomNumber).filter(Boolean) as string[] || [],
+          checkOutTime: booking.checkOutDate || "",
+        }));
+        setDeparturesData(transformedDepartures);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
-    user,
     stats,
-    roomStatusData,
-    arrivals,
-    departures,
-    occupancyRate,
-    arrivalsCount,
-    departuresCount,
-    roomsNeedingCleaning,
-    handleLogout,
+    occupancyData,
+    arrivalsData,
+    departuresData,
+    loading,
   };
-}
+};

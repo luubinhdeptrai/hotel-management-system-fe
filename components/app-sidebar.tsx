@@ -91,6 +91,7 @@ const serviceManagement = [
     title: "Sự Kiện & Lịch",
     url: "/calendar-events",
     icon: ICONS.CALENDAR,
+    permission: "calendar:read",
   },
   {
     title: "Khuyến Mại",
@@ -135,6 +136,7 @@ const adminManagement = [
     title: "Hạng Khách Hàng",
     url: "/customer-ranks",
     icon: ICONS.STAR,
+    permission: "customerRank:read",
   },
   {
     title: "Khách Lưu Trú",

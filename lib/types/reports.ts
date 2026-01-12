@@ -15,18 +15,16 @@ export interface ReportFilter {
 
 export interface RevenueByDayData {
   date: string;
-  totalRevenue: number;
-  roomRevenue: number;
-  serviceRevenue: number;
-  numberOfBookings: number;
+  period: string;
+  revenue: number;
+  bookings: number;
 }
 
 export interface RevenueByMonthData {
-  month: string;
-  totalRevenue: number;
-  roomRevenue: number;
-  serviceRevenue: number;
-  numberOfBookings: number;
+  date: string;
+  period: string;
+  revenue: number;
+  bookings: number;
 }
 
 export interface OccupancyRateData {

@@ -11,11 +11,11 @@ interface RevenueByMonthReportProps {
 export function RevenueByMonthReport({
   filteredRevenueByMonthData,
 }: RevenueByMonthReportProps) {
-  const totalRevenue = filteredRevenueByMonthData.reduce((sum, item) => sum + item.totalRevenue, 0);
+  const totalRevenue = filteredRevenueByMonthData.reduce((sum, item) => sum + item.revenue, 0);
   const avgRevenue = filteredRevenueByMonthData.length > 0 ? totalRevenue / filteredRevenueByMonthData.length : 0;
   const maxMonth = filteredRevenueByMonthData.reduce((max, item) => 
-    item.totalRevenue > max.totalRevenue ? item : max, 
-    filteredRevenueByMonthData[0] || { totalRevenue: 0, month: "", roomRevenue: 0, serviceRevenue: 0, numberOfBookings: 0 }
+    item.revenue > max.revenue ? item : max, 
+    filteredRevenueByMonthData[0] || { revenue: 0, date: "", bookings: 0 }
   );
   
   // Parse month from string format "MM/YYYY" or "YYYY-MM"
@@ -31,7 +31,7 @@ export function RevenueByMonthReport({
     return { month: monthStr, year: "" };
   };
   
-  const maxMonthParsed = parseMonthYear(maxMonth.month);
+  const maxMonthParsed = parseMonthYear(maxMonth.date);
 
   return (
     <div className="space-y-6">
@@ -72,7 +72,7 @@ export function RevenueByMonthReport({
             <span className="text-sm font-semibold text-gray-600">Tháng cao nhất</span>
           </div>
           <p className="text-xl font-extrabold text-gray-900">
-            {new Intl.NumberFormat("vi-VN", { notation: "compact" }).format(maxMonth.totalRevenue)} ₫
+            {new Intl.NumberFormat("vi-VN", { notation: "compact" }).format(maxMonth.revenue)} ₫
           </p>
           <p className="text-xs text-gray-500 mt-2">
             Tháng {maxMonthParsed.month}/{maxMonthParsed.year}
@@ -93,9 +93,9 @@ export function RevenueByMonthReport({
 
         <div className="space-y-3">
           {filteredRevenueByMonthData.slice(-12).reverse().map((item, index) => {
-            const barWidth = maxMonth.totalRevenue > 0 ? (item.totalRevenue / maxMonth.totalRevenue) * 100 : 0;
-            const isMax = item.totalRevenue === maxMonth.totalRevenue;
-            const monthParsed = parseMonthYear(item.month);
+            const barWidth = maxMonth.revenue > 0 ? (item.revenue / maxMonth.revenue) * 100 : 0;
+            const isMax = item.revenue === maxMonth.revenue;
+            const monthParsed = parseMonthYear(item.date);
             
             return (
               <div key={index} className="space-y-1.5">
@@ -111,7 +111,7 @@ export function RevenueByMonthReport({
                     )}
                   </div>
                   <span className="font-bold text-gray-900">
-                    {new Intl.NumberFormat("vi-VN").format(item.totalRevenue)} ₫
+                    {new Intl.NumberFormat("vi-VN").format(item.revenue)} ₫
                   </span>
                 </div>
                 <div className="h-10 w-full overflow-hidden rounded-lg bg-gray-100">

@@ -29,6 +29,7 @@ export interface UseServicesReturn {
   // Utilities
   refresh: () => Promise<void>;
   clearError: () => void;
+  getActiveServices: () => Service[];
 }
 
 export function useServices(): UseServicesReturn {
@@ -150,6 +151,10 @@ export function useServices(): UseServicesReturn {
     setError(null);
   };
 
+  const getActiveServices = () => {
+    return services.filter((s) => s.isActive);
+  };
+
   return {
     services,
     isLoading,
@@ -160,5 +165,6 @@ export function useServices(): UseServicesReturn {
     deleteService,
     refresh,
     clearError,
+    getActiveServices,
   };
 }

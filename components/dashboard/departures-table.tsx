@@ -12,11 +12,11 @@ import { vi } from "date-fns/locale";
 
 export interface Departure {
   id: string;
-  guestName: string;
-  roomNumber: string;
-  roomType: string;
-  checkOutTime: Date;
-  totalAmount: number;
+  name: string;
+  email?: string;
+  phone?: string;
+  roomNumbers: string;
+  checkOutTime: string;
 }
 
 interface DeparturesTableProps {
@@ -24,13 +24,6 @@ interface DeparturesTableProps {
 }
 
 export function DeparturesTable({ departures }: DeparturesTableProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
   return (
     <Card className="shadow-sm">
       <CardHeader>
@@ -52,16 +45,13 @@ export function DeparturesTable({ departures }: DeparturesTableProps) {
                     Tên Khách
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700">
+                    Điện Thoại
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">
                     Phòng
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700">
-                    Loại Phòng
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
                     Giờ Trả
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700 text-right">
-                    Tổng Tiền
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -72,19 +62,16 @@ export function DeparturesTable({ departures }: DeparturesTableProps) {
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
                     <TableCell className="font-medium text-gray-900">
-                      {departure.guestName}
+                      {departure.name}
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {departure.roomNumber}
+                      {departure.phone || 'N/A'}
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {departure.roomType}
+                      {departure.roomNumbers}
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {format(departure.checkOutTime, "HH:mm", { locale: vi })}
-                    </TableCell>
-                    <TableCell className="text-gray-700 text-right font-medium">
-                      {formatCurrency(departure.totalAmount)}
+                      {departure.checkOutTime ? format(new Date(departure.checkOutTime), "HH:mm", { locale: vi }) : 'N/A'}
                     </TableCell>
                   </TableRow>
                 ))}

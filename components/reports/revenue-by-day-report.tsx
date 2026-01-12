@@ -21,13 +21,13 @@ export function RevenueByDayReport({
     : 0;
   
   const maxDay = filteredRevenueByDayData.reduce((max, item) => 
-    item.totalRevenue > max.totalRevenue ? item : max, 
-    filteredRevenueByDayData[0] || { totalRevenue: 0, date: "" }
+    item.revenue > max.revenue ? item : max, 
+    filteredRevenueByDayData[0] || { revenue: 0, date: "" }
   );
 
   const minDay = filteredRevenueByDayData.reduce((min, item) => 
-    item.totalRevenue < min.totalRevenue ? item : min, 
-    filteredRevenueByDayData[0] || { totalRevenue: 0, date: "" }
+    item.revenue < min.revenue ? item : min, 
+    filteredRevenueByDayData[0] || { revenue: 0, date: "" }
   );
 
   return (
@@ -69,7 +69,7 @@ export function RevenueByDayReport({
             <span className="text-sm font-semibold text-gray-600">Cao nhất</span>
           </div>
           <p className="text-lg font-extrabold text-gray-900">
-            {new Intl.NumberFormat("vi-VN", { notation: "compact" }).format(maxDay.totalRevenue)} ₫
+            {new Intl.NumberFormat("vi-VN", { notation: "compact" }).format(maxDay.revenue)} ₫
           </p>
           <p className="text-xs text-gray-600 mt-1">
             {maxDay.date ? new Date(maxDay.date).toLocaleDateString("vi-VN") : "-"}

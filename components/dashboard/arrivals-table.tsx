@@ -12,11 +12,12 @@ import { vi } from "date-fns/locale";
 
 export interface Arrival {
   id: string;
-  guestName: string;
-  roomNumber: string;
-  roomType: string;
-  checkInTime: Date;
-  numberOfGuests: number;
+  name: string;
+  email?: string;
+  phone?: string;
+  roomNumbers: string;
+  checkInTime: string;
+  totalGuests: number;
 }
 
 interface ArrivalsTableProps {
@@ -45,10 +46,10 @@ export function ArrivalsTable({ arrivals }: ArrivalsTableProps) {
                     Tên Khách
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700">
-                    Phòng
+                    Điện Thoại
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700">
-                    Loại Phòng
+                    Phòng
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700">
                     Giờ Đến
@@ -65,19 +66,19 @@ export function ArrivalsTable({ arrivals }: ArrivalsTableProps) {
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
                     <TableCell className="font-medium text-gray-900">
-                      {arrival.guestName}
+                      {arrival.name}
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {arrival.roomNumber}
+                      {arrival.phone || 'N/A'}
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {arrival.roomType}
+                      {arrival.roomNumbers}
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {format(arrival.checkInTime, "HH:mm", { locale: vi })}
+                      {arrival.checkInTime ? format(new Date(arrival.checkInTime), "HH:mm", { locale: vi }) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-gray-700 text-right">
-                      {arrival.numberOfGuests}
+                      {arrival.totalGuests}
                     </TableCell>
                   </TableRow>
                 ))}
