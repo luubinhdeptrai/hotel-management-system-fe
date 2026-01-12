@@ -35,6 +35,7 @@ import { CSS } from "@dnd-kit/utilities";
 interface ImageUploadProps {
   entityType: "roomType" | "service";
   entityId: string;
+  disableUpload?: boolean;
 }
 
 // Sortable Image Item
@@ -96,6 +97,7 @@ function SortableImageItem({
 export default function ImageUpload({
   entityType,
   entityId,
+  disableUpload = false,
 }: ImageUploadProps) {
   const [files, setFiles] = useState<File[]>([]);
 
@@ -190,31 +192,33 @@ export default function ImageUpload({
     return (
       <div className="space-y-6">
         {/* Upload Area - still allow uploads even if fetching failed */}
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
-            isDragActive
-              ? "border-blue-500 bg-blue-50"
-              : "border-gray-300 hover:border-gray-400"
-          }`}
-        >
-          <input {...getInputProps()} />
-          {isDragActive ? (
-            <p className="text-blue-500">Drop the images here...</p>
-          ) : (
-            <div>
-              <p className="text-gray-600">
-                Drag &amp; drop images here, or click to select
-              </p>
-              <p className="text-sm text-gray-400 mt-2">
-                Max 5MB per file, JPG/PNG/WEBP
-              </p>
-            </div>
-          )}
-        </div>
+        {!disableUpload && (
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
+              isDragActive
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            <input {...getInputProps()} />
+            {isDragActive ? (
+              <p className="text-blue-500">Drop the images here...</p>
+            ) : (
+              <div>
+                <p className="text-gray-600">
+                  Drag &amp; drop images here, or click to select
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Max 5MB per file, JPG/PNG/WEBP
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Selected Files */}
-        {files.length > 0 && (
+        {!disableUpload && files.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Selected Files ({files.length})</h3>
@@ -259,31 +263,33 @@ export default function ImageUpload({
   return (
     <div className="space-y-6">
       {/* Upload Area */}
-      <div
-        {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
-          isDragActive
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-300 hover:border-gray-400"
-        }`}
-      >
-        <input {...getInputProps()} />
-        {isDragActive ? (
-          <p className="text-blue-500">Drop the images here...</p>
-        ) : (
-          <div>
-            <p className="text-gray-600">
-              Drag &amp; drop images here, or click to select
-            </p>
-            <p className="text-sm text-gray-400 mt-2">
-              Max 5MB per file, JPG/PNG/WEBP
-            </p>
-          </div>
-        )}
-      </div>
+      {!disableUpload && (
+        <div
+          {...getRootProps()}
+          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
+            isDragActive
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-300 hover:border-gray-400"
+          }`}
+        >
+          <input {...getInputProps()} />
+          {isDragActive ? (
+            <p className="text-blue-500">Drop the images here...</p>
+          ) : (
+            <div>
+              <p className="text-gray-600">
+                Drag &amp; drop images here, or click to select
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Max 5MB per file, JPG/PNG/WEBP
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Selected Files */}
-      {files.length > 0 && (
+      {!disableUpload && files.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Selected Files ({files.length})</h3>

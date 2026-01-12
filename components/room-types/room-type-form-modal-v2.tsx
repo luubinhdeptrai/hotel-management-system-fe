@@ -125,8 +125,8 @@ export function RoomTypeFormModal({
         roomTypeData.roomTypeID = roomType.roomTypeID;
       }
 
-      // Pass selectedFiles correctly during creation
-      await onSave(roomTypeData, roomType ? undefined : selectedFiles);
+      // Pass selectedFiles correctly for both creation and update
+      await onSave(roomTypeData, selectedFiles);
       onOpenChange(false);
     } catch (error) {
       logger.error("Error saving room type:", error);
@@ -333,26 +333,33 @@ export function RoomTypeFormModal({
 
           {/* Image Management - Always show, but behavior differs for create vs edit */}
           <div className="grid gap-3 pt-4 border-t border-gray-200">
-            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              Hình ảnh{" "}
-              {!roomType && (
+            {/* Image Management */}
+            {roomType?.roomTypeID && (
+              <div className="mb-4">
+                <Label className="text-sm font-medium text-gray-700 block mb-2">
+                  Hình ảnh hiện có
+                </Label>
+                <ImageUpload
+                  entityType="roomType"
+                  entityId={roomType.roomTypeID}
+                  disableUpload={true}
+                />
+              </div>
+            )}
+
+            <div>
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                <Tag className="w-4 h-4" />
+                {roomType ? "Thêm ảnh mới" : "Hình ảnh"}
                 <span className="text-xs text-gray-500 font-normal">
-                  (sẽ upload sau khi tạo)
+                  (sẽ upload sau khi lưu)
                 </span>
-              )}
-            </Label>
-            {roomType?.roomTypeID ? (
-              <ImageUpload
-                entityType="roomType"
-                entityId={roomType.roomTypeID}
-              />
-            ) : (
+              </Label>
               <LocalImageUpload
                 files={selectedFiles}
                 onFilesChange={setSelectedFiles}
               />
-            )}
+            </div>
           </div>
         </div>
 

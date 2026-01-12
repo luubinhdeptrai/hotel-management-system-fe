@@ -75,13 +75,14 @@ export const imageApi = {
 
   // Get all images
   getRoomTypeImages: async (roomTypeId: string): Promise<ImageResponse[]> => {
-    return apiFetch<ImageResponse[]>(
+    const response = await apiFetch<any>(
       `/employee/room-types/${roomTypeId}/images`,
       {
         method: "GET",
         requiresAuth: true,
       }
     );
+    return response.data || response;
   },
 
   // Delete image
@@ -169,10 +170,14 @@ export const imageApi = {
   },
 
   getServiceImages: async (serviceId: string): Promise<ImageResponse[]> => {
-    return apiFetch<ImageResponse[]>(`/employee/services/${serviceId}/images`, {
-      method: "GET",
-      requiresAuth: true,
-    });
+    const response = await apiFetch<any>(
+      `/employee/services/${serviceId}/images`,
+      {
+        method: "GET",
+        requiresAuth: true,
+      }
+    );
+    return response.data || response;
   },
 
   deleteServiceImage: async (

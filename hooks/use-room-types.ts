@@ -6,6 +6,7 @@ import type {
   RoomType as ApiRoomType,
   Room as ApiRoom,
   RoomTag as ApiRoomTag,
+  RoomTypeImage,
   CreateRoomTypeRequest,
   UpdateRoomTypeRequest,
 } from "@/lib/types/api";
@@ -22,6 +23,7 @@ export interface RoomType {
   price: number;
   tags: string[]; // Array of tag IDs
   tagDetails?: ApiRoomTag[]; // Full tag objects
+  images: RoomTypeImage[];
 }
 
 // Map API RoomType to local RoomType format
@@ -50,6 +52,7 @@ function mapApiToRoomType(apiType: ApiRoomType): RoomType {
     price,
     tags: tagIds,
     tagDetails: tagDetails,
+    images: apiType.roomTypeImages || [],
   };
 }
 
@@ -89,7 +92,31 @@ export function useRoomTypes() {
         sortBy: "name",
         sortOrder: "asc",
       });
-      setRoomTypes(result.data.map(mapApiToRoomType));
+
+      // Map initial basic data
+      const basicRoomTypes = result.data.map(mapApiToRoomType);
+
+      // Fetch images for each room type in parallel
+      // We do this because the list endpoint might not include the full image relation
+      const roomTypesWithImages = await Promise.all(
+        basicRoomTypes.map(async (rt) => {
+          try {
+            const images = await imageApi.getRoomTypeImages(rt.roomTypeID);
+            return {
+              ...rt,
+              images: images || [],
+            };
+          } catch (err) {
+            logger.error(
+              `Failed to load images for room type ${rt.roomTypeID}`,
+              err
+            );
+            return rt; // Return without images on error
+          }
+        })
+      );
+
+      setRoomTypes(roomTypesWithImages);
       setError(null);
     } catch (err) {
       const message =
@@ -171,6 +198,19 @@ export function useRoomTypes() {
     files?: File[]
   ) => {
     try {
+      // Helper to create temp image objects for optimistic UI
+      const createTempImages = (files: File[]): RoomTypeImage[] => {
+        return files.map((file) => ({
+          id: `temp-${Math.random().toString(36).substr(2, 9)}`,
+          url: URL.createObjectURL(file),
+          secureUrl: URL.createObjectURL(file),
+          cloudinaryId: `temp-${Math.random()}`,
+          sortOrder: 0,
+          isDefault: false,
+          createdAt: new Date().toISOString(),
+        }));
+      };
+
       if (editingRoomType) {
         // Update existing room type
         const updateData: UpdateRoomTypeRequest = {
@@ -184,13 +224,60 @@ export function useRoomTypes() {
           editingRoomType.roomTypeID,
           updateData
         );
+
+        // Optimistic UI update: append new temporary images to existing ones
+        const updatedLocal = mapApiToRoomType(updated);
+        const newTempImages = files ? createTempImages(files) : [];
+        updatedLocal.images = [
+          ...(editingRoomType.images || []),
+          ...newTempImages,
+        ];
+
         setRoomTypes((prev) =>
           prev.map((rt) =>
-            rt.roomTypeID === editingRoomType.roomTypeID
-              ? mapApiToRoomType(updated)
-              : rt
+            rt.roomTypeID === editingRoomType.roomTypeID ? updatedLocal : rt
           )
         );
+
+        // Close modal immediately
+        setModalOpen(false);
+        setEditingRoomType(null);
+        setError(null);
+
+        // Handle image updates in background
+        (async () => {
+          try {
+            // If files provided, upload them
+            if (files && files.length > 0) {
+              const compressedFiles = await compressFiles(files);
+              await imageApi.uploadRoomTypeImages(
+                editingRoomType.roomTypeID,
+                compressedFiles
+              );
+              logger.info(
+                `Uploaded ${files.length} images for room type ${editingRoomType.roomTypeID}`
+              );
+            }
+
+            // Always fetch fresh images after update to ensure sync
+            const freshImages = await imageApi.getRoomTypeImages(
+              editingRoomType.roomTypeID
+            );
+
+            setRoomTypes((prev) =>
+              prev.map((rt) =>
+                rt.roomTypeID === editingRoomType.roomTypeID
+                  ? { ...rt, images: freshImages || [] }
+                  : rt
+              )
+            );
+          } catch (bgError) {
+            logger.error(
+              "Background update for room type images failed:",
+              bgError
+            );
+          }
+        })();
       } else {
         // Create new room type
         const createData: CreateRoomTypeRequest = {
@@ -202,36 +289,49 @@ export function useRoomTypes() {
         };
         const created = await roomService.createRoomType(createData);
 
-        // If files provided, upload them immediately after creation
+        // Optimistic UI update: add to list with temporary images
+        const newLocal = mapApiToRoomType(created);
         if (files && files.length > 0) {
-          try {
-            // We need to import imageApi dynamically or statically.
-            // Since we're in a hook, static import is fine but need to add it to top of file
-            // Just importing it here for clarity of the replacement block, but realistically need to add import at top
-            // Assuming imageApi will be imported at top.
-
-            // Compress files before upload
-            const compressedFiles = await compressFiles(files);
-
-            await imageApi.uploadRoomTypeImages(created.id, compressedFiles);
-            logger.info(
-              `Uploaded ${files.length} images for new room type ${created.id}`
-            );
-          } catch (uploadError) {
-            logger.error(
-              "Error uploading images after room type creation:",
-              uploadError
-            );
-            // We don't fail the whole creation if image upload fails, but could show a warning
-            // Or just log it. The user can see the room type created and try uploading again.
-          }
+          newLocal.images = createTempImages(files);
         }
 
-        setRoomTypes((prev) => [...prev, mapApiToRoomType(created)]);
+        setRoomTypes((prev) => [...prev, newLocal]);
+
+        // Close modal immediately
+        setModalOpen(false);
+        setEditingRoomType(null);
+        setError(null);
+
+        // Handle image upload in background
+        if (files && files.length > 0) {
+          (async () => {
+            try {
+              const compressedFiles = await compressFiles(files);
+              await imageApi.uploadRoomTypeImages(created.id, compressedFiles);
+              logger.info(
+                `Uploaded ${files.length} images for new room type ${created.id}`
+              );
+
+              // Fetch fresh images to get correct URLs
+              const freshImages = await imageApi.getRoomTypeImages(created.id);
+
+              // Update the item in the list with images
+              setRoomTypes((prev) =>
+                prev.map((rt) =>
+                  rt.roomTypeID === created.id
+                    ? { ...rt, images: freshImages || [] }
+                    : rt
+                )
+              );
+            } catch (bgError) {
+              logger.error(
+                "Background upload for new room type failed:",
+                bgError
+              );
+            }
+          })();
+        }
       }
-      setModalOpen(false);
-      setEditingRoomType(null);
-      setError(null);
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : "Không thể lưu loại phòng";

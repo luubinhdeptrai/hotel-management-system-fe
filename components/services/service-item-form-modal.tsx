@@ -29,11 +29,12 @@ import {
   SERVICE_GROUP_LABELS,
 } from "@/lib/types/service";
 import ImageUpload from "@/components/ImageUpload";
+import LocalImageUpload from "@/components/LocalImageUpload";
 
 interface ServiceItemFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ServiceItemFormData) => void;
+  onSubmit: (data: ServiceItemFormData, files?: File[]) => void;
   service?: ServiceItem;
   categories: ServiceCategory[];
   mode: "create" | "edit";
@@ -69,33 +70,37 @@ export function ServiceItemFormModal({
         };
 
   const [formData, setFormData] = useState<ServiceItemFormData>(initialData);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Load data when modal opens or service changes
   useEffect(() => {
     if (isOpen) {
-      if (service && mode === "edit") {
-        setFormData({
-          serviceName: service.serviceName,
-          categoryID: service.categoryID,
-          serviceGroup: service.serviceGroup,
-          price: service.price,
-          unit: service.unit,
-          description: service.description || "",
-          imageUrl: service.imageUrl || "",
-        });
-      } else {
-        setFormData({
-          serviceName: "",
-          categoryID: "",
-          serviceGroup: "F&B" as ServiceGroup,
-          price: 0,
-          unit: "",
-          description: "",
-          imageUrl: "",
-        });
-      }
-      setErrors({});
+      setTimeout(() => {
+        setSelectedFiles([]); // Reset files on open
+        if (service && mode === "edit") {
+          setFormData({
+            serviceName: service.serviceName,
+            categoryID: service.categoryID,
+            serviceGroup: service.serviceGroup,
+            price: service.price,
+            unit: service.unit,
+            description: service.description || "",
+            imageUrl: service.imageUrl || "",
+          });
+        } else {
+          setFormData({
+            serviceName: "",
+            categoryID: "",
+            serviceGroup: "F&B" as ServiceGroup,
+            price: 0,
+            unit: "",
+            description: "",
+            imageUrl: "",
+          });
+        }
+        setErrors({});
+      }, 0);
     }
   }, [isOpen, service, mode]);
 
@@ -133,7 +138,7 @@ export function ServiceItemFormModal({
       return;
     }
 
-    onSubmit(formData);
+    onSubmit(formData, selectedFiles);
     onClose();
   };
 
@@ -160,7 +165,7 @@ export function ServiceItemFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             {mode === "create" ? "Thêm dịch vụ mới" : "Chỉnh sửa dịch vụ"}
@@ -321,29 +326,29 @@ export function ServiceItemFormModal({
           </div>
 
           {/* Image Management - Show upload component when editing, text input when creating */}
-          {service?.serviceID && mode === "edit" ? (
-            <div className="space-y-2">
-              <Label>Hình ảnh</Label>
-              <ImageUpload entityType="service" entityId={service.serviceID} />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">URL Hình ảnh</Label>
-              <Input
-                id="imageUrl"
-                type="url"
-                value={formData.imageUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, imageUrl: e.target.value })
-                }
-                placeholder="https://example.com/service.jpg"
+          {service?.serviceID && mode === "edit" && (
+            <div className="space-y-2 mb-4">
+              <Label>Hình ảnh hiện có</Label>
+              <ImageUpload
+                entityType="service"
+                entityId={service.serviceID}
+                disableUpload={true}
               />
-              <p className="text-xs text-gray-500">
-                Nhập đường dẫn URL của hình ảnh dịch vụ (không bắt buộc). Sau
-                khi tạo, bạn có thể upload hình ảnh từ máy tính.
-              </p>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              {mode === "create" ? "Hình ảnh" : "Thêm ảnh mới"}
+              <span className="text-xs text-gray-500 font-normal">
+                (sẽ upload sau khi lưu)
+              </span>
+            </Label>
+            <LocalImageUpload
+              files={selectedFiles}
+              onFilesChange={setSelectedFiles}
+            />
+          </div>
 
           <DialogFooter className="gap-3">
             <Button
