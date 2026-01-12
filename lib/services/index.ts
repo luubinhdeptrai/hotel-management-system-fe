@@ -7,6 +7,7 @@ export { authService } from "./auth.service";
 export { bookingService } from "./booking.service";
 export { customerService } from "./customer.service";
 export { employeeService } from "./employee.service";
+export { permissionService } from "./permission.service";
 export { roomService } from "./room.service";
 export { roomTagService } from "./roomTag.service";
 export { serviceManagementService } from "./service.service";
