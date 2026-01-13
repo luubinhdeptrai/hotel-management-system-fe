@@ -39,29 +39,6 @@ export default function RoomTypesPage() {
     handleFilterByPrice,
     handleFilterByCapacity,
     handleResetFilters,
-  } = useRoomTypes();
-
-  // Debug component to show user state
-  const DebugUserState = () => {
-    const { user, isAuthenticated } = useAuth();
-    const { actions, isLoading: permissionsLoading } = usePermissions();
-    
-    return (
-      <div className="fixed top-4 right-4 bg-black text-white p-4 rounded-lg text-xs z-50 max-w-md">
-        <h3 className="font-bold mb-2">Debug Info</h3>
-        <div>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</div>
-        <div>User: {user ? JSON.stringify({
-          id: user.id,
-          name: user.name,
-          role: user.role,
-          roleRef: user.roleRef
-        }, null, 2) : 'null'}</div>
-        <div>Permissions Loading: {permissionsLoading ? 'Yes' : 'No'}</div>
-        <div>Actions: {actions.join(', ')}</div>
-      </div>
-    );
-  };
-
   const stats = useMemo(() => {
     if (allRoomTypes.length === 0) {
       return {
@@ -200,8 +177,6 @@ export default function RoomTypesPage() {
         roomTags={roomTags}
         onSave={handleSave}
       />
-
-      <DebugUserState />
     </div>
   );
 }

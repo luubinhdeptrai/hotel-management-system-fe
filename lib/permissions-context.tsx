@@ -24,12 +24,10 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const loadPermissions = useCallback(async () => {
-    console.log("Loading permissions for user:", user);
     setIsLoading(true);
     setError(null);
     try {
       const userPermissions = await permissionService.getUserPermissions();
-      console.log("Loaded permissions:", userPermissions);
       setActions(userPermissions.actions);
       setPermissions(userPermissions.permissions);
 
@@ -44,7 +42,6 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       );
 
       if (isAdmin) {
-        console.log("Ensuring admin permissions are set");
         setActions([
           // All permissions for admin
           "employee:create", "employee:read", "employee:update", "employee:delete",
@@ -71,7 +68,6 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       logger.error("Failed to load permissions:", err);
 
       // Fallback: If permission endpoint fails, grant permissions based on role
-      console.log("Using fallback permissions for role:", user?.role, "roleRef:", user?.roleRef);
       const isAdmin = user && (
         user.role === "ADMIN" ||
         user.roleRef?.name === "ADMIN" ||
