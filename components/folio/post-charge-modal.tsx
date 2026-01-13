@@ -73,9 +73,9 @@ export function PostChargeModal({
     setSelectedItemId(itemId);
 
     if (type === "SERVICE_CHARGE") {
-      const selectedItem = activeServices.find(s => s.serviceID === itemId);
+      const selectedItem = activeServices.find(s => s.id === itemId);
       if (selectedItem) {
-        setDescription(selectedItem.serviceName);
+        setDescription(selectedItem.name);
         setAmount(selectedItem.price.toString());
       }
     }
@@ -162,8 +162,8 @@ export function PostChargeModal({
                 </SelectTrigger>
                 <SelectContent>
                   {type === "SERVICE_CHARGE" && activeServices.map((service) => (
-                    <SelectItem key={service.serviceID} value={service.serviceID}>
-                      {service.serviceName} - {new Intl.NumberFormat("vi-VN", {
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.name} - {new Intl.NumberFormat("vi-VN", {
                         style: "currency",
                         currency: "VND",
                       }).format(service.price)}

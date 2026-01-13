@@ -82,7 +82,7 @@ export function useStaff() {
         name: data.fullName,
         username: data.email.split("@")[0] || `emp_${Date.now()}`, // Generate username from email
         password: "DefaultPassword123", // TODO: Add password field or generate secure password
-        role: "STAFF", // Default role
+        roleId: "", // TODO: Set proper role ID from available roles
       });
 
       const newEmployee = mapApiToEmployee(apiEmployee);
@@ -133,7 +133,7 @@ export function useStaff() {
     try {
       // Update employee role
       const apiEmployee = await employeeService.updateEmployee(employeeId, {
-        role: mapRoleToApi(accountData.role),
+        roleId: mapRoleToApi(accountData.role),
       });
 
       const updatedEmployee = mapApiToEmployee(apiEmployee);

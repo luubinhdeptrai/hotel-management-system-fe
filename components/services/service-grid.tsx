@@ -2,74 +2,49 @@
 
 import { useState, useMemo } from "react";
 import { ServiceCard } from "./service-card";
-import { ServiceItem, ServiceCategory } from "@/lib/types/service";
+import type { Service } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
 import { PermissionGuard } from "@/components/permission-guard";
 
 interface ServiceGridProps {
-  services: ServiceItem[];
-  categories: ServiceCategory[];
-  onEdit: (service: ServiceItem) => void;
-  onDelete: (serviceID: string) => void;
-  onToggleActive?: (serviceID: string, isActive: boolean) => void;
+  services: Service[];
+  onEdit: (service: Service) => void;
+  onDelete: (serviceId: string) => void;
   onCreate?: () => void;
 }
 
 export function ServiceGrid({
   services,
-  categories,
   onEdit,
   onDelete,
-  onToggleActive,
   onCreate,
 }: ServiceGridProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<boolean | null>(null);
 
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
       // Search filter
-      const matchesSearch = service.serviceName
+      const matchesSearch = service.name
         .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-        service.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // Category filter
-      const matchesCategory = !selectedCategory || 
-        service.categoryID === selectedCategory;
+        .includes(searchTerm.toLowerCase());
       
       // Active filter
       const matchesActive = activeFilter === null || 
         service.isActive === activeFilter;
 
-      return matchesSearch && matchesCategory && matchesActive;
+      return matchesSearch && matchesActive;
     });
-  }, [services, searchTerm, selectedCategory, activeFilter]);
-
-  // Group services by category for display
-  const groupedServices = useMemo(() => {
-    const groups: Record<string, ServiceItem[]> = {};
-    filteredServices.forEach((service) => {
-      const categoryName = service.category?.categoryName || "Khác";
-      if (!groups[categoryName]) {
-        groups[categoryName] = [];
-      }
-      groups[categoryName].push(service);
-    });
-    return groups;
-  }, [filteredServices]);
+  }, [services, searchTerm, activeFilter]);
 
   const clearFilters = () => {
     setSearchTerm("");
-    setSelectedCategory(null);
     setActiveFilter(null);
   };
 
-  const hasFilters = searchTerm || selectedCategory || activeFilter !== null;
+  const hasFilters = searchTerm || activeFilter !== null;
 
   return (
     <div className="space-y-6">
@@ -82,7 +57,7 @@ export function ServiceGrid({
                 {ICONS.SEARCH}
               </div>
               <Input
-                placeholder="Tìm kiếm dịch vụ theo tên hoặc mô tả..."
+                placeholder="Tìm kiếm dịch vụ theo tên..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-12 pl-12 pr-4 border-2 border-gray-300 rounded-xl font-semibold text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all shadow-sm"
@@ -97,7 +72,6 @@ export function ServiceGrid({
               )}
             </div>
           </div>
-          
           <div className="flex gap-3 flex-wrap">
             {hasFilters && (
               <Button
@@ -122,38 +96,6 @@ export function ServiceGrid({
             )}
           </div>
         </div>
-      </div>
-
-      {/* Category Filter Pills */}
-      <div className="flex flex-wrap gap-3">
-        <Badge
-          variant={selectedCategory === null ? "default" : "outline"}
-          className={`cursor-pointer transition-all h-10 px-5 text-sm font-bold ${
-            selectedCategory === null 
-              ? "bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-md hover:shadow-lg" 
-              : "hover:bg-blue-50 hover:border-blue-300"
-          }`}
-          onClick={() => setSelectedCategory(null)}
-        >
-          Tất cả ({services.length})
-        </Badge>
-        {categories.map((category) => {
-          const count = services.filter(s => s.categoryID === category.categoryID).length;
-          return (
-            <Badge
-              key={category.categoryID}
-              variant={selectedCategory === category.categoryID ? "default" : "outline"}
-              className={`cursor-pointer transition-all h-10 px-5 text-sm font-bold ${
-                selectedCategory === category.categoryID 
-                  ? "bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-md hover:shadow-lg" 
-                  : "hover:bg-blue-50 hover:border-blue-300"
-              }`}
-              onClick={() => setSelectedCategory(category.categoryID)}
-            >
-              {category.categoryName} ({count})
-            </Badge>
-          );
-        })}
       </div>
 
       {/* Status Filter */}
@@ -193,7 +135,7 @@ export function ServiceGrid({
         </span>
       </div>
 
-      {/* Service Grid by Category */}
+      {/* Service Grid */}
       {filteredServices.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-linear-to-br from-gray-50 to-white rounded-2xl border-2 border-dashed border-gray-300">
           <div className="w-20 h-20 mb-6 flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-50 rounded-full">
@@ -219,46 +161,18 @@ export function ServiceGrid({
             </Button>
           )}
         </div>
-      ) : selectedCategory ? (
-        // Show flat grid when category is selected
+      ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredServices.map((service) => (
             <ServiceCard
-              key={service.serviceID}
+              key={service.id}
               service={service}
               onEdit={onEdit}
               onDelete={onDelete}
-              onToggleActive={onToggleActive}
             />
-          ))}
-        </div>
-      ) : (
-        // Show grouped by category
-        <div className="space-y-8">
-          {Object.entries(groupedServices).map(([categoryName, categoryServices]) => (
-            <div key={categoryName}>
-              <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900">{categoryName}</h3>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700 font-bold px-3 py-1">
-                  {categoryServices.length}
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {categoryServices.map((service) => (
-                  <ServiceCard
-                    key={service.serviceID}
-                    service={service}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onToggleActive={onToggleActive}
-                  />
-                ))}
-              </div>
-            </div>
           ))}
         </div>
       )}
     </div>
   );
 }
-
