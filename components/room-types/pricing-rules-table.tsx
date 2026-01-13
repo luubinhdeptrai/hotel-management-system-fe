@@ -2,6 +2,7 @@ import type { PricingRule, CreatePricingRuleRequest, UpdatePricingRuleRequest } 
 import type { RoomType } from "@/lib/types/room";
 import { useState } from "react";
 import { GripVertical, Edit2, Trash2, CheckCircle2, Circle } from "lucide-react";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface PricingRulesTableProps {
   rules: PricingRule[];
@@ -119,39 +120,45 @@ export function PricingRulesTable({
             </div>
 
             {/* Active Toggle */}
-            <button
-              onClick={() => onToggleActive(rule.id, !rule.isActive)}
-              className="flex-shrink-0 p-2 rounded-lg transition-colors hover:bg-gray-100"
-              title={rule.isActive ? "Click to disable" : "Click to enable"}
-            >
-              {rule.isActive ? (
-                <CheckCircle2 size={20} className="text-green-600" />
-              ) : (
-                <Circle size={20} className="text-gray-400" />
-              )}
-            </button>
+            <PermissionGuard permission="roomType:update">
+              <button
+                onClick={() => onToggleActive(rule.id, !rule.isActive)}
+                className="flex-shrink-0 p-2 rounded-lg transition-colors hover:bg-gray-100"
+                title={rule.isActive ? "Click to disable" : "Click to enable"}
+              >
+                {rule.isActive ? (
+                  <CheckCircle2 size={20} className="text-green-600" />
+                ) : (
+                  <Circle size={20} className="text-gray-400" />
+                )}
+              </button>
+            </PermissionGuard>
 
             {/* Edit Button */}
-            <button
-              onClick={() => onEdit(rule)}
-              className="flex-shrink-0 p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-              title="Edit rule"
-            >
-              <Edit2 size={18} />
-            </button>
+            <PermissionGuard permission="roomType:update">
+              <button
+                onClick={() => onEdit(rule)}
+                className="flex-shrink-0 p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                title="Edit rule"
+              >
+                <Edit2 size={18} />
+              </button>
+            </PermissionGuard>
 
             {/* Delete Button */}
-            <button
-              onClick={() => {
-                if (window.confirm(`Bạn có chắc muốn xóa quy tắc "${rule.name}"?`)) {
-                  onDelete(rule.id);
-                }
-              }}
-              className="flex-shrink-0 p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-              title="Delete rule"
-            >
-              <Trash2 size={18} />
-            </button>
+            <PermissionGuard permission="roomType:delete">
+              <button
+                onClick={() => {
+                  if (window.confirm(`Bạn có chắc muốn xóa quy tắc "${rule.name}"?`)) {
+                    onDelete(rule.id);
+                  }
+                }}
+                className="flex-shrink-0 p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                title="Delete rule"
+              >
+                <Trash2 size={18} />
+              </button>
+            </PermissionGuard>
           </div>
         ))}
       </div>

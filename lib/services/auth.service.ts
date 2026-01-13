@@ -154,6 +154,15 @@ export const authService = {
     const userData = (response && typeof response === "object" && "data" in response)
       ? (response as any).data
       : response;
+    
+    // Update stored user with fresh data
+    if (userData && typeof window !== "undefined") {
+      localStorage.setItem(
+        AUTH_STORAGE_KEYS.USER,
+        JSON.stringify(userData)
+      );
+    }
+    
     return userData;
   },
 

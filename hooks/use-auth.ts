@@ -33,14 +33,17 @@ export function useAuth(): UseAuthReturn {
         const storedUser = authService.getStoredUser();
 
         if (storedUser && authService.isAuthenticated()) {
+          console.log("Found stored user:", storedUser);
           setUser(storedUser);
 
-          // Optionally verify with backend
+          // Always try to get fresh user data from profile endpoint
           try {
             const freshUser = await authService.getCurrentUser();
+            console.log("Fresh user from API:", freshUser);
             setUser(freshUser);
           } catch {
             // If API fails but we have stored user, keep using it
+            console.warn("Failed to refresh user from API, using stored user");
             logger.warn("Failed to refresh user from API, using stored user");
           }
         }
@@ -62,7 +65,19 @@ export function useAuth(): UseAuthReturn {
 
       try {
         const response = await authService.login(username, password);
-        setUser(response.employee);
+        console.log("Login response:", response);
+        console.log("Employee from login:", response.employee);
+        
+        // Try to get the full user profile to ensure we have roleRef
+        try {
+          const fullUser = await authService.getCurrentUser();
+          console.log("Full user from profile:", fullUser);
+          setUser(fullUser);
+        } catch (profileError) {
+          console.warn("Could not get full user profile, using login response:", profileError);
+          setUser(response.employee);
+        }
+        
         return true;
       } catch (err) {
         if (err instanceof ApiError) {

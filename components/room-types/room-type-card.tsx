@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import {
 import { RoomType } from "@/hooks/use-room-types";
 import { ICONS } from "@/src/constants/icons.enum";
 import { formatCurrency } from "@/lib/utils";
+import { PermissionGuard } from "@/components/permission-guard";
 
 // Removed static images for debugging
 // const ROOM_IMAGES: Record<string, string> = { ... };
@@ -41,9 +42,9 @@ export function RoomTypeCard({
       ? roomType.images[0].secureUrl || roomType.images[0].url
       : "";
 
-  useEffect(() => {
-    setImageError(false);
-  }, [imageUrl]);
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   const handleDeleteConfirm = () => {
     onDelete(roomType.roomTypeID);
@@ -147,23 +148,27 @@ export function RoomTypeCard({
 
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t-2 border-gray-100">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(roomType)}
-              className="flex-1 h-11 text-primary-600 border-2 border-primary-200 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-400 transition-all font-bold text-sm hover:scale-105"
-            >
-              <span className="w-5 h-5 mr-2">{ICONS.EDIT}</span>
-              Chỉnh sửa
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDeleteConfirm(true)}
-              className="h-11 px-4 text-error-600 border-2 border-error-200 hover:bg-error-50 hover:text-error-700 hover:border-error-400 transition-all font-bold hover:scale-105"
-            >
-              <span className="w-5 h-5">{ICONS.TRASH}</span>
-            </Button>
+            <PermissionGuard permission="roomType:update">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(roomType)}
+                className="flex-1 h-11 text-primary-600 border-2 border-primary-200 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-400 transition-all font-bold text-sm hover:scale-105"
+              >
+                <span className="w-5 h-5 mr-2">{ICONS.EDIT}</span>
+                Chỉnh sửa
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard permission="roomType:delete">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteConfirm(true)}
+                className="h-11 px-4 text-error-600 border-2 border-error-200 hover:bg-error-50 hover:text-error-700 hover:border-error-400 transition-all font-bold hover:scale-105"
+              >
+                <span className="w-5 h-5">{ICONS.TRASH}</span>
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
       </div>
@@ -189,6 +194,7 @@ export function RoomTypeCard({
                     alt={roomType.roomTypeName}
                     fill
                     className="object-cover"
+                    onError={handleImageError}
                   />
                 ) : (
                   <div className="w-full h-full bg-primary-100 flex items-center justify-center">
