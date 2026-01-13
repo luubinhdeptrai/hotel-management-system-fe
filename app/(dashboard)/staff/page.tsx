@@ -99,23 +99,30 @@ export default function StaffPageNew() {
   const loadEmployees = async () => {
     setLoading(true);
     try {
-      // Load ALL employees (for stats)
+      // Load ALL employees
       const allResponse = await employeeService.getEmployees({
         page: 1,
         limit: 100,
       });
       setAllEmployees(allResponse.data);
 
-      // Load filtered employees (for display)
-      const params: Record<string, number | string> = {
-        page: 1,
-        limit: 100,
-      };
-      if (searchQuery) params.search = searchQuery;
-      if (roleFilter !== "ALL") params.role = roleFilter;
+      // Filter on client side
+      let filtered = allResponse.data;
+      
+      // Apply search filter
+      if (searchQuery) {
+        filtered = filtered.filter((emp) =>
+          emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          emp.username.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
 
-      const response = await employeeService.getEmployees(params);
-      setEmployees(response.data);
+      // Apply role filter
+      if (roleFilter !== "ALL") {
+        filtered = filtered.filter((emp) => getEmployeeRole(emp) === roleFilter);
+      }
+
+      setEmployees(filtered);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Vui lòng thử lại sau";
       toast.error("Không thể tải danh sách nhân viên", {

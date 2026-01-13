@@ -188,7 +188,7 @@ export function RoomTypeCard({
           <div className="py-4">
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
               <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
-                {!imageError ? (
+                {!imageError && imageUrl ? (
                   <Image
                     src={imageUrl}
                     alt={roomType.roomTypeName}
