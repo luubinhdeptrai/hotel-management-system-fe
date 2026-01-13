@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -13,53 +12,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ServiceItem } from "@/lib/types/service";
+import type { Service } from "@/lib/types/api";
 import { ICONS } from "@/src/constants/icons.enum";
 import { formatCurrency } from "@/lib/utils";
-import { PermissionGuard } from "@/components/permission-guard";
-
-// Category icons
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  Minibar: ICONS.WINE,
-  "Giặt ủi": ICONS.SHIRT,
-  "Spa & Massage": ICONS.SPA,
-  "Ăn uống": ICONS.UTENSILS,
-  "Thuê xe": ICONS.CAR,
-  "Phụ thu": ICONS.SURCHARGE,
-  "Phí phạt": ICONS.PENALTY,
-};
+import { imageApi, type ImageResponse } from "@/lib/api/image.api";
 
 interface ServiceCardProps {
-  service: ServiceItem;
-  onEdit: (service: ServiceItem) => void;
-  onDelete: (serviceID: string) => void;
-  onToggleActive?: (serviceID: string, isActive: boolean) => void;
+  service: Service;
+  onEdit: (service: Service) => void;
+  onDelete: (serviceId: string) => void;
 }
 
 export function ServiceCard({
   service,
   onEdit,
   onDelete,
-  onToggleActive,
 }: ServiceCardProps) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [firstImage, setFirstImage] = useState<ImageResponse | null>(null);
+  const [loadingImage, setLoadingImage] = useState(true);
 
-  const categoryName = service.category?.categoryName || "Khác";
-  const categoryIcon = CATEGORY_ICONS[categoryName] || ICONS.PACKAGE;
+  // Fetch service images from image API
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        setLoadingImage(true);
+        const images = await imageApi.getServiceImages(service.id);
+        if (images && images.length > 0) {
+          setFirstImage(images[0]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch service images:", err);
+      } finally {
+        setLoadingImage(false);
+      }
+    };
 
-  // Prioritize uploaded images, sort by sortOrder
-  const sortedImages = Array.isArray(service.images)
-    ? service.images
-        .slice()
-        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-    : [];
-  const firstImage =
-    sortedImages && sortedImages.length > 0 ? sortedImages[0] : null;
-  const imageUrl = firstImage?.url || firstImage?.secureUrl || service.imageUrl;
+    fetchImages();
+  }, [service.id]);
+
+  // Get image URL from fetched image or service object
+  const imageUrl = firstImage?.secureUrl || firstImage?.url || null;
 
   const handleDeleteConfirm = () => {
-    onDelete(service.serviceID);
+    onDelete(service.id);
     setDeleteConfirm(false);
   };
 
@@ -68,10 +65,10 @@ export function ServiceCard({
       <div className="group relative bg-white rounded-2xl shadow-md border-2 border-gray-200 overflow-hidden hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300">
         {/* Image Header */}
         <div className="relative h-40 overflow-hidden">
-          {imageUrl && !imageError ? (
+          {!loadingImage && imageUrl && !imageError ? (
             <Image
               src={imageUrl}
-              alt={service.serviceName}
+              alt={service.name}
               fill
               className="object-cover group-hover:scale-110 transition-transform duration-500"
               onError={() => setImageError(true)}
@@ -80,7 +77,7 @@ export function ServiceCard({
           ) : (
             <div className="w-full h-full bg-linear-to-br from-blue-50 to-blue-100 flex items-center justify-center">
               <div className="w-12 h-12 text-blue-300 flex items-center justify-center">
-                {categoryIcon}
+                {ICONS.PACKAGE}
               </div>
             </div>
           )}
@@ -98,16 +95,6 @@ export function ServiceCard({
               {service.isActive ? "Hoạt động" : "Tạm ngưng"}
             </Badge>
           </div>
-
-          {/* Category badge */}
-          <div className="absolute top-3 right-3">
-            <Badge
-              variant="secondary"
-              className="bg-white/95 text-gray-700 text-xs font-bold backdrop-blur-sm shadow-md"
-            >
-              {categoryName}
-            </Badge>
-          </div>
         </div>
 
         {/* Content */}
@@ -115,19 +102,10 @@ export function ServiceCard({
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-gray-900 truncate text-base group-hover:text-blue-600 transition-colors">
-                {service.serviceName}
+                {service.name}
               </h3>
-              <p className="text-xs text-gray-500 mt-1 font-medium">
-                Mã: {service.serviceID}
-              </p>
             </div>
           </div>
-
-          {service.description && (
-            <p className="text-sm text-gray-600 line-clamp-2 mb-4 leading-relaxed">
-              {service.description}
-            </p>
-          )}
 
           {/* Price and Unit */}
           <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-100">
@@ -141,15 +119,6 @@ export function ServiceCard({
                 </span>
               )}
             </div>
-            {onToggleActive && (
-              <Switch
-                checked={service.isActive}
-                onCheckedChange={(checked) =>
-                  onToggleActive(service.serviceID, checked)
-                }
-                className="data-[state=checked]:bg-success-500"
-              />
-            )}
           </div>
 
           {/* Actions */}
@@ -195,12 +164,12 @@ export function ServiceCard({
             <div className="flex items-center gap-4 p-4 bg-linear-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200">
               <div className="w-14 h-14 rounded-xl bg-linear-to-br from-blue-100 to-blue-50 flex items-center justify-center shrink-0 shadow-sm">
                 <div className="w-7 h-7 text-blue-500 flex items-center justify-center">
-                  {categoryIcon}
+                  {ICONS.PACKAGE}
                 </div>
               </div>
               <div>
                 <p className="font-bold text-gray-900 text-base">
-                  {service.serviceName}
+                  {service.name}
                 </p>
                 <p className="text-sm font-bold bg-linear-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
                   {formatCurrency(service.price)}
