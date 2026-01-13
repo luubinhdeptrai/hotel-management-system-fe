@@ -9,7 +9,6 @@ import { ICONS } from "@/src/constants/icons.enum";
 import type { Booking, BookingRoom } from "@/lib/types/api";
 import type { PaymentMethod } from "@/lib/types/payment";
 import { cn } from "@/lib/utils";
-import { ServiceUsageList } from "@/components/service-usage";
 import { AddServiceModal } from "./add-service-modal";
 
 interface ModernCheckOutDetailsProps {
@@ -39,7 +38,6 @@ export function ModernCheckOutDetails({
     new Set(bookingRooms.map((br) => br.id))
   );
   const [showAddService, setShowAddService] = useState(false);
-  const [serviceRefreshKey, setServiceRefreshKey] = useState(0);
 
   const toggleRoomSelection = (bookingRoomId: string) => {
     setSelectedRooms((prev) => {
@@ -431,15 +429,7 @@ export function ModernCheckOutDetails({
         onOpenChange={setShowAddService}
         onConfirm={async (formData) => {
           try {
-            const { serviceUsageService } = await import("@/lib/services");
-            await serviceUsageService.createServiceUsage({
-              bookingId: booking.id,
-              serviceId: formData.serviceID,
-              quantity: formData.quantity,
-              note: formData.notes,
-            });
-            setShowAddService(false);
-            setServiceRefreshKey(prev => prev + 1);
+            // Service usage implementation removed
           } catch (error) {
             console.error("Failed to add service:", error);
             alert(
