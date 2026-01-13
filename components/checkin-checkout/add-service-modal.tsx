@@ -65,29 +65,24 @@ export function AddServiceModal({
           page: 1,
         });
 
-        console.log("API Response:", response); // DEBUG
-        console.log("Response.data:", response?.data); // DEBUG
-
-        // Handle response - response.data should be array of services
-        const apiServices = (response?.data as unknown as ApiService[]) || [];
-        console.log("API Services (raw):", apiServices, "Count:", apiServices.length); // DEBUG
+        // response is PaginatedResponse<Service> = { data: [...services], total, page, limit }
+        // response.data is the array of services
+        const apiServices = (response?.data as ApiService[]) || [];
 
         // Convert API Service to local Service format
         const converted: Service[] = apiServices
           .filter((s: ApiService) => {
             const isActive = s.isActive !== false;
-            console.log(`Service: ${s.name}, isActive: ${s.isActive}, keeping: ${isActive}`); // DEBUG
             return isActive;
           })
           .map((s: ApiService) => ({
             serviceID: s.id,
             serviceName: s.name,
-            price: s.price || 0, // Already a number from API
+            price: s.price || 0,
             unit: s.unit || "lần",
-            category: "Dịch vụ", // API doesn't have category, use default
+            category: "Dịch vụ",
           }));
 
-        console.log("Converted Services:", converted, "Count:", converted.length); // DEBUG
         setServices(converted);
       } catch (err) {
         console.error("Failed to load services:", err);

@@ -146,6 +146,58 @@ export const serviceUsageService = {
       return null;
     }
   },
+
+  /**
+   * Create penalty charge
+   * POST /employee/service/penalty
+   * 
+   * Penalty uses custom price and has reason/description
+   */
+  async createPenalty(data: {
+    bookingId?: string;
+    bookingRoomId?: string;
+    customPrice: number;
+    quantity: number;
+    reason: string;
+  }): Promise<ServiceUsage> {
+    const response = await api.post<ApiResponse<ServiceUsage>>(
+      "/employee/service/penalty",
+      data,
+      { requiresAuth: true }
+    );
+
+    if (response && typeof response === "object" && "data" in response) {
+      return (response as ApiResponse<ServiceUsage>).data;
+    }
+
+    return response as unknown as ServiceUsage;
+  },
+
+  /**
+   * Create surcharge fee
+   * POST /employee/service/surcharge
+   * 
+   * Surcharge uses custom price and has reason/description
+   */
+  async createSurcharge(data: {
+    bookingId?: string;
+    bookingRoomId?: string;
+    customPrice: number;
+    quantity: number;
+    reason: string;
+  }): Promise<ServiceUsage> {
+    const response = await api.post<ApiResponse<ServiceUsage>>(
+      "/employee/service/surcharge",
+      data,
+      { requiresAuth: true }
+    );
+
+    if (response && typeof response === "object" && "data" in response) {
+      return (response as ApiResponse<ServiceUsage>).data;
+    }
+
+    return response as unknown as ServiceUsage;
+  },
 };
 
 export default serviceUsageService;

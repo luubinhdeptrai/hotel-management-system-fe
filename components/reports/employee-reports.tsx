@@ -180,24 +180,24 @@ export function EmployeeReports() {
                       <tbody>
                         {bookingPerformance.employees.map((emp) => (
                           <tr key={emp.employeeId} className="border-b hover:bg-muted/30 transition-colors">
-                            <td className="px-4 py-3 font-medium">{emp.employeeName}</td>
+                            <td className="px-4 py-3 font-medium">{emp.name}</td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {emp.checkInsCount}
+                                {emp.totalCheckIns}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {emp.checkOutsCount}
+                                {emp.totalCheckOuts}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                {emp.cancellationsCount}
+                                {emp.totalTransactions}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
-                              {formatCurrency(emp.totalRevenue || 0)}
+                              {formatCurrency(emp.totalRevenueProcessed || 0)}
                             </td>
                           </tr>
                         ))}
@@ -237,20 +237,20 @@ export function EmployeeReports() {
                       <tbody>
                         {servicePerformance.employees.map((emp) => (
                           <tr key={emp.employeeId} className="border-b hover:bg-muted/30 transition-colors">
-                            <td className="px-4 py-3 font-medium">{emp.employeeName}</td>
+                            <td className="px-4 py-3 font-medium">{emp.name}</td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {emp.completedServicesCount}
+                                {emp.totalServicesProvided}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                {emp.pendingServicesCount}
+                                {emp.totalServicesPaid}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                {emp.cancelledServicesCount}
+                                {(emp.totalServicesProvided - emp.totalServicesPaid) || 0}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
@@ -267,7 +267,7 @@ export function EmployeeReports() {
           )}
 
           {/* Activity Summary */}
-          {activitySummary?.activities && activitySummary.activities.length > 0 && (
+          {activitySummary?.activityTypeSummary && activitySummary.activityTypeSummary.length > 0 && (
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -281,9 +281,9 @@ export function EmployeeReports() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {activitySummary.activities.map((activity) => (
-                      <div key={activity.activityType} className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{activity.activityType}</span>
+                    {activitySummary.activityTypeSummary.map((activity) => (
+                      <div key={activity.type} className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{activity.type}</span>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-orange-100 text-orange-800">
                           {activity.count}
                         </span>
@@ -304,16 +304,15 @@ export function EmployeeReports() {
                   <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
                       <Pie
-                        data={activitySummary.activities}
+                        data={activitySummary.activityTypeSummary}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={(entry) => `${entry.activityType}: ${entry.count}`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="count"
                       >
-                        {activitySummary.activities.map((entry, index) => (
+                        {activitySummary.activityTypeSummary.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                         ))}
                       </Pie>

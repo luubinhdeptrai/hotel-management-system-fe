@@ -178,43 +178,43 @@ export function ServiceReports() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-pink-600">
-                    {usageStatistics.summary.totalUsage}
+                    {usageStatistics.summary.totalServiceCount}
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="border-l-4 border-l-green-500 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Hoàn Thành</CardTitle>
+                  <CardTitle className="text-sm font-medium">Số Dịch Vụ</CardTitle>
                   <CheckCircle className="h-5 w-5 text-green-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
-                    {usageStatistics.summary.completedCount}
+                    {usageStatistics.summary.totalServices}
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="border-l-4 border-l-yellow-500 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Đang Xử Lý</CardTitle>
+                  <CardTitle className="text-sm font-medium">Doanh Thu Trung Bình</CardTitle>
                   <Clock className="h-5 w-5 text-yellow-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-yellow-600">
-                    {usageStatistics.summary.pendingCount}
+                    {formatCurrency(usageStatistics.summary.averageRevenuePerService || 0)}
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="border-l-4 border-l-red-500 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Đã Hủy</CardTitle>
+                  <CardTitle className="text-sm font-medium">Tổng Doanh Thu</CardTitle>
                   <XCircle className="h-5 w-5 text-red-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-600">
-                    {usageStatistics.summary.cancelledCount}
+                    {formatCurrency(usageStatistics.summary.totalServiceRevenue || 0)}
                   </div>
                 </CardContent>
               </Card>
@@ -222,7 +222,7 @@ export function ServiceReports() {
           )}
 
           {/* Top Services by Revenue */}
-          {topServices?.services && topServices.services.length > 0 && (
+          {topServices?.topServices && topServices.topServices.length > 0 && (
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -231,12 +231,12 @@ export function ServiceReports() {
                     Top Dịch Vụ Theo Doanh Thu
                   </CardTitle>
                   <CardDescription>
-                    {topServices.services.length} dịch vụ hàng đầu
+                    {topServices.topServices.length} dịch vụ hàng đầu
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {topServices.services.map((service, index) => (
+                    {topServices.topServices.map((service, index) => (
                       <div key={service.serviceId} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-pink-500 text-white font-bold text-sm">
@@ -245,7 +245,7 @@ export function ServiceReports() {
                           <div>
                             <div className="font-medium">{service.serviceName}</div>
                             <div className="text-sm text-muted-foreground">
-                              Sử dụng: {service.usageCount} lần
+                              Sử dụng: {service.totalUsageCount} lần
                             </div>
                           </div>
                         </div>
@@ -269,7 +269,7 @@ export function ServiceReports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={topServices.services.slice(0, 5)}>
+                    <BarChart data={topServices.topServices.slice(0, 5)}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="serviceName" 
@@ -280,7 +280,7 @@ export function ServiceReports() {
                       />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value: number | undefined) => value ? formatCurrency(value) : ''}
                       />
                       <Bar dataKey="totalRevenue" fill="#ec4899" />
                     </BarChart>
@@ -310,7 +310,8 @@ export function ServiceReports() {
                     <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" />
                     <Tooltip 
-                      formatter={(value: number, name: string) => {
+                      formatter={(value: number | undefined, name: string | undefined) => {
+                        if (!value) return '';
                         if (name === "revenue") return formatCurrency(value);
                         return value;
                       }}
@@ -364,20 +365,20 @@ export function ServiceReports() {
                         {usageStatistics.services.map((service) => (
                           <tr key={service.serviceId} className="border-b hover:bg-muted/30 transition-colors">
                             <td className="px-4 py-3 font-medium">{service.serviceName}</td>
-                            <td className="px-4 py-3 text-right font-semibold">{service.totalCount}</td>
+                            <td className="px-4 py-3 text-right font-semibold">{service.totalUsageCount}</td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {service.completedCount}
+                                {service.statusBreakdown.COMPLETED}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                {service.pendingCount}
+                                {service.statusBreakdown.PENDING}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                {service.cancelledCount}
+                                {service.statusBreakdown.CANCELLED}
                               </span>
                             </td>
                           </tr>

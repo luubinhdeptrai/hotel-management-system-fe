@@ -43,16 +43,16 @@ export const serviceManagementService = {
       { requiresAuth: true }
     );
 
-    console.log("Service API raw response:", response); // DEBUG
-
-    // Backend wraps in { data: { data: [...services], total, page, limit } }
+    // Backend wraps response in { data: {...actual_response...} }
+    // So response.data contains { data: [...services], total, page, limit }
     if (response && typeof response === "object" && "data" in response) {
-      const unwrapped = (response as any).data;
-      console.log("Service API unwrapped (first level):", unwrapped); // DEBUG
-      return unwrapped as PaginatedResponse<Service>;
+      const wrapped = (response as ApiResponse<PaginatedResponse<Service>>).data;
+      
+      // wrapped should be: { data: [...services], total, page, limit }
+      // which matches PaginatedResponse<Service> structure
+      return wrapped;
     }
 
-    console.log("Service API returning as-is:", response); // DEBUG
     return response as unknown as PaginatedResponse<Service>;
   },
 
