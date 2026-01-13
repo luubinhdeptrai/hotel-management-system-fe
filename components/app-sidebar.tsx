@@ -31,12 +31,6 @@ import { authService } from "@/lib/services/auth.service";
 // Navigation items based on page-description.md
 const navItems = [
   {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: ICONS.DASHBOARD,
-    permission: null, // Dashboard accessible to all roles
-  },
-  {
     title: "Reports",
     url: "/reports",
     icon: ICONS.BAR_CHART,
@@ -328,7 +322,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarHeader>
 
         <SidebarContent className="bg-slate-900 scrollbar-hide">
-          {/* Dashboard */}
           <SidebarGroup className="py-3 border-b border-slate-700">
             <SidebarGroupContent>
               <SidebarMenu>

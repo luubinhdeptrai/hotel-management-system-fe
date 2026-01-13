@@ -39,6 +39,10 @@ export default function RoomTypesPage() {
     handleFilterByPrice,
     handleFilterByCapacity,
     handleResetFilters,
+  } = useRoomTypes();
+
+
+
   const stats = useMemo(() => {
     if (allRoomTypes.length === 0) {
       return {
