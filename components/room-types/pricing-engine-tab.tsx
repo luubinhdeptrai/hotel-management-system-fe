@@ -15,6 +15,7 @@ import { PricingRulesTable } from "./pricing-rules-table";
 import { PricingRuleFormModal } from "./pricing-rule-form-modal";
 import { formatCurrency } from "@/lib/utils";
 import { formatAdjustment } from "@/lib/services/pricing-rule.service";
+import { PermissionGuard } from "@/components/permission-guard";
 
 interface PricingEngineTabProps {
   roomTypes: RoomType[];
@@ -251,15 +252,17 @@ export function PricingEngineTab({ roomTypes }: PricingEngineTabProps) {
               Quản lý các quy tắc định giá với drag-drop priority và time matching linh hoạt
             </p>
           </div>
-          <Button
-            size="lg"
-            onClick={handleAddNew}
-            disabled={loading}
-            className="h-14 px-8 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:via-purple-500 hover:to-fuchsia-500 shadow-xl hover:shadow-2xl font-black text-base hover:scale-105 transition-all"
-          >
-            <span className="text-xl mr-2">✨</span>
-            Thêm quy tắc mới
-          </Button>
+          <PermissionGuard permission="roomType:update">
+            <Button
+              size="lg"
+              onClick={handleAddNew}
+              disabled={loading}
+              className="h-14 px-8 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:via-purple-500 hover:to-fuchsia-500 shadow-xl hover:shadow-2xl font-black text-base hover:scale-105 transition-all"
+            >
+              <span className="text-xl mr-2">✨</span>
+              Thêm quy tắc mới
+            </Button>
+          </PermissionGuard>
         </CardHeader>
         <CardContent className="pt-8">
           {loading && rules.length === 0 ? (
