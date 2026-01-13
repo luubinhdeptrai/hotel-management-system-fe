@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PermissionGuard } from "@/components/permission-guard";
+import { authService } from "@/lib/services/auth.service";
 
 // Navigation items based on page-description.md
 const navItems = [
@@ -194,9 +195,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { state } = useSidebar();
 
-  const renderMenuItems = (items: typeof roomManagement) => {
+  const renderMenuItems = (items: any[]) => {
     return items.map((item) => {
       const isActive = pathname === item.url;
+      
+      // Special case: Always render RoomType for authenticated users (read-only for non-admin)
+      if (item.title === "Loại Phòng" && authService.isAuthenticated()) {
+        return (
+          <SidebarMenuItem key={item.title}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarMenuButton
+                  asChild
+                  className={cn(
+                    "transition-all duration-200 h-10 text-sm font-medium mx-2 rounded-lg",
+                    isActive
+                      ? "bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  )}
+                >
+                  <Link href={item.url} className="flex items-center gap-3 px-2">
+                    <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      {item.title}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="bg-slate-800 text-white border-slate-700"
+              >
+                {item.title}
+              </TooltipContent>
+            </Tooltip>
+          </SidebarMenuItem>
+        );
+      }
       
       // If permission is required, wrap with PermissionGuard
       if (item.permission) {
