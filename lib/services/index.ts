@@ -13,7 +13,6 @@ export { roomTagService } from "./roomTag.service";
 export { serviceManagementService } from "./service.service";
 export { transactionService } from "./transaction.service";
 export { appSettingsService } from "./app-settings.service";
-export { serviceUsageService } from "./service-usage.service";
 export * from "./calendar-event.service";
 
 // Re-export API utilities

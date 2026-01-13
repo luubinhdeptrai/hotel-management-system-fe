@@ -209,16 +209,6 @@ export function ModernCheckOutDetails({
             </CardContent>
           </Card>
 
-          {/* Service Usage */}
-          <ServiceUsageList
-            key={serviceRefreshKey}
-            bookingId={booking.id}
-            onAddService={() => setShowAddService(true)}
-            onRefresh={() => setServiceRefreshKey(prev => prev + 1)}
-            readonly={false}
-            showTitle={true}
-          />
-
           {/* Rooms to Check-out */}
           <Card className="border-2 border-gray-100 shadow-md">
             <CardHeader className="pb-3">
