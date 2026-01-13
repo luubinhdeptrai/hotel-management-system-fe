@@ -1,6 +1,5 @@
 "use client";
 
-
 import { logger } from "@/lib/utils/logger";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,79 +12,69 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ICONS } from "@/src/constants/icons.enum";
-import type { RoomStatus } from "@/lib/types/room";
+import type { RoomStatusFE } from "@/lib/api/rooms.api";
+import {
+  useHousekeepingRooms,
+  useUpdateRoomStatus,
+  useHousekeepingStats,
+} from "@/hooks/useRooms";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HousekeepingPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [rooms, setRooms] = useState<any[]>([]); // TODO: Fetch from API
+
+  // Fetch rooms with CLEANING status from BE API
+  const { data: roomsData, isLoading } = useHousekeepingRooms();
+  const { data: stats } = useHousekeepingStats();
+  const updateStatusMutation = useUpdateRoomStatus();
+
+  const rooms = roomsData?.data || [];
 
   const housekeepingRooms = rooms.filter((room) => {
-    const status = room.roomStatus;
-    const isHousekeepingRelated =
-      status === "Bẩn" || status === "Đang dọn" || status === "Đang kiểm tra";
-
-    if (statusFilter === "all") return isHousekeepingRelated;
-    return status === statusFilter;
+    if (statusFilter === "all") return true;
+    return room.roomStatus === statusFilter;
   });
 
-  const handleStatusChange = (roomID: string, newStatus: RoomStatus) => {
-    setRooms((prevRooms) =>
-      prevRooms.map((room) =>
-        room.roomID === roomID ? { ...room, roomStatus: newStatus } : room
-      )
+  const handleStatusChange = (roomID: string, newStatus: RoomStatusFE) => {
+    updateStatusMutation.mutate(
+      { roomId: roomID, newStatus },
+      {
+        onSuccess: () => {
+          logger.log(`Changed room ${roomID} to ${newStatus}`);
+        },
+      }
     );
-    logger.log(`Changed room ${roomID} to ${newStatus}`);
   };
 
-  const getStatusColor = (status: RoomStatus) => {
+  const getStatusColor = (status: RoomStatusFE) => {
     const colors: Record<string, string> = {
-      Bẩn: "bg-warning-100 text-warning-800 border-warning-300",
       "Đang dọn": "bg-info-100 text-info-800 border-info-300",
-      "Đang kiểm tra": "bg-primary-100 text-primary-800 border-primary-300",
+      "Sẵn sàng": "bg-success-100 text-success-800 border-success-300",
+      "Bảo trì": "bg-gray-100 text-gray-800 border-gray-300",
     };
     return colors[status] || "bg-gray-100 text-gray-800 border-gray-300";
   };
 
-  const getStatusIcon = (status: RoomStatus) => {
-    if (status === "Bẩn") return ICONS.ALERT_CIRCLE;
+  const getStatusIcon = (status: RoomStatusFE) => {
     if (status === "Đang dọn") return ICONS.SPARKLES;
-    if (status === "Đang kiểm tra") return ICONS.SEARCH;
+    if (status === "Sẵn sàng") return ICONS.CHECK_CIRCLE;
+    if (status === "Bảo trì") return ICONS.ALERT_CIRCLE;
     return ICONS.CLIPBOARD_LIST;
   };
 
   const getActionButton = (room: any) => {
-    if (room.roomStatus === "Bẩn") {
-      return (
-        <Button
-          onClick={() => handleStatusChange(room.roomID, "Đang dọn")}
-          className="inline-flex items-center gap-2 bg-linear-to-r from-info-600 to-info-500 hover:from-info-700 hover:to-info-600 text-white h-11 px-6 rounded-lg shadow-md hover:shadow-lg transition-all"
-        >
-          <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.SPARKLES}</span>
-          Bắt đầu dọn
-        </Button>
-      );
-    }
-
+    // CLEANING status → can mark as AVAILABLE
     if (room.roomStatus === "Đang dọn") {
       return (
         <Button
-          onClick={() => handleStatusChange(room.roomID, "Đang kiểm tra")}
-          className="inline-flex items-center gap-2 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white h-11 px-6 rounded-lg shadow-md hover:shadow-lg transition-all"
-        >
-          <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.CHECK}</span>
-          Hoàn thành
-        </Button>
-      );
-    }
-
-    if (room.roomStatus === "Đang kiểm tra") {
-      return (
-        <Button
           onClick={() => handleStatusChange(room.roomID, "Sẵn sàng")}
-          className="inline-flex items-center gap-2 bg-linear-to-r from-success-600 to-success-500 hover:from-success-700 hover:to-success-600 text-white h-11 px-6 rounded-lg shadow-md hover:shadow-lg transition-all"
+          disabled={updateStatusMutation.isPending}
+          className="inline-flex items-center gap-2 bg-linear-to-r from-success-600 to-success-500 hover:from-success-700 hover:to-success-600 text-white h-11 px-6 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50"
         >
-          <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.CHECK_CIRCLE}</span>
-          Phê duyệt
+          <span className="inline-flex items-center justify-center w-4 h-4">
+            {ICONS.CHECK_CIRCLE}
+          </span>
+          Hoàn thành dọn dẹp
         </Button>
       );
     }
@@ -93,12 +82,24 @@ export default function HousekeepingPage() {
     return null;
   };
 
-  const dirtyCount = rooms.filter((r) => r.roomStatus === "Bẩn").length;
   const cleaningCount = rooms.filter((r) => r.roomStatus === "Đang dọn").length;
-  const inspectingCount = rooms.filter(
-    (r) => r.roomStatus === "Đang kiểm tra"
-  ).length;
-  const totalPending = dirtyCount + cleaningCount + inspectingCount;
+  const totalPending = stats?.cleaning || cleaningCount;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-8">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <Skeleton className="h-32 w-full" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
@@ -121,22 +122,7 @@ export default function HousekeepingPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="bg-linear-to-br from-warning-50 to-warning-100/30 rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-600 mb-2">Cần dọn</p>
-                <p className="text-3xl font-extrabold text-gray-900">
-                  {dirtyCount}
-                </p>
-                <p className="text-xs text-gray-500 mt-2">Phòng bẩn</p>
-              </div>
-              <div className="w-12 h-12 bg-linear-to-br from-warning-600 to-warning-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                <span className="w-6 h-6 text-white">{ICONS.ALERT_CIRCLE}</span>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <div className="bg-linear-to-br from-info-50 to-info-100/30 rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -152,17 +138,17 @@ export default function HousekeepingPage() {
             </div>
           </div>
 
-          <div className="bg-linear-to-br from-primary-50 to-primary-100/30 rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+          <div className="bg-linear-to-br from-success-50 to-success-100/30 rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-600 mb-2">Chờ kiểm tra</p>
+                <p className="text-sm font-semibold text-gray-600 mb-2">Sẵn sàng</p>
                 <p className="text-3xl font-extrabold text-gray-900">
-                  {inspectingCount}
+                  {stats?.available || 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">Cần phê duyệt</p>
+                <p className="text-xs text-gray-500 mt-2">Phòng trống</p>
               </div>
-              <div className="w-12 h-12 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                <span className="w-6 h-6 text-white">{ICONS.SEARCH}</span>
+              <div className="w-12 h-12 bg-linear-to-br from-success-600 to-success-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                <span className="w-6 h-6 text-white">{ICONS.CHECK_CIRCLE}</span>
               </div>
             </div>
           </div>
@@ -170,11 +156,11 @@ export default function HousekeepingPage() {
           <div className="bg-linear-to-br from-gray-50 to-gray-100/30 rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-600 mb-2">Tổng cần xử lý</p>
+                <p className="text-sm font-semibold text-gray-600 mb-2">Tổng phòng</p>
                 <p className="text-3xl font-extrabold text-gray-900">
-                  {totalPending}
+                  {stats?.total || 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">Tất cả trạng thái</p>
+                <p className="text-xs text-gray-500 mt-2">Tổng số</p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-gray-600 to-gray-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                 <span className="w-6 h-6 text-white">{ICONS.CLIPBOARD_LIST}</span>
@@ -195,9 +181,8 @@ export default function HousekeepingPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="Bẩn">⚠️ Cần dọn</SelectItem>
                 <SelectItem value="Đang dọn">✨ Đang dọn</SelectItem>
-                <SelectItem value="Đang kiểm tra">🔍 Chờ kiểm tra</SelectItem>
+                <SelectItem value="Sẵn sàng">✅ Sẵn sàng</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -231,8 +216,7 @@ export default function HousekeepingPage() {
                   key={room.roomID}
                   className="flex items-center justify-between p-5 border-2 rounded-xl bg-linear-to-r from-white to-gray-50 hover:shadow-md transition-all"
                   style={{
-                    borderColor: room.roomStatus === "Bẩn" ? "#f59e0b" : 
-                                room.roomStatus === "Đang dọn" ? "#0ea5e9" : "#6366f1"
+                    borderColor: room.roomStatus === "Đang dọn" ? "#0ea5e9" : "#10b981"
                   }}
                 >
                   <div className="flex items-center gap-4 flex-1">

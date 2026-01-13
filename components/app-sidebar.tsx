@@ -36,6 +36,12 @@ const navItems = [
     icon: ICONS.DASHBOARD,
     permission: null, // Dashboard accessible to all roles
   },
+  {
+    title: "Reports",
+    url: "/reports",
+    icon: ICONS.BAR_CHART,
+    permission: "report:read",
+  },
 ];
 
 const roomManagement = [
@@ -91,6 +97,7 @@ const serviceManagement = [
     title: "Sự Kiện & Lịch",
     url: "/calendar-events",
     icon: ICONS.CALENDAR,
+    permission: "calendar:read",
   },
   {
     title: "Khuyến Mại",
@@ -135,6 +142,7 @@ const adminManagement = [
     title: "Hạng Khách Hàng",
     url: "/customer-ranks",
     icon: ICONS.STAR,
+    permission: "customerRank:read",
   },
   {
     title: "Khách Lưu Trú",
@@ -153,12 +161,6 @@ const adminManagement = [
     url: "/activities",
     icon: ICONS.ACTIVITY,
     permission: "report:read",
-  },
-  {
-    title: "Báo Cáo",
-    url: "/reports",
-    icon: ICONS.BAR_CHART,
-    permission: "report:view",
   },
   {
     title: "Cài đặt",
@@ -243,12 +245,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     className={cn(
                       "transition-all duration-200 h-10 text-sm font-medium mx-2 rounded-lg",
                       isActive
-                        ? "bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
+                        ? "bg-linear-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
                         : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                     )}
                   >
                     <Link href={item.url} className="flex items-center gap-3 px-2">
-                      <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
+                      <span className="w-5 h-5 shrink-0">{item.icon}</span>
                       <span className="group-data-[collapsible=icon]:hidden">
                         {item.title}
                       </span>
@@ -277,12 +279,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className={cn(
                   "transition-all duration-200 h-10 text-sm font-medium mx-2 rounded-lg",
                   isActive
-                    ? "bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
+                    ? "bg-linear-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
                     : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                 )}
               >
                 <Link href={item.url} className="flex items-center gap-3 px-2">
-                  <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
+                  <span className="w-5 h-5 shrink-0">{item.icon}</span>
                   <span className="group-data-[collapsible=icon]:hidden">
                     {item.title}
                   </span>
@@ -311,7 +313,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       >
         <SidebarHeader className="border-b border-slate-700 bg-slate-900">
           <div className="flex items-center gap-3 px-4 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-teal-600 text-white shadow-lg">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-teal-600 text-white shadow-lg">
               <span className="text-xl">{ICONS.HOTEL}</span>
             </div>
             <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
@@ -341,7 +343,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             className={cn(
                               "transition-all duration-200 h-11 text-sm font-medium mx-2 rounded-lg",
                               isActive
-                                ? "bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
+                                ? "bg-linear-to-r from-blue-600 to-teal-500 text-white hover:from-blue-600 hover:to-teal-500"
                                 : "text-slate-300 hover:text-white hover:bg-slate-800"
                             )}
                           >
@@ -349,7 +351,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               href={item.url}
                               className="flex items-center gap-3 px-2"
                             >
-                              <span className="w-5 h-5 flex-shrink-0">
+                              <span className="w-5 h-5 shrink-0">
                                 {item.icon}
                               </span>
                               <span className="group-data-[collapsible=icon]:hidden">

@@ -123,7 +123,7 @@ export function EmployeeFormModal({
         // Update employee (only name and role)
         const updateData: UpdateEmployeeRequest = {
           name: formData.name.trim(),
-          role: formData.role,
+          roleId: formData.role,
         };
         await onSave(updateData);
       } else {
@@ -132,7 +132,7 @@ export function EmployeeFormModal({
           name: formData.name.trim(),
           username: formData.username.trim(),
           password: formData.password,
-          role: formData.role,
+          roleId: formData.role,
         };
         await onSave(createData);
       }

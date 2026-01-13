@@ -1,83 +1,103 @@
 "use client";
 
-import {
-  ReportSummaryCards,
-  ReportFilters,
-  ReportContent,
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Users, 
+  DollarSign, 
+  Hotel,
+  UserCheck,
+  Package,
+} from "lucide-react";
+import { 
+  RevenueReports, 
+  RoomReports, 
+  CustomerReports, 
+  EmployeeReports,
+  ServiceReports
 } from "@/components/reports";
-import { useReports } from "@/hooks/use-reports";
-import { ICONS } from "@/src/constants/icons.enum";
 
 export default function ReportsPage() {
-  const {
-    reportType,
-    setReportType,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
-    isLoading,
-    summary,
-    filteredRevenueByDayData,
-    filteredRevenueByMonthData,
-    filteredOccupancyData,
-    roomAvailabilityData,
-    customerReportData,
-    serviceRevenueData,
-    handleGenerateReport,
-    handleExportPdf,
-    handleExportExcel,
-  } = useReports();
+  const [activeTab, setActiveTab] = useState("revenue");
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Modern Header with Gradient */}
-      <div className="bg-linear-to-br from-primary-600 via-primary-500 to-primary-600 rounded-2xl p-8 shadow-xl">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="w-8 h-8 text-white">{ICONS.BAR_CHART}</span>
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-white">
-              Báo Cáo & Thống Kê
-            </h1>
-            <p className="text-sm text-white/90 mt-1 font-medium">
-              Xem các báo cáo về doanh thu, công suất phòng và các thống kê khác
-            </p>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+            Báo Cáo Phân Tích
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Phân tích chuyên sâu về doanh thu, khách hàng, nhân viên và hoạt động kinh doanh
+          </p>
         </div>
       </div>
 
-      <ReportSummaryCards
-        totalRevenue={summary.totalRevenue}
-        totalBookings={summary.totalBookings}
-        averageOccupancy={summary.averageOccupancyRate}
-        totalCustomers={summary.totalCustomers}
-      />
+      {/* Reports Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid bg-muted/50 p-1 h-auto">
+          <TabsTrigger 
+            value="revenue" 
+            className="data-[state=active]:bg-linear-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white gap-2 py-2.5"
+          >
+            <DollarSign className="h-4 w-4" />
+            <span className="hidden sm:inline">Doanh Thu</span>
+          </TabsTrigger>
+          
+          <TabsTrigger 
+            value="rooms" 
+            className="data-[state=active]:bg-linear-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white gap-2 py-2.5"
+          >
+            <Hotel className="h-4 w-4" />
+            <span className="hidden sm:inline">Phòng</span>
+          </TabsTrigger>
+          
+          <TabsTrigger 
+            value="customers" 
+            className="data-[state=active]:bg-linear-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white gap-2 py-2.5"
+          >
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Khách Hàng</span>
+          </TabsTrigger>
+          
+          <TabsTrigger 
+            value="employees" 
+            className="data-[state=active]:bg-linear-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white gap-2 py-2.5"
+          >
+            <UserCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Nhân Viên</span>
+          </TabsTrigger>
+          
+          <TabsTrigger 
+            value="services" 
+            className="data-[state=active]:bg-linear-to-r data-[state=active]:from-pink-500 data-[state=active]:to-rose-500 data-[state=active]:text-white gap-2 py-2.5"
+          >
+            <Package className="h-4 w-4" />
+            <span className="hidden sm:inline">Dịch Vụ</span>
+          </TabsTrigger>
+        </TabsList>
 
-      <ReportFilters
-        reportType={reportType}
-        onReportTypeChange={setReportType}
-        startDate={startDate}
-        endDate={endDate}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        onGenerateReport={handleGenerateReport}
-        onExportPdf={handleExportPdf}
-        onExportExcel={handleExportExcel}
-      />
+        <TabsContent value="revenue" className="space-y-6">
+          <RevenueReports />
+        </TabsContent>
 
-      <ReportContent
-        reportType={reportType}
-        isLoading={isLoading}
-        summary={summary}
-        filteredRevenueByDayData={filteredRevenueByDayData}
-        filteredRevenueByMonthData={filteredRevenueByMonthData}
-        filteredOccupancyData={filteredOccupancyData}
-        roomAvailabilityData={roomAvailabilityData}
-        customerReportData={customerReportData}
-        serviceRevenueData={serviceRevenueData}
-      />
+        <TabsContent value="rooms" className="space-y-6">
+          <RoomReports />
+        </TabsContent>
+
+        <TabsContent value="customers" className="space-y-6">
+          <CustomerReports />
+        </TabsContent>
+
+        <TabsContent value="employees" className="space-y-6">
+          <EmployeeReports />
+        </TabsContent>
+
+        <TabsContent value="services" className="space-y-6">
+          <ServiceReports />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
