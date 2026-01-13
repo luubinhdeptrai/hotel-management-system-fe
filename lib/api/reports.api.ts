@@ -26,10 +26,16 @@ import type {
 const BASE_URL = "/employee/reports";
 
 /**
- * Reports API Service
- * Handles all report-related API calls based on Backend endpoints
+ * Helper function to unwrap Backend response format: { data: {...} }
  */
-export const reportsApi = {
+function unwrapResponse<T>(response: any): T {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return response.data as T;
+  }
+  return response as T;
+}
+
+export const reportApi = {
   // ==================== ROOM AVAILABILITY REPORTS ====================
 
   /**
@@ -48,7 +54,8 @@ export const reportsApi = {
     if (filters.minPrice) params.append("minPrice", filters.minPrice.toString());
     if (filters.maxPrice) params.append("maxPrice", filters.maxPrice.toString());
 
-    return api.get(`${BASE_URL}/rooms/availability?${params.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/rooms/availability?${params.toString()}`, { requiresAuth: true });
+    return unwrapResponse<RoomAvailabilityResponse>(response);
   },
 
   /**
@@ -65,7 +72,8 @@ export const reportsApi = {
     queryParams.append("endDate", params.endDate);
     queryParams.append("groupBy", params.groupBy || "day");
 
-    return api.get(`${BASE_URL}/rooms/occupancy-forecast?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/rooms/occupancy-forecast?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<OccupancyForecastResponse>(response);
   },
 
   // ==================== CUSTOMER REPORTS ====================
@@ -88,7 +96,8 @@ export const reportsApi = {
     params.append("page", (filters.page || 1).toString());
     params.append("limit", (filters.limit || 20).toString());
 
-    return api.get(`${BASE_URL}/customers/stay-history?${params.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/customers/stay-history?${params.toString()}`, { requiresAuth: true });
+    return unwrapResponse<CustomerStayHistoryResponse>(response);
   },
 
   /**
@@ -107,7 +116,8 @@ export const reportsApi = {
     queryParams.append("page", (params.page || 1).toString());
     queryParams.append("limit", (params.limit || 20).toString());
 
-    return api.get(`${BASE_URL}/customers/first-time-guests?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/customers/first-time-guests?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<FirstTimeGuestsResponse>(response);
   },
 
   /**
@@ -115,12 +125,15 @@ export const reportsApi = {
    * Get customer lifetime value
    */
   getCustomerLifetimeValue: async (params?: {
-    limit?: number;
+    minSpent?: number;
+    minBookings?: number;
   }): Promise<CustomerLifetimeValueResponse> => {
     const queryParams = new URLSearchParams();
-    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.minSpent) queryParams.append("minSpent", params.minSpent.toString());
+    if (params?.minBookings) queryParams.append("minBookings", params.minBookings.toString());
 
-    return api.get(`${BASE_URL}/customers/lifetime-value?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/customers/lifetime-value?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<CustomerLifetimeValueResponse>(response);
   },
 
   /**
@@ -128,7 +141,8 @@ export const reportsApi = {
    * Get customer rank distribution
    */
   getCustomerRankDistribution: async (): Promise<CustomerRankDistributionResponse> => {
-    return api.get(`${BASE_URL}/customers/rank-distribution`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/customers/rank-distribution`, { requiresAuth: true });
+    return unwrapResponse<CustomerRankDistributionResponse>(response);
   },
 
   // ==================== EMPLOYEE REPORTS ====================
@@ -147,7 +161,8 @@ export const reportsApi = {
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
-    return api.get(`${BASE_URL}/employees/booking-performance?${params.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/employees/booking-performance?${params.toString()}`, { requiresAuth: true });
+    return unwrapResponse<EmployeeBookingPerformanceResponse>(response);
   },
 
   /**
@@ -164,7 +179,8 @@ export const reportsApi = {
     queryParams.append("fromDate", params.fromDate);
     queryParams.append("toDate", params.toDate);
 
-    return api.get(`${BASE_URL}/employees/service-performance?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/employees/service-performance?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<EmployeeServicePerformanceResponse>(response);
   },
 
   /**
@@ -185,7 +201,8 @@ export const reportsApi = {
       queryParams.append("activityTypes", params.activityTypes.join(","));
     }
 
-    return api.get(`${BASE_URL}/employees/activity-summary?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/employees/activity-summary?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<EmployeeActivitySummaryResponse>(response);
   },
 
   // ==================== SERVICE REPORTS ====================
@@ -203,7 +220,8 @@ export const reportsApi = {
     if (filters.serviceId) params.append("serviceId", filters.serviceId);
     if (filters.status) params.append("status", filters.status);
 
-    return api.get(`${BASE_URL}/services/usage-statistics?${params.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/services/usage-statistics?${params.toString()}`, { requiresAuth: true });
+    return unwrapResponse<ServiceUsageStatisticsResponse>(response);
   },
 
   /**
@@ -220,7 +238,8 @@ export const reportsApi = {
     queryParams.append("toDate", params.toDate);
     if (params.limit) queryParams.append("limit", params.limit.toString());
 
-    return api.get(`${BASE_URL}/services/top-by-revenue?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/services/top-by-revenue?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<TopServicesByRevenueResponse>(response);
   },
 
   /**
@@ -237,9 +256,10 @@ export const reportsApi = {
     queryParams.append("fromDate", params.fromDate);
     queryParams.append("toDate", params.toDate);
     if (params.serviceId) queryParams.append("serviceId", params.serviceId);
-    queryParams.append("groupBy", params.groupBy || "day");
+    if (params.groupBy) queryParams.append("groupBy", params.groupBy);
 
-    return api.get(`${BASE_URL}/services/trend?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/services/trend?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<ServicePerformanceTrendResponse>(response);
   },
 
   // ==================== REVENUE REPORTS ====================
@@ -254,9 +274,10 @@ export const reportsApi = {
     const params = new URLSearchParams();
     params.append("fromDate", filters.fromDate);
     params.append("toDate", filters.toDate);
-    params.append("groupBy", filters.groupBy);
+    if (filters.groupBy) params.append("groupBy", filters.groupBy);
 
-    return api.get(`${BASE_URL}/revenue/summary?${params.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/revenue/summary?${params.toString()}`, { requiresAuth: true });
+    return unwrapResponse<RevenueSummaryResponse>(response);
   },
 
   /**
@@ -271,7 +292,8 @@ export const reportsApi = {
     queryParams.append("fromDate", params.fromDate);
     queryParams.append("toDate", params.toDate);
 
-    return api.get(`${BASE_URL}/revenue/by-room-type?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/revenue/by-room-type?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<RevenueByRoomTypeResponse>(response);
   },
 
   /**
@@ -286,7 +308,8 @@ export const reportsApi = {
     queryParams.append("fromDate", params.fromDate);
     queryParams.append("toDate", params.toDate);
 
-    return api.get(`${BASE_URL}/revenue/payment-methods?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/revenue/payment-methods?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<PaymentMethodDistributionResponse>(response);
   },
 
   /**
@@ -301,6 +324,7 @@ export const reportsApi = {
     queryParams.append("fromDate", params.fromDate);
     queryParams.append("toDate", params.toDate);
 
-    return api.get(`${BASE_URL}/revenue/promotions?${queryParams.toString()}`, { requiresAuth: true });
+    const response = await api.get<any>(`${BASE_URL}/revenue/promotions?${queryParams.toString()}`, { requiresAuth: true });
+    return unwrapResponse<PromotionEffectivenessResponse>(response);
   },
 };

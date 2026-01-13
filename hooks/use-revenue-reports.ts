@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { reportsApi } from "@/lib/api/reports.api";
+import { reportApi } from "@/lib/api/reports.api";
 import type {
   RevenueSummaryResponse,
   RevenueByRoomTypeResponse,
@@ -32,10 +32,10 @@ export function useRevenueReports(params: UseRevenueReportsParams) {
         setError(null);
 
         const [summary, roomType, paymentMethods, promotions] = await Promise.all([
-          reportsApi.getRevenueSummary(params),
-          reportsApi.getRevenueByRoomType({ fromDate: params.fromDate, toDate: params.toDate }),
-          reportsApi.getPaymentMethodDistribution({ fromDate: params.fromDate, toDate: params.toDate }),
-          reportsApi.getPromotionEffectiveness({ fromDate: params.fromDate, toDate: params.toDate }),
+          reportApi.getRevenueSummary(params),
+          reportApi.getRevenueByRoomType({ fromDate: params.fromDate, toDate: params.toDate }),
+          reportApi.getPaymentMethodDistribution({ fromDate: params.fromDate, toDate: params.toDate }),
+          reportApi.getPromotionEffectiveness({ fromDate: params.fromDate, toDate: params.toDate }),
         ]);
 
         console.log("Revenue Summary Response:", summary);
