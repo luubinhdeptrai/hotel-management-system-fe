@@ -78,8 +78,8 @@ export const reportsApi = {
     filters: CustomerStayHistoryFilters
   ): Promise<CustomerStayHistoryResponse> => {
     const params = new URLSearchParams();
-    if (filters.fromDate) params.append("fromDate", filters.fromDate);
-    if (filters.toDate) params.append("toDate", filters.toDate);
+    if (filters.fromDate) params.append("startDate", filters.fromDate);
+    if (filters.toDate) params.append("endDate", filters.toDate);
     if (filters.rankId) params.append("rankId", filters.rankId);
     if (filters.minStays) params.append("minStays", filters.minStays.toString());
     if (filters.minTotalSpent) params.append("minTotalSpent", filters.minTotalSpent.toString());
@@ -102,8 +102,8 @@ export const reportsApi = {
     limit?: number;
   }): Promise<FirstTimeGuestsResponse> => {
     const queryParams = new URLSearchParams();
-    queryParams.append("fromDate", params.fromDate);
-    queryParams.append("toDate", params.toDate);
+    queryParams.append("startDate", params.fromDate);
+    queryParams.append("endDate", params.toDate);
     queryParams.append("page", (params.page || 1).toString());
     queryParams.append("limit", (params.limit || 20).toString());
 
@@ -115,10 +115,12 @@ export const reportsApi = {
    * Get customer lifetime value
    */
   getCustomerLifetimeValue: async (params?: {
-    limit?: number;
+    minSpent?: number;
+    minBookings?: number;
   }): Promise<CustomerLifetimeValueResponse> => {
     const queryParams = new URLSearchParams();
-    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.minSpent) queryParams.append("minSpent", params.minSpent.toString());
+    if (params?.minBookings) queryParams.append("minBookings", params.minBookings.toString());
 
     return api.get(`${BASE_URL}/customers/lifetime-value?${queryParams.toString()}`, { requiresAuth: true });
   },
@@ -142,8 +144,8 @@ export const reportsApi = {
   ): Promise<EmployeeBookingPerformanceResponse> => {
     const params = new URLSearchParams();
     if (filters.employeeId) params.append("employeeId", filters.employeeId);
-    params.append("fromDate", filters.fromDate);
-    params.append("toDate", filters.toDate);
+    params.append("startDate", filters.fromDate);
+    params.append("endDate", filters.toDate);
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
@@ -161,8 +163,8 @@ export const reportsApi = {
   }): Promise<EmployeeServicePerformanceResponse> => {
     const queryParams = new URLSearchParams();
     if (params.employeeId) queryParams.append("employeeId", params.employeeId);
-    queryParams.append("fromDate", params.fromDate);
-    queryParams.append("toDate", params.toDate);
+    queryParams.append("startDate", params.fromDate);
+    queryParams.append("endDate", params.toDate);
 
     return api.get(`${BASE_URL}/employees/service-performance?${queryParams.toString()}`, { requiresAuth: true });
   },
@@ -179,8 +181,8 @@ export const reportsApi = {
   }): Promise<EmployeeActivitySummaryResponse> => {
     const queryParams = new URLSearchParams();
     if (params?.employeeId) queryParams.append("employeeId", params.employeeId);
-    if (params?.fromDate) queryParams.append("fromDate", params.fromDate);
-    if (params?.toDate) queryParams.append("toDate", params.toDate);
+    if (params?.fromDate) queryParams.append("startDate", params.fromDate);
+    if (params?.toDate) queryParams.append("endDate", params.toDate);
     if (params?.activityTypes && params.activityTypes.length > 0) {
       queryParams.append("activityTypes", params.activityTypes.join(","));
     }
@@ -198,8 +200,8 @@ export const reportsApi = {
     filters: ServiceUsageStatisticsFilters
   ): Promise<ServiceUsageStatisticsResponse> => {
     const params = new URLSearchParams();
-    params.append("fromDate", filters.fromDate);
-    params.append("toDate", filters.toDate);
+    params.append("startDate", filters.fromDate);
+    params.append("endDate", filters.toDate);
     if (filters.serviceId) params.append("serviceId", filters.serviceId);
     if (filters.status) params.append("status", filters.status);
 
@@ -216,8 +218,8 @@ export const reportsApi = {
     limit?: number;
   }): Promise<TopServicesByRevenueResponse> => {
     const queryParams = new URLSearchParams();
-    queryParams.append("fromDate", params.fromDate);
-    queryParams.append("toDate", params.toDate);
+    queryParams.append("startDate", params.fromDate);
+    queryParams.append("endDate", params.toDate);
     if (params.limit) queryParams.append("limit", params.limit.toString());
 
     return api.get(`${BASE_URL}/services/top-by-revenue?${queryParams.toString()}`, { requiresAuth: true });
@@ -234,8 +236,8 @@ export const reportsApi = {
     groupBy?: "day" | "week" | "month";
   }): Promise<ServicePerformanceTrendResponse> => {
     const queryParams = new URLSearchParams();
-    queryParams.append("fromDate", params.fromDate);
-    queryParams.append("toDate", params.toDate);
+    queryParams.append("startDate", params.fromDate);
+    queryParams.append("endDate", params.toDate);
     if (params.serviceId) queryParams.append("serviceId", params.serviceId);
     queryParams.append("groupBy", params.groupBy || "day");
 
@@ -252,8 +254,8 @@ export const reportsApi = {
     filters: RevenueSummaryFilters
   ): Promise<RevenueSummaryResponse> => {
     const params = new URLSearchParams();
-    params.append("fromDate", filters.fromDate);
-    params.append("toDate", filters.toDate);
+    params.append("startDate", filters.fromDate);
+    params.append("endDate", filters.toDate);
     params.append("groupBy", filters.groupBy);
 
     return api.get(`${BASE_URL}/revenue/summary?${params.toString()}`, { requiresAuth: true });
@@ -268,8 +270,8 @@ export const reportsApi = {
     toDate: string;
   }): Promise<RevenueByRoomTypeResponse> => {
     const queryParams = new URLSearchParams();
-    queryParams.append("fromDate", params.fromDate);
-    queryParams.append("toDate", params.toDate);
+    queryParams.append("startDate", params.fromDate);
+    queryParams.append("endDate", params.toDate);
 
     return api.get(`${BASE_URL}/revenue/by-room-type?${queryParams.toString()}`, { requiresAuth: true });
   },
@@ -283,8 +285,8 @@ export const reportsApi = {
     toDate: string;
   }): Promise<PaymentMethodDistributionResponse> => {
     const queryParams = new URLSearchParams();
-    queryParams.append("fromDate", params.fromDate);
-    queryParams.append("toDate", params.toDate);
+    queryParams.append("startDate", params.fromDate);
+    queryParams.append("endDate", params.toDate);
 
     return api.get(`${BASE_URL}/revenue/payment-methods?${queryParams.toString()}`, { requiresAuth: true });
   },
@@ -298,8 +300,8 @@ export const reportsApi = {
     toDate: string;
   }): Promise<PromotionEffectivenessResponse> => {
     const queryParams = new URLSearchParams();
-    queryParams.append("fromDate", params.fromDate);
-    queryParams.append("toDate", params.toDate);
+    queryParams.append("startDate", params.fromDate);
+    queryParams.append("endDate", params.toDate);
 
     return api.get(`${BASE_URL}/revenue/promotions?${queryParams.toString()}`, { requiresAuth: true });
   },

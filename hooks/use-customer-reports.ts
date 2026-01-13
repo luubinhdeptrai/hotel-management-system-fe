@@ -17,7 +17,7 @@ export function useCustomerReports() {
         setError(null);
 
         const [clv, ranks] = await Promise.all([
-          reportsApi.getCustomerLifetimeValue({ limit: 50 }),
+          reportsApi.getCustomerLifetimeValue(),
           reportsApi.getCustomerRankDistribution(),
         ]);
 
