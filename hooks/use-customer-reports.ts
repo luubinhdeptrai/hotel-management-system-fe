@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { reportsApi } from "@/lib/api/reports.api";
+import { reportApi } from "@/lib/api/reports.api";
 import type { CustomerLifetimeValueResponse, CustomerRankDistributionResponse } from "@/lib/types/report";
 
 export function useCustomerReports() {
@@ -17,8 +17,8 @@ export function useCustomerReports() {
         setError(null);
 
         const [clv, ranks] = await Promise.all([
-          reportsApi.getCustomerLifetimeValue(),
-          reportsApi.getCustomerRankDistribution(),
+          reportApi.getCustomerLifetimeValue(),
+          reportApi.getCustomerRankDistribution(),
         ]);
 
         setLifetimeValue(clv);

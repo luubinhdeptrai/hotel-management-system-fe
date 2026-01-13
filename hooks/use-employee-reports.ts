@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { reportsApi } from "@/lib/api/reports.api";
+import { reportApi } from "@/lib/api/reports.api";
 import type {
   EmployeeBookingPerformanceResponse,
   EmployeeServicePerformanceResponse,
@@ -30,9 +30,9 @@ export function useEmployeeReports(params: UseEmployeeReportsParams) {
         setError(null);
 
         const [booking, service, activity] = await Promise.all([
-          reportsApi.getEmployeeBookingPerformance(params),
-          reportsApi.getEmployeeServicePerformance(params),
-          reportsApi.getEmployeeActivitySummary({
+          reportApi.getEmployeeBookingPerformance(params),
+          reportApi.getEmployeeServicePerformance(params),
+          reportApi.getEmployeeActivitySummary({
             fromDate: params.fromDate,
             toDate: params.toDate,
             employeeId: params.employeeId,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { reportsApi } from "@/lib/api/reports.api";
+import { reportApi } from "@/lib/api/reports.api";
 import type {
   ServiceUsageStatisticsResponse,
   TopServicesByRevenueResponse,
@@ -31,17 +31,17 @@ export function useServiceReports(params: UseServiceReportsParams) {
         setError(null);
 
         const [usage, top, trend] = await Promise.all([
-          reportsApi.getServiceUsageStatistics({
+          reportApi.getServiceUsageStatistics({
             fromDate: params.fromDate,
             toDate: params.toDate,
             serviceId: params.serviceId,
           }),
-          reportsApi.getTopServicesByRevenue({
+          reportApi.getTopServicesByRevenue({
             fromDate: params.fromDate,
             toDate: params.toDate,
             limit: 10,
           }),
-          reportsApi.getServicePerformanceTrend({
+          reportApi.getServicePerformanceTrend({
             fromDate: params.fromDate,
             toDate: params.toDate,
             serviceId: params.serviceId,
