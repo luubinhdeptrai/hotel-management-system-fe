@@ -227,7 +227,14 @@ export async function apiFetch<T>(
       return {} as T;
     }
 
-    return isJson ? await response.json() : ({} as T);
+    const jsonData = isJson ? await response.json() : ({} as T);
+    
+    // Unwrap data field if it exists (Backend response format: { data: {...} })
+    if (jsonData && typeof jsonData === 'object' && 'data' in jsonData) {
+      return (jsonData as any).data as T;
+    }
+    
+    return jsonData;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
