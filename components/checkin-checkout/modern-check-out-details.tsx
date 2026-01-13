@@ -9,6 +9,8 @@ import { ICONS } from "@/src/constants/icons.enum";
 import type { Booking, BookingRoom } from "@/lib/types/api";
 import type { PaymentMethod } from "@/lib/types/payment";
 import { cn } from "@/lib/utils";
+import { ServiceUsageList } from "@/components/service-usage";
+import { AddServiceModal } from "./add-service-modal";
 
 interface ModernCheckOutDetailsProps {
   booking: Booking;
@@ -36,6 +38,8 @@ export function ModernCheckOutDetails({
   const [selectedRooms, setSelectedRooms] = useState<Set<string>>(
     new Set(bookingRooms.map((br) => br.id))
   );
+  const [showAddService, setShowAddService] = useState(false);
+  const [serviceRefreshKey, setServiceRefreshKey] = useState(0);
 
   const toggleRoomSelection = (bookingRoomId: string) => {
     setSelectedRooms((prev) => {
@@ -206,6 +210,16 @@ export function ModernCheckOutDetails({
               </div>
             </CardContent>
           </Card>
+
+          {/* Service Usage */}
+          <ServiceUsageList
+            key={serviceRefreshKey}
+            bookingId={booking.id}
+            onAddService={() => setShowAddService(true)}
+            onRefresh={() => setServiceRefreshKey(prev => prev + 1)}
+            readonly={false}
+            showTitle={true}
+          />
 
           {/* Rooms to Check-out */}
           <Card className="border-2 border-gray-100 shadow-md">
@@ -410,6 +424,32 @@ export function ModernCheckOutDetails({
           </Card>
         </div>
       </div>
+
+      {/* Add Service Modal */}
+      <AddServiceModal
+        open={showAddService}
+        onOpenChange={setShowAddService}
+        onConfirm={async (formData) => {
+          try {
+            const { serviceUsageService } = await import("@/lib/services");
+            await serviceUsageService.createServiceUsage({
+              bookingId: booking.id,
+              serviceId: formData.serviceID,
+              quantity: formData.quantity,
+              note: formData.notes,
+            });
+            setShowAddService(false);
+            setServiceRefreshKey(prev => prev + 1);
+          } catch (error) {
+            console.error("Failed to add service:", error);
+            alert(
+              error instanceof Error
+                ? error.message
+                : "Không thể thêm dịch vụ. Vui lòng thử lại."
+            );
+          }
+        }}
+      />
     </div>
   );
 }

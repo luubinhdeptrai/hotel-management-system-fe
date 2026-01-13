@@ -60,21 +60,34 @@ export function AddServiceModal({
 
       try {
         const response = await serviceManagementService.getServices({
-          isActive: true,
+          // Don't filter by isActive here - let's get all and filter in FE
           limit: 100,
+          page: 1,
         });
 
-        const apiServices = response.data || [];
+        console.log("API Response:", response); // DEBUG
+        console.log("Response.data:", response?.data); // DEBUG
+
+        // Handle response - response.data should be array of services
+        const apiServices = (response?.data as unknown as ApiService[]) || [];
+        console.log("API Services (raw):", apiServices, "Count:", apiServices.length); // DEBUG
 
         // Convert API Service to local Service format
-        const converted: Service[] = apiServices.map((s: ApiService) => ({
-          serviceID: s.id,
-          serviceName: s.name,
-          price: s.price || 0, // Already a number from API
-          unit: s.unit || "lần",
-          category: "Dịch vụ", // API doesn't have category, use default
-        }));
+        const converted: Service[] = apiServices
+          .filter((s: ApiService) => {
+            const isActive = s.isActive !== false;
+            console.log(`Service: ${s.name}, isActive: ${s.isActive}, keeping: ${isActive}`); // DEBUG
+            return isActive;
+          })
+          .map((s: ApiService) => ({
+            serviceID: s.id,
+            serviceName: s.name,
+            price: s.price || 0, // Already a number from API
+            unit: s.unit || "lần",
+            category: "Dịch vụ", // API doesn't have category, use default
+          }));
 
+        console.log("Converted Services:", converted, "Count:", converted.length); // DEBUG
         setServices(converted);
       } catch (err) {
         console.error("Failed to load services:", err);
@@ -120,15 +133,6 @@ export function AddServiceModal({
       currency: "VND",
     }).format(amount);
   };
-
-  // Group services by category
-  const servicesByCategory = services.reduce((acc, service) => {
-    if (!acc[service.category]) {
-      acc[service.category] = [];
-    }
-    acc[service.category].push(service);
-    return acc;
-  }, {} as Record<string, Service[]>);
 
   const totalAmount = selectedService ? selectedService.price * quantity : 0;
 
@@ -182,24 +186,14 @@ export function AddServiceModal({
                     <SelectValue placeholder="Chọn dịch vụ..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(servicesByCategory).map(
-                      ([category, categoryServices]) => (
-                        <div key={category}>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
-                            {category}
-                          </div>
-                          {categoryServices.map((service) => (
-                            <SelectItem
-                              key={service.serviceID}
-                              value={service.serviceID}
-                            >
-                              {service.serviceName} -{" "}
-                              {formatCurrency(service.price)}
-                            </SelectItem>
-                          ))}
-                        </div>
-                      )
-                    )}
+                    {services.map((service) => (
+                      <SelectItem
+                        key={service.serviceID}
+                        value={service.serviceID}
+                      >
+                        {service.serviceName} - {formatCurrency(service.price)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -269,6 +263,19 @@ export function AddServiceModal({
                 </div>
               )}
             </>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && services.length === 0 && !error && (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
+                  <span className="w-6 h-6 text-gray-400">{ICONS.PACKAGE}</span>
+                </div>
+                <p className="text-sm font-medium text-gray-900">Không có dịch vụ nào</p>
+                <p className="text-xs text-gray-500">Vui lòng thêm dịch vụ trong quản lý dịch vụ</p>
+              </div>
+            </div>
           )}
         </div>
 
