@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { reportsApi } from "@/lib/api/reports.api";
+import { reportApi } from "@/lib/api/reports.api";
 import type { OccupancyForecastResponse } from "@/lib/types/report";
 
 interface UseRoomReportsParams {
@@ -23,7 +23,7 @@ export function useRoomReports(params: UseRoomReportsParams) {
         setLoading(true);
         setError(null);
 
-        const forecast = await reportsApi.getOccupancyForecast(params);
+        const forecast = await reportApi.getOccupancyForecast(params);
         setOccupancyForecast(forecast);
       } catch (err: Error | unknown) {
         console.error("Error fetching room reports:", err);

@@ -18,14 +18,13 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Redirect to /dashboard if the user is authenticated and accessing login page
+  // Redirect to /reports if the user is authenticated and accessing login page
   if (
     isPublicRoute &&
     token &&
-    pathname === "/login" &&
-    !pathname.startsWith("/dashboard")
+    pathname === "/login"
   ) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/reports", request.url));
   }
 
   return NextResponse.next();

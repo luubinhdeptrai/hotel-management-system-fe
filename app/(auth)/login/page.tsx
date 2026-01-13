@@ -40,7 +40,7 @@ export default function LoginPage() {
 
       // If we reach here without error, login was successful
       // authService.login() throws on failure
-      router.push("/dashboard");
+      router.push("/reports");
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.statusCode === 401) {
