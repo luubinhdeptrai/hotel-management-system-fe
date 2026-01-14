@@ -108,6 +108,16 @@ export function UpdateBookingModal({
         selectedRooms: reservation.details.map((detail) => ({
           roomID: detail.roomId,
           roomName: detail.roomName,
+          roomType: {
+            id: detail.roomTypeId,
+            name: detail.roomTypeName || "Phòng",
+            capacity: 0, // Fallback
+            totalBed: 0, // Fallback
+            basePrice: detail.pricePerNight,
+            roomTypeID: detail.roomTypeId,
+            roomTypeName: detail.roomTypeName,
+            price: detail.pricePerNight,
+          },
           roomTypeID: detail.roomTypeId || "", // fallback
           pricePerNight: detail.pricePerNight,
           checkInDate: detail.checkInDate,
@@ -116,7 +126,6 @@ export function UpdateBookingModal({
           totalPrice:
             detail.pricePerNight *
             calculateNights(detail.checkInDate, detail.checkOutDate),
-          // We might miss roomTypeName or other details if not in ReservationDetail
           id: detail.roomId,
         })),
         dateRange: {

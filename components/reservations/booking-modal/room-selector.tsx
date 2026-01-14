@@ -526,7 +526,10 @@ export function RoomSelector({
                 <div className="flex-1">
                   <p className="font-bold text-lg">{room.roomName}</p>
                   <p className="text-sm text-gray-600">
-                    {room.roomType.roomTypeName} • Tầng {room.floor}
+                    {room.roomType?.roomTypeName ||
+                      room.roomType?.name ||
+                      "Phòng"}{" "}
+                    • Tầng {room.floor}
                   </p>
                   {room.totalPrice && (
                     <p className="text-sm font-semibold text-green-600">
@@ -538,7 +541,7 @@ export function RoomSelector({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleRemoveRoom(room.roomID)}
+                  onClick={() => handleRemoveRoom(room.roomID || room.id)}
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   Xóa
