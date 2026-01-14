@@ -112,6 +112,12 @@ const serviceManagement = [
     permission: "penalty:read",
   },
   {
+    title: "Giao Dịch",
+    url: "/transactions",
+    icon: ICONS.CREDIT_CARD,
+    permission: "transaction:read",
+  },
+  {
     title: "Folio",
     url: "/folio",
     icon: ICONS.FILE_TEXT,

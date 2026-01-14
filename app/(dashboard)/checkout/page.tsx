@@ -51,16 +51,34 @@ export default function CheckOutPage() {
     }
   };
 
-  const handleCompleteCheckout = () => {
-    checkOut.handleCompleteCheckout();
+  const handleCompleteCheckout = async () => {
+    try {
+      await checkOut.handleCompleteCheckout();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Không thể tiếp tục check-out. Vui lòng thử lại.";
+      notification.showError(errorMessage);
+    }
   };
 
-  const handleConfirmPayment = (
+  const handleConfirmPayment = async (
     method: Parameters<typeof checkOut.handleConfirmPayment>[0]
   ) => {
-    const roomName = checkOut.handleConfirmPayment(method);
-    if (roomName) {
-      notification.showSuccess(`Đã hoàn tất check-out cho phòng ${roomName}!`);
+    try {
+      const roomName = await checkOut.handleConfirmPayment(method);
+      if (roomName) {
+        notification.showSuccess(
+          `Đã hoàn tất check-out cho phòng ${roomName}!`
+        );
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Không thể hoàn tất check-out. Vui lòng thử lại.";
+      notification.showError(errorMessage);
     }
   };
 
@@ -171,7 +189,7 @@ export default function CheckOutPage() {
       <PaymentModal
         open={checkOut.showPaymentModal}
         onOpenChange={checkOut.setShowPaymentModal}
-        summary={null}
+        summary={checkOut.checkoutSummary}
         onConfirm={handleConfirmPayment}
       />
 
