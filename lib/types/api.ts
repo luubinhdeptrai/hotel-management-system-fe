@@ -16,6 +16,12 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   limit: number;
+  // Actual API response structure
+  items?: T[];
+  totalItems?: number;
+  currentPage?: number;
+  perPage?: number;
+  totalPages?: number;
 }
 
 export interface ApiError {

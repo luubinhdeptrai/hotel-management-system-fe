@@ -85,8 +85,8 @@ export function CustomerSelectionCard({
       const result = await customerService.getCustomers({
         limit: 100,
       });
-      setExistingCustomers(result.data);
-      setFilteredCustomers(result.data);
+      setExistingCustomers(result?.items || result?.data || []);
+      setFilteredCustomers(result?.items || result?.data || []);
     } catch (error) {
       console.error("Failed to load customers:", error);
       toast.error("Không thể tải danh sách khách hàng");
