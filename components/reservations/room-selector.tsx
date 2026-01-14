@@ -109,14 +109,14 @@ export function RoomSelector({
         };
 
         // Add optional filters
-        if (selectedRoomTypeFilter && selectedRoomTypeFilter !== 'all') {
+        if (selectedRoomTypeFilter && selectedRoomTypeFilter !== "all") {
           params.roomTypeId = selectedRoomTypeFilter;
           logger.log("🔍 FILTER: Room type filter ID:", selectedRoomTypeFilter);
         }
         if (searchRoomNumber) {
           params.search = searchRoomNumber;
         }
-        if (selectedFloor && selectedFloor !== 'all') {
+        if (selectedFloor && selectedFloor !== "all") {
           params.floor = parseInt(selectedFloor);
           logger.log("🔍 FILTER: Floor filter:", params.floor);
         }
@@ -127,18 +127,27 @@ export function RoomSelector({
           params.maxPrice = parseInt(maxPrice);
         }
 
-        logger.log("📤 Full params sent to API:", JSON.stringify(params, null, 2));
+        logger.log(
+          "📤 Full params sent to API:",
+          JSON.stringify(params, null, 2)
+        );
         const rooms = await bookingService.getAvailableRooms(params);
 
         logger.log("📥 API returned:", rooms.length, "rooms");
         logger.log("Available rooms loaded from service:", rooms);
-        logger.log("Rooms array length:", Array.isArray(rooms) ? rooms.length : "not an array");
+        logger.log(
+          "Rooms array length:",
+          Array.isArray(rooms) ? rooms.length : "not an array"
+        );
         if (Array.isArray(rooms) && rooms.length > 0) {
           logger.log("First room sample:", rooms[0]);
-          const roomTypeIds = [...new Set(rooms.map(r => r.roomType?.id))];
+          const roomTypeIds = [...new Set(rooms.map((r) => r.roomType?.id))];
           logger.log("Unique room type IDs in response:", roomTypeIds);
         }
-        logger.log("Available room type IDs from props:", roomTypes.map(rt => rt.roomTypeID));
+        logger.log(
+          "Available room type IDs from props:",
+          roomTypes.map((rt) => rt.roomTypeID)
+        );
         setAvailableRooms(Array.isArray(rooms) ? rooms : []);
       } catch (err) {
         const errorMessage =
@@ -154,10 +163,20 @@ export function RoomSelector({
     };
 
     loadAvailableRooms();
-  }, [checkInDate, checkOutDate, selectedRoomTypeFilter, searchRoomNumber, selectedFloor, minPrice, maxPrice]);
+  }, [
+    checkInDate,
+    checkOutDate,
+    selectedRoomTypeFilter,
+    searchRoomNumber,
+    selectedFloor,
+    minPrice,
+    maxPrice,
+  ]);
 
   // Filter to exclude already selected rooms (client-side only)
-  const filteredRooms = (Array.isArray(availableRooms) ? availableRooms : []).filter((room) => {
+  const filteredRooms = (
+    Array.isArray(availableRooms) ? availableRooms : []
+  ).filter((room) => {
     // Exclude already selected rooms
     return !selectedRooms.some((sr) => sr.roomID === room.id);
   });
@@ -185,7 +204,10 @@ export function RoomSelector({
     return acc;
   }, [] as GroupedAvailableRooms[]);
 
-  const handleSelectRoom = (room: AvailableRoom, numberOfGuests: number = 1) => {
+  const handleSelectRoom = (
+    room: AvailableRoom,
+    numberOfGuests: number = 1
+  ) => {
     if (selectedRooms.length >= (maxRooms || 10)) {
       toast.error(`Bạn chỉ có thể chọn tối đa ${maxRooms || 10} phòng`);
       return;
@@ -224,7 +246,9 @@ export function RoomSelector({
     const updated = [...selectedRooms, newSelectedRoom];
     onRoomsSelected(updated);
     toast.success(
-      `Đã chọn phòng ${room.roomNumber} - ${room.roomType.name} (${totalPrice.toLocaleString()}₫)`
+      `Đã chọn phòng ${room.roomNumber} - ${
+        room.roomType.name
+      } (${totalPrice.toLocaleString()}₫)`
     );
   };
 
@@ -257,7 +281,10 @@ export function RoomSelector({
         roomTypeMap.set(room.roomType.id, room.roomType.name);
       }
     });
-    return Array.from(roomTypeMap.entries()).map(([id, name]) => ({ id, name }));
+    return Array.from(roomTypeMap.entries()).map(([id, name]) => ({
+      id,
+      name,
+    }));
   };
 
   const getPriceRange = (): { min: number; max: number } => {
@@ -466,9 +493,12 @@ export function RoomSelector({
                 <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-blue-900">{group.roomTypeName}</p>
+                      <p className="font-bold text-blue-900">
+                        {group.roomTypeName}
+                      </p>
                       <p className="text-sm text-blue-700">
-                        Sức chứa: {group.capacity} khách | Còn lại: {group.availableCount} phòng
+                        Sức chứa: {group.capacity} khách | Còn lại:{" "}
+                        {group.availableCount} phòng
                       </p>
                     </div>
                     <div className="text-right">
@@ -478,7 +508,8 @@ export function RoomSelector({
                       <p className="text-xs text-blue-600">/đêm</p>
                       {nights > 0 && (
                         <p className="text-sm font-semibold text-blue-700">
-                          {(group.basePrice * nights).toLocaleString()}₫ ({nights}đ)
+                          {(group.basePrice * nights).toLocaleString()}₫ (
+                          {nights}đ)
                         </p>
                       )}
                     </div>
@@ -494,8 +525,12 @@ export function RoomSelector({
                     >
                       <div className="space-y-2">
                         <div>
-                          <p className="text-lg font-bold text-center">{room.roomNumber}</p>
-                          <p className="text-xs text-gray-600 text-center">Tầng {room.floor}</p>
+                          <p className="text-lg font-bold text-center">
+                            {room.roomNumber}
+                          </p>
+                          <p className="text-xs text-gray-600 text-center">
+                            Tầng {room.floor}
+                          </p>
                         </div>
 
                         <div className="bg-gray-50 p-2 rounded text-center">
@@ -510,7 +545,7 @@ export function RoomSelector({
                         <Button
                           onClick={() => handleSelectRoom(room)}
                           size="sm"
-                          className="w-full"
+                          className="w-full bg-primary-700"
                           variant="default"
                         >
                           Chọn
@@ -526,14 +561,16 @@ export function RoomSelector({
       )}
 
       {/* Empty State */}
-      {!isLoading && filteredRooms.length === 0 && availableRooms.length > 0 && (
-        <Alert>
-          <AlertDescription>
-            Không tìm thấy phòng nào khớp với bộ lọc của bạn. Vui lòng thử
-            thay đổi bộ lọc.
-          </AlertDescription>
-        </Alert>
-      )}
+      {!isLoading &&
+        filteredRooms.length === 0 &&
+        availableRooms.length > 0 && (
+          <Alert>
+            <AlertDescription>
+              Không tìm thấy phòng nào khớp với bộ lọc của bạn. Vui lòng thử
+              thay đổi bộ lọc.
+            </AlertDescription>
+          </Alert>
+        )}
 
       {/* No Available Rooms */}
       {!isLoading && availableRooms.length === 0 && !error && (
@@ -566,7 +603,8 @@ export function RoomSelector({
                   </p>
                   {room.totalPrice && (
                     <p className="text-sm font-semibold text-green-600">
-                      {room.pricePerNight.toLocaleString()}₫ × {nights}đ = {room.totalPrice.toLocaleString()}₫
+                      {room.pricePerNight.toLocaleString()}₫ × {nights}đ ={" "}
+                      {room.totalPrice.toLocaleString()}₫
                     </p>
                   )}
                 </div>
@@ -580,13 +618,18 @@ export function RoomSelector({
                 </Button>
               </div>
             ))}
-            
+
             {/* Summary */}
             <div className="border-t pt-3 mt-3">
               <div className="flex items-center justify-between font-semibold">
-                <span>Tổng cộng ({selectedRooms.length} phòng × {nights} đêm):</span>
+                <span>
+                  Tổng cộng ({selectedRooms.length} phòng × {nights} đêm):
+                </span>
                 <span className="text-lg text-green-600">
-                  {(selectedRooms.reduce((sum, r) => sum + (r.totalPrice || 0), 0)).toLocaleString()}₫
+                  {selectedRooms
+                    .reduce((sum, r) => sum + (r.totalPrice || 0), 0)
+                    .toLocaleString()}
+                  ₫
                 </span>
               </div>
             </div>
