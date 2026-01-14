@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from "@/lib/utils/logger";
 import { useNotification } from "@/hooks/use-notification";
 import { useState, useCallback, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
@@ -98,7 +99,7 @@ export function ModernCheckInModal({
             }
           }
         } catch (error) {
-          console.error("Failed to fetch booking details:", error);
+          logger.error("Failed to fetch booking details:", error);
           // Fallback to prop data if fetch fails
           setDetailedBooking(booking);
         }
@@ -171,7 +172,7 @@ export function ModernCheckInModal({
         setShowCustomerSelection(false);
         dispatch(setActiveBookingRoomId(null));
       } catch (error) {
-        console.error("Check-in failed:", error);
+        logger.error("Check-in failed:", error);
         notification.showError(
           "Check-in thất bại: " +
             (error instanceof Error ? error.message : "Đã có lỗi xảy ra")
@@ -243,7 +244,7 @@ export function ModernCheckInModal({
       // Clear selections if any
       dispatch(setActiveBookingRoomId(null));
     } catch (error) {
-      console.error("Quick check-in failed:", error);
+      logger.error("Quick check-in failed:", error);
       notification.showError(
         "Check-in nhanh thất bại: " +
           (error instanceof Error ? error.message : "Đã có lỗi xảy ra")

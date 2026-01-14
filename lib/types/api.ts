@@ -438,6 +438,106 @@ export type PaymentMethod =
 // Transaction Status
 export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
 
+// Transaction interfaces
+export interface Transaction {
+  id: string;
+  bookingId: string;
+  amount: number;
+  baseAmount: number;
+  discountAmount: number;
+  type: TransactionType;
+  method: PaymentMethod;
+  status: TransactionStatus;
+  description?: string;
+  processedById: string;
+  occurredAt: string;
+  createdAt: string;
+  updatedAt: string;
+  booking?: Booking;
+  processedBy?: {
+    id: string;
+    name: string;
+    username: string;
+  };
+}
+
+export interface TransactionDetail {
+  id: string;
+  transactionId: string;
+  bookingRoomId?: string;
+  serviceUsageId?: string;
+  baseAmount: number;
+  discountAmount: number;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+  bookingRoom?: BookingRoom;
+  serviceUsage?: {
+    id: string;
+    quantity: number;
+    service: {
+      id: string;
+      name: string;
+      price: number;
+    };
+  };
+}
+
+export interface GetTransactionsParams {
+  bookingId?: string;
+  type?: TransactionType;
+  status?: TransactionStatus;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+// Transaction interfaces
+export interface Transaction {
+  id: string;
+  bookingId: string;
+  amount: number;
+  baseAmount: number;
+  discountAmount: number;
+  type: TransactionType;
+  method: PaymentMethod;
+  status: TransactionStatus;
+  description?: string;
+  processedById: string;
+  occurredAt: string;
+  createdAt: string;
+  updatedAt: string;
+  booking?: Booking;
+  processedBy?: {
+    id: string;
+    name: string;
+    username: string;
+  };
+}
+
+export interface TransactionDetail {
+  id: string;
+  transactionId: string;
+  bookingRoomId?: string;
+  serviceUsageId?: string;
+  baseAmount: number;
+  discountAmount: number;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+  bookingRoom?: BookingRoom;
+  serviceUsage?: {
+    id: string;
+    quantity: number;
+    service: {
+      id: string;
+      name: string;
+      price: number;
+    };
+  };
+}
+
 export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, string> = {
   PENDING: "Chờ xử lý",
   COMPLETED: "Hoàn thành",
@@ -525,13 +625,17 @@ export interface CheckOutRequest {
 }
 
 export interface CreateTransactionRequest {
-  bookingId: string;
+  bookingId?: string;
+  bookingRoomIds?: string[];
+  serviceUsageId?: string;
+  paymentMethod: PaymentMethod;
   transactionType: TransactionType;
-  amount: number;
-  method: PaymentMethod;
-  bookingRoomId?: string;
-  transactionRef?: string;
   description?: string;
+  promotionApplications?: Array<{
+    customerPromotionId: string;
+    bookingRoomId?: string;
+    serviceUsageId?: string;
+  }>;
 }
 
 // Booking Room - represents individual room within a booking

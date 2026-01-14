@@ -99,6 +99,36 @@ const serviceManagement = [
     icon: ICONS.TAG,
     permission: "promotion:read",
   },
+  {
+    title: "Phụ Thu",
+    url: "/surcharges",
+    icon: ICONS.SURCHARGE,
+    permission: "surcharge:read",
+  },
+  {
+    title: "Phí Phạt",
+    url: "/penalties",
+    icon: ICONS.PENALTY,
+    permission: "penalty:read",
+  },
+  {
+    title: "Giao Dịch",
+    url: "/transactions",
+    icon: ICONS.CREDIT_CARD,
+    permission: "transaction:read",
+  },
+  {
+    title: "Folio",
+    url: "/folio",
+    icon: ICONS.FILE_TEXT,
+    permission: "transaction:read",
+  },
+  {
+    title: "Thanh Toán",
+    url: "/payments",
+    icon: ICONS.RECEIPT,
+    permission: "transaction:create",
+  },
 ];
 
 const adminManagement = [
