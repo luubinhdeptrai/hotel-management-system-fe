@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { SelectedRoom } from "./room-selector";
+import type { SelectedRoom } from "./booking-modal/room-selector";
 
 interface BookingSummaryProps {
   rooms: SelectedRoom[];
@@ -56,7 +56,9 @@ export function BookingSummary({
           </div>
           <div className="bg-white p-4 rounded-lg border border-blue-100">
             <p className="text-sm text-gray-600 mb-1">Số lượng khách</p>
-            <p className="font-bold text-gray-900 text-lg">👥 {totalGuests} khách</p>
+            <p className="font-bold text-gray-900 text-lg">
+              👥 {totalGuests} khách
+            </p>
           </div>
         </div>
       </div>
@@ -82,7 +84,9 @@ export function BookingSummary({
           </div>
         </div>
         <div className="mt-4 bg-purple-100 p-3 rounded-lg text-center">
-          <p className="text-sm font-semibold text-purple-900">🌙 {nights} đêm lưu trú</p>
+          <p className="text-sm font-semibold text-purple-900">
+            🌙 {nights} đêm lưu trú
+          </p>
         </div>
       </div>
 
@@ -93,10 +97,15 @@ export function BookingSummary({
         </h3>
         <div className="space-y-3">
           {roomBreakdown.map((item, idx) => (
-            <div key={idx} className="bg-white p-4 rounded-lg border border-green-100 hover:border-green-200 transition-colors">
+            <div
+              key={idx}
+              className="bg-white p-4 rounded-lg border border-green-100 hover:border-green-200 transition-colors"
+            >
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <p className="font-bold text-gray-900 text-base">{item.roomNumber}</p>
+                  <p className="font-bold text-gray-900 text-base">
+                    {item.roomNumber}
+                  </p>
                   <Badge className="bg-green-100 text-green-700 text-xs mt-1">
                     {item.roomType}
                   </Badge>
@@ -106,7 +115,11 @@ export function BookingSummary({
                 </span>
               </div>
               <p className="text-xs text-gray-600 border-t border-gray-200 pt-2">
-                {item.nights} đêm × <span className="font-semibold">{item.pricePerNight.toLocaleString()}₫</span>/đêm
+                {item.nights} đêm ×{" "}
+                <span className="font-semibold">
+                  {item.pricePerNight.toLocaleString()}₫
+                </span>
+                /đêm
               </p>
             </div>
           ))}
@@ -121,20 +134,26 @@ export function BookingSummary({
         <div className="space-y-3 mb-4">
           <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-amber-100">
             <span className="text-gray-700 font-medium">Tổng tiền phòng</span>
-            <span className="font-bold text-gray-900 text-lg">{subtotal.toLocaleString()}₫</span>
+            <span className="font-bold text-gray-900 text-lg">
+              {subtotal.toLocaleString()}₫
+            </span>
           </div>
 
           {showDeposit && (
             <>
               <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-amber-100">
-                <span className="text-gray-700 font-medium">Cọc ({depositPercentage}%)</span>
+                <span className="text-gray-700 font-medium">
+                  Cọc ({depositPercentage}%)
+                </span>
                 <Badge className="bg-orange-100 text-orange-700 font-bold">
                   {deposit.toLocaleString()}₫
                 </Badge>
               </div>
 
               <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg border border-green-300">
-                <span className="text-green-900 font-bold">Còn lại sau cọc</span>
+                <span className="text-green-900 font-bold">
+                  Còn lại sau cọc
+                </span>
                 <span className="text-green-700 font-bold text-lg">
                   {balance.toLocaleString()}₫
                 </span>
@@ -160,7 +179,8 @@ export function BookingSummary({
             ℹ️ Lưu ý quan trọng
           </span>
           Giá trên đã bao gồm thuế và phí dịch vụ.
-          {showDeposit && ` Bạn sẽ thanh toán cọc ${depositPercentage}% khi xác nhận đặt phòng.`}
+          {showDeposit &&
+            ` Bạn sẽ thanh toán cọc ${depositPercentage}% khi xác nhận đặt phòng.`}
         </p>
       </div>
     </div>

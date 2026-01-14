@@ -1,6 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useNotification } from "@/hooks/use-notification";
+import { useState, useCallback, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  setModalOpen,
+  setActiveBookingRoomId,
+  setRoomGuests,
+} from "@/lib/redux/slices/checkin.slice";
+import { MultiCustomerSelectionData } from "../reservations/booking-modal/multi-customer-selection-card";
+import { MultiCustomerSelectionDialog } from "./multi-customer-selection-dialog";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +19,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -21,154 +29,231 @@ import { ICONS } from "@/src/constants/icons.enum";
 import type { BackendCheckInRequest } from "@/lib/types/checkin-checkout";
 import type { Booking } from "@/lib/types/api";
 import { cn } from "@/lib/utils";
+import { bookingService } from "@/lib/services";
 
 interface ModernCheckInModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   booking: Booking | null;
-  onConfirm: (data: BackendCheckInRequest) => Promise<void>;
-  isLoading?: boolean;
-}
-
-interface RoomCheckInState {
-  bookingRoomId: string;
-  customerIds: string[];
-  numberOfGuests: number;
+  // onConfirm removed as it's internal now
+  isLoading?: boolean; // Kept for compatibility but unused
 }
 
 export function ModernCheckInModal({
   open,
   onOpenChange,
   booking,
-  onConfirm,
-  isLoading = false,
 }: ModernCheckInModalProps) {
-  const [checkInStates, setCheckInStates] = useState<RoomCheckInState[]>([]);
-  const [notes, setNotes] = useState("");
-  const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set());
-  const [lastInitializedBookingId, setLastInitializedBookingId] = useState<
-    string | null
-  >(null);
-  const [showGuestRegistration, setShowGuestRegistration] = useState(false);
-
-  // Initialize state when modal opens with new booking data
-  // Using React's recommended pattern: set state during render based on props
-  // This avoids the cascading renders warning from useEffect
-  if (open && booking?.id && booking.id !== lastInitializedBookingId) {
-    setLastInitializedBookingId(booking.id);
-
-    const initialStates =
-      booking.bookingRooms
-        ?.filter((br) => br.status === "CONFIRMED")
-        .map((br) => {
-          // Get customers already assigned to this room (if any)
-          const roomCustomers = br.bookingCustomers?.map(bc => bc.customerId) || [];
-          
-          // If no customers assigned yet, default to primary customer
-          const defaultCustomers = roomCustomers.length > 0 
-            ? roomCustomers 
-            : [booking.primaryCustomerId];
-
-          return {
-            bookingRoomId: br.id,
-            customerIds: defaultCustomers,
-            numberOfGuests: defaultCustomers.length,
-          };
-        }) || [];
-
-    setCheckInStates(initialStates);
-    setSelectedRooms(new Set(initialStates.map((s) => s.bookingRoomId)));
-  }
-
-  // Reset state when modal closes
-  const handleOpenChange = useCallback(
-    (newOpen: boolean) => {
-      if (!newOpen) {
-        setCheckInStates([]);
-        setNotes("");
-        setSelectedRooms(new Set());
-        setLastInitializedBookingId(null);
-      }
-      onOpenChange(newOpen);
-    },
-    [onOpenChange]
+  const dispatch = useAppDispatch();
+  const notification = useNotification();
+  const { roomGuests, activeBookingRoomId } = useAppSelector(
+    (state) => state.checkin
   );
+  // Remove onConfirm from props as we handle it internally now, or keep it optional?
+  // ideally checking in is now verified inside this component.
+  // actually, let's use the bookingService directly here for the single room action.
 
-  const toggleRoomSelection = (bookingRoomId: string) => {
-    setSelectedRooms((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(bookingRoomId)) {
-        newSet.delete(bookingRoomId);
-      } else {
-        newSet.add(bookingRoomId);
+  const [notes, setNotes] = useState("");
+  const [showCustomerSelection, setShowCustomerSelection] = useState(false);
+  const [detailedBooking, setDetailedBooking] = useState<Booking | null>(
+    booking
+  );
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Initialize Redux state when modal opens
+  useEffect(() => {
+    const initData = async () => {
+      if (open && booking) {
+        try {
+          // Fetch full booking details to get nested bookingCustomers
+          // The booking prop from search results might not have deep nested data
+          const fullBookingData = await bookingService.getBookingById(
+            booking.id
+          );
+
+          if (fullBookingData?.booking) {
+            setDetailedBooking(fullBookingData.booking);
+
+            // Initialize roomGuests from fetched booking data
+            if (fullBookingData.booking.bookingRooms) {
+              fullBookingData.booking.bookingRooms.forEach((br) => {
+                if (br.bookingCustomers && br.bookingCustomers.length > 0) {
+                  const guests = br.bookingCustomers
+                    .filter((bc) => bc.customer)
+                    .map((bc) => ({
+                      customerId: bc.customer!.id,
+                      fullName: bc.customer!.fullName,
+                    }));
+
+                  if (guests.length > 0) {
+                    dispatch(
+                      setRoomGuests({
+                        bookingRoomId: br.id,
+                        guests,
+                      })
+                    );
+                  }
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch booking details:", error);
+          // Fallback to prop data if fetch fails
+          setDetailedBooking(booking);
+        }
       }
-      return newSet;
-    });
-  };
-  // Customer assignment helpers removed — backend list endpoint doesn't provide bookingCustomers yet.
-
-  const handleConfirm = async () => {
-    if (!booking || selectedRooms.size === 0) {
-      alert("Vui lòng chọn ít nhất một phòng để check-in!");
-      return;
-    }
-
-    // ✅ FIX #4: Validate customerIds not empty
-    const roomsWithoutGuests = checkInStates
-      .filter((state) => selectedRooms.has(state.bookingRoomId))
-      .filter((state) => !state.customerIds || state.customerIds.length === 0);
-    
-    if (roomsWithoutGuests.length > 0) {
-      alert("Vui lòng gán ít nhất một khách cho mỗi phòng được chọn!");
-      return;
-    }
-
-    // ✅ FIX #5: Validate room capacity
-    const overCapacityRooms = checkInStates
-      .filter((state) => selectedRooms.has(state.bookingRoomId))
-      .filter((state) => {
-        const room = booking.bookingRooms?.find(br => br.id === state.bookingRoomId);
-        const capacity = room?.roomType?.capacity || 999;
-        return state.customerIds.length > capacity;
-      });
-    
-    if (overCapacityRooms.length > 0) {
-      const roomDetails = overCapacityRooms.map(state => {
-        const room = booking.bookingRooms?.find(br => br.id === state.bookingRoomId);
-        return `${room?.room?.roomNumber || 'Unknown'} (capacity: ${room?.roomType?.capacity || 0}, assigned: ${state.customerIds.length})`;
-      }).join(", ");
-      alert(`Một số phòng vượt quá sức chứa! ${roomDetails}\n\nVui lòng điều chỉnh số lượng khách.`);
-      return;
-    }
-
-    const checkInInfo = checkInStates
-      .filter((state) => selectedRooms.has(state.bookingRoomId))
-      .map((state) => ({
-        bookingRoomId: state.bookingRoomId,
-        customerIds: state.customerIds,
-      }));
-
-    const requestData: BackendCheckInRequest = {
-      checkInInfo,
     };
 
-    try {
-      await onConfirm(requestData);
-      handleOpenChange(false);
-    } catch (error) {
-      console.error("Check-in failed:", error);
-      // Show user-friendly error message
-      alert(
-        "Check-in thất bại! Vui lòng kiểm tra:\n" +
-        "- Tất cả phòng đã ở trạng thái \"Đã xác nhận\"\n" +
-        "- Phòng đang sẵn sàng (không bị chiếm hoặc đang dọn dẹp)\n" +
-        "- Thông tin khách hàng hợp lệ\n\n" +
-        "Chi tiết lỗi: " + (error instanceof Error ? error.message : "Unknown error")
-      );
+    initData();
+  }, [open, booking, dispatch]);
+
+  const activeBooking = detailedBooking || booking;
+
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      onOpenChange(newOpen);
+      dispatch(setModalOpen(newOpen));
+    },
+    [onOpenChange, dispatch]
+  );
+
+  const handleCheckInClick = (bookingRoomId: string) => {
+    dispatch(setActiveBookingRoomId(bookingRoomId));
+    setShowCustomerSelection(true);
+  };
+
+  const handleCustomerSelected = async (data: MultiCustomerSelectionData) => {
+    if (activeBookingRoomId && activeBooking) {
+      if (data.customers.length === 0) {
+        notification.showError("Vui lòng chọn ít nhất một khách hàng!");
+        return;
+      }
+
+      setIsProcessing(true);
+      try {
+        // 1. Prepare Check-in Request
+        const checkInInfo = [
+          {
+            bookingRoomId: activeBookingRoomId,
+            customerIds: data.customers.map((c) => c.customerId),
+          },
+        ];
+
+        const requestData: BackendCheckInRequest = {
+          checkInInfo,
+        };
+
+        // 2. Call API
+        await bookingService.checkIn(requestData);
+
+        // 3. Update UI - Refresh data
+        const fullBookingData = await bookingService.getBookingById(
+          activeBooking.id
+        );
+        if (fullBookingData?.booking) {
+          setDetailedBooking(fullBookingData.booking);
+        }
+
+        // 4. Update Redux state local to this session (optional but correct)
+        const newGuests = data.customers.map((c) => ({
+          customerId: c.customerId,
+          fullName: c.customerName,
+        }));
+        dispatch(
+          setRoomGuests({
+            bookingRoomId: activeBookingRoomId,
+            guests: newGuests,
+          })
+        );
+
+        notification.showSuccess("Check-in phòng thành công!");
+        setShowCustomerSelection(false);
+        dispatch(setActiveBookingRoomId(null));
+      } catch (error) {
+        console.error("Check-in failed:", error);
+        notification.showError(
+          "Check-in thất bại: " +
+            (error instanceof Error ? error.message : "Đã có lỗi xảy ra")
+        );
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 
-  if (!booking) return null;
+  const handleQuickCheckInAll = async () => {
+    if (!activeBooking || !activeBooking.bookingRooms) return;
+
+    const confirmedRooms = activeBooking.bookingRooms.filter(
+      (br) => br.status === "CONFIRMED"
+    );
+
+    if (confirmedRooms.length === 0) {
+      notification.showError("Không có phòng nào cần check-in!");
+      return;
+    }
+
+    // Prepare data: Check in ALL confirmed rooms
+    // If a room has guests assigned in Redux, use them.
+    // Otherwise, AUTO-ASSIGN the Primary Customer (Test Mode / Quick Mode).
+    const checkInInfo = confirmedRooms.map((br) => {
+      const assignedGuests = roomGuests[br.id] || [];
+      const customerIds =
+        assignedGuests.length > 0
+          ? assignedGuests.map((g) => g.customerId)
+          : activeBooking.primaryCustomer
+          ? [activeBooking.primaryCustomer.id]
+          : []; // Should not happen if booking has primary customer
+
+      return {
+        bookingRoomId: br.id,
+        customerIds,
+      };
+    });
+
+    // Validate if any room has no customer (edge case)
+    if (checkInInfo.some((info) => info.customerIds.length === 0)) {
+      notification.showError(
+        "Không tìm thấy thông tin khách hàng để gán tự động!"
+      );
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const requestData: BackendCheckInRequest = {
+        checkInInfo,
+      };
+
+      await bookingService.checkIn(requestData);
+
+      // Refresh data
+      const fullBookingData = await bookingService.getBookingById(
+        activeBooking.id
+      );
+      if (fullBookingData?.booking) {
+        setDetailedBooking(fullBookingData.booking);
+      }
+
+      notification.showSuccess(
+        `Đã check-in nhanh cho ${confirmedRooms.length} phòng!`
+      );
+
+      // Clear selections if any
+      dispatch(setActiveBookingRoomId(null));
+    } catch (error) {
+      console.error("Quick check-in failed:", error);
+      notification.showError(
+        "Check-in nhanh thất bại: " +
+          (error instanceof Error ? error.message : "Đã có lỗi xảy ra")
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (!activeBooking) return null;
 
   const formatCurrency = (value: string | number) => {
     const amount = typeof value === "string" ? parseFloat(value) : value;
@@ -188,18 +273,12 @@ export function ModernCheckInModal({
     });
   };
 
-  // ✅ FIX: Only show CONFIRMED rooms per Backend validation
-  // Backend check-in API ONLY accepts rooms with status = CONFIRMED
-  const confirmedRooms =
-    booking.bookingRooms?.filter((br) => br.status === "CONFIRMED") || [];
-  
-  // Track already checked-in rooms for info display
-  const checkedInRooms = 
-    booking.bookingRooms?.filter((br) => br.status === "CHECKED_IN") || [];
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         {/* Modern Header with Gradient */}
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-start gap-4">
@@ -208,29 +287,39 @@ export function ModernCheckInModal({
             </div>
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold text-gray-900 mb-1">
-                Check-in Confirmation
+                Chi Tiết Booking & Check-in
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-600">
-                Booking Code:{" "}
+                Mã Booking:{" "}
                 <span className="font-mono font-semibold text-blue-600">
-                  {booking.bookingCode}
+                  {activeBooking.bookingCode}
                 </span>
               </DialogDescription>
             </div>
-            <Badge
-              variant="default"
-              className="bg-blue-100 text-blue-700 hover:bg-blue-200"
-            >
-              {confirmedRooms.length}{" "}
-              {confirmedRooms.length === 1 ? "Room" : "Rooms"}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="default"
+                className="bg-blue-100 text-blue-700 hover:bg-blue-200"
+              >
+                {activeBooking.bookingRooms?.length || 0}{" "}
+                {activeBooking.bookingRooms?.length === 1 ? "Phòng" : "Phòng"}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full hover:bg-gray-100"
+                onClick={() => handleOpenChange(false)}
+              >
+                <div className="w-5 h-5 text-gray-500">{ICONS.CLOSE}</div>
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto py-4 space-y-6">
           {/* Guest Information Card */}
-          {booking.primaryCustomer && (
+          {activeBooking.primaryCustomer && (
             <Card className="border-2 border-gray-100 shadow-sm">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3 mb-4">
@@ -238,27 +327,27 @@ export function ModernCheckInModal({
                     <span className="w-5 h-5 text-white">{ICONS.USER}</span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Guest Information
+                    Thông Tin Khách Đặt
                   </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-500 mb-1">Full Name</p>
+                    <p className="text-gray-500 mb-1">Họ tên</p>
                     <p className="font-semibold text-gray-900">
-                      {booking.primaryCustomer.fullName}
+                      {activeBooking.primaryCustomer.fullName}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-500 mb-1">Phone Number</p>
+                    <p className="text-gray-500 mb-1">Số điện thoại</p>
                     <p className="font-semibold text-gray-900">
-                      {booking.primaryCustomer.phone}
+                      {activeBooking.primaryCustomer.phone}
                     </p>
                   </div>
-                  {booking.primaryCustomer.email && (
+                  {activeBooking.primaryCustomer.email && (
                     <div className="col-span-2">
                       <p className="text-gray-500 mb-1">Email</p>
                       <p className="font-semibold text-gray-900">
-                        {booking.primaryCustomer.email}
+                        {activeBooking.primaryCustomer.email}
                       </p>
                     </div>
                   )}
@@ -277,46 +366,62 @@ export function ModernCheckInModal({
                   </span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Stay Details
+                  Chi Tiết Lưu Trú
                 </h3>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-500 mb-1">Check-in</p>
+                  <p className="text-gray-500 mb-1">Ngày Check-in</p>
                   <p className="font-semibold text-gray-900">
-                    {formatDate(booking.checkInDate)}
+                    {formatDate(activeBooking.checkInDate)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 mb-1">Check-out</p>
+                  <p className="text-gray-500 mb-1">Ngày Check-out</p>
                   <p className="font-semibold text-gray-900">
-                    {formatDate(booking.checkOutDate)}
+                    {formatDate(activeBooking.checkOutDate)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 mb-1">Total Guests</p>
+                  <p className="text-gray-500 mb-1">Tổng khách</p>
                   <p className="font-semibold text-gray-900">
-                    {booking.totalGuests} guests
+                    {activeBooking.totalGuests} khách
                   </p>
                 </div>
                 <div className="col-span-3">
                   <Separator className="my-2" />
                   <div className="space-y-2 pt-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600 font-medium">Total Amount</span>
-                      <span className="text-lg font-bold text-blue-600">{formatCurrency(booking.totalAmount)}</span>
+                      <span className="text-gray-600 font-medium">
+                        Tổng Tiền
+                      </span>
+                      <span className="text-lg font-bold text-blue-600">
+                        {formatCurrency(activeBooking.totalAmount)}
+                      </span>
                     </div>
-                    {booking.depositRequired && (
+                    {activeBooking.depositRequired && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 font-medium">Deposit Required</span>
-                        <span className="font-semibold text-gray-900">{formatCurrency(booking.depositRequired)}</span>
+                        <span className="text-gray-600 font-medium">
+                          Tiền Cọc Yêu Cầu
+                        </span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(activeBooking.depositRequired)}
+                        </span>
                       </div>
                     )}
-                    {booking.balance !== undefined && (
+                    {activeBooking.balance !== undefined && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 font-medium">Remaining Balance</span>
-                        <span className={`font-bold ${parseFloat(booking.balance) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {formatCurrency(booking.balance)}
+                        <span className="text-gray-600 font-medium">
+                          Số Dư Còn Lại
+                        </span>
+                        <span
+                          className={`font-bold ${
+                            parseFloat(activeBooking.balance) > 0
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {formatCurrency(activeBooking.balance)}
                         </span>
                       </div>
                     )}
@@ -333,167 +438,112 @@ export function ModernCheckInModal({
                 <span className="w-5 h-5 text-white">{ICONS.BUILDING}</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Select Rooms to Check-in
+                Danh Sách Phòng
               </h3>
             </div>
-            
-            {/* Info alert for already checked-in rooms */}
-            {checkedInRooms.length > 0 && (
-              <Card className="mb-4 border-2 border-blue-200 bg-blue-50">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-sm font-bold">ℹ</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-blue-900 mb-1">
-                        {checkedInRooms.length} room(s) already checked in
-                      </p>
-                      <p className="text-xs text-blue-700">
-                        These rooms are not shown in the list below as they have already been checked in. 
-                        Only rooms with CONFIRMED status can be checked in.
-                      </p>
-                      {checkedInRooms.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {checkedInRooms.slice(0, 5).map((room) => (
-                            <Badge 
-                              key={room.id} 
-                              variant="secondary" 
-                              className="bg-blue-100 text-blue-700 text-xs"
-                            >
-                              {room.room?.roomNumber || room.roomId}
-                            </Badge>
-                          ))}
-                          {checkedInRooms.length > 5 && (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
-                              +{checkedInRooms.length - 5} more
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
+
             <div className="space-y-3">
-              {confirmedRooms.map((bookingRoom) => {
-                const isSelected = selectedRooms.has(bookingRoom.id);
-                const state = checkInStates.find(
-                  (s) => s.bookingRoomId === bookingRoom.id
-                );
+              {activeBooking.bookingRooms?.map((bookingRoom) => {
+                const isConfirmed = bookingRoom.status === "CONFIRMED";
+                const isCheckedIn = bookingRoom.status === "CHECKED_IN";
+                // Only show guests if they are assigned
+                const currentGuests = roomGuests[bookingRoom.id] || [];
+                // const guestCount = currentGuests.length; // unused
 
                 return (
                   <Card
                     key={bookingRoom.id}
                     className={cn(
-                      "border-2 transition-all duration-200 cursor-pointer hover:shadow-md",
-                      isSelected
-                        ? "border-blue-500 bg-blue-50/50 shadow-md"
+                      "border-2 transition-all duration-200",
+                      isCheckedIn
+                        ? "border-green-200 bg-green-50/30 opacity-80"
+                        : isConfirmed
+                        ? "border-blue-100 bg-white"
                         : "border-gray-200 hover:border-gray-300"
                     )}
-                    onClick={() => toggleRoomSelection(bookingRoom.id)}
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={cn(
-                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                            isSelected
-                              ? "border-blue-500 bg-blue-500"
-                              : "border-gray-300"
-                          )}
-                        >
-                          {isSelected && (
-                            <span className="w-4 h-4 text-white">
-                              {ICONS.CHECK}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="font-bold text-gray-900">
-                              Room{" "}
-                              {bookingRoom.room?.roomNumber ||
-                                bookingRoom.roomId}
-                            </h4>
-                            <Badge variant="outline" className="text-xs">
-                              {bookingRoom.roomType?.name || "Room"}
-                            </Badge>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3 text-sm">
-                            <div>
-                              <p className="text-gray-500 text-xs">
-                                Price/Night
-                              </p>
-                              <p className="font-semibold text-gray-900">
-                                {formatCurrency(bookingRoom.pricePerNight)}
-                              </p>
+                      <div className="flex flex-col gap-4">
+                        {/* Row 1: Room Info */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h4
+                                className={cn(
+                                  "font-bold",
+                                  isCheckedIn
+                                    ? "text-green-800"
+                                    : "text-gray-900"
+                                )}
+                              >
+                                Phòng{" "}
+                                {bookingRoom.room?.roomNumber ||
+                                  bookingRoom.roomId}
+                              </h4>
+                              <Badge
+                                variant={isCheckedIn ? "default" : "outline"}
+                                className={cn(
+                                  "text-xs",
+                                  isCheckedIn
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-200"
+                                    : ""
+                                )}
+                              >
+                                {isCheckedIn
+                                  ? "Đã Check-in"
+                                  : bookingRoom.roomType?.name || "Phòng"}
+                              </Badge>
+                              {!isConfirmed && !isCheckedIn && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {bookingRoom.status}
+                                </Badge>
+                              )}
                             </div>
-                            <div>
-                              <p className="text-gray-500 text-xs">Total</p>
-                              <p className="font-semibold text-gray-900">
-                                {formatCurrency(bookingRoom.totalAmount)}
-                              </p>
-                            </div>
-                            {isSelected && state && (
-                              <div className="col-span-3 pt-2">
-                                <p className="text-xs font-medium text-blue-600">
-                                  ✓ {state.customerIds.length} Guest(s) assigned
+                            <div className="grid grid-cols-3 gap-3 text-sm">
+                              <div>
+                                <p className="text-gray-500 text-xs">Giá</p>
+                                <p className="font-semibold">
+                                  {formatCurrency(bookingRoom.totalAmount)}
                                 </p>
+                              </div>
+                              {currentGuests.length > 0 && (
+                                <div className="col-span-2">
+                                  <p className="text-xs font-medium text-blue-600">
+                                    {currentGuests
+                                      .map((g) => g.fullName)
+                                      .join(", ")}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* ACTION BUTTONS */}
+                          <div className="flex items-center gap-2">
+                            {isConfirmed && (
+                              <Button
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                                onClick={() =>
+                                  handleCheckInClick(bookingRoom.id)
+                                }
+                                disabled={isProcessing}
+                              >
+                                {isProcessing ? ICONS.LOADING : ICONS.CHECK}
+                                <span className="ml-2">Check-in</span>
+                              </Button>
+                            )}
+                            {isCheckedIn && (
+                              <div className="flex items-center text-green-600 gap-1 text-sm font-medium px-3 py-1.5 bg-green-50 rounded-md">
+                                <span className="w-4 h-4">
+                                  {ICONS.CHECK_CIRCLE}
+                                </span>
+                                <span>Đã xong</span>
                               </div>
                             )}
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Customer Assignment Info */}
-                      {isSelected && state && (
-                        <div
-                          className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex items-start gap-2 mb-2">
-                            <span className="text-blue-600 font-bold text-lg">ℹ</span>
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold text-gray-900">
-                                Primary Guest: {booking.primaryCustomer?.fullName || "Guest"}
-                              </p>
-                              <p className="text-xs text-gray-600 mt-1">
-                                Total guests assigned: <span className="font-bold text-blue-600">{state.customerIds.length}</span>
-                              </p>
-                            </div>
-                          </div>
-                          {bookingRoom.bookingCustomers && bookingRoom.bookingCustomers.length > 0 && (
-                            <div className="mt-2 pt-2 border-t border-blue-200">
-                              <p className="text-xs font-semibold text-gray-700 mb-1">👥 Guests in this room:</p>
-                              <div className="space-y-1">
-                                {bookingRoom.bookingCustomers.map((bc) => (
-                                  <p key={bc.id} className="text-xs text-gray-700 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full inline-block"></span>
-                                    {bc.customer?.fullName || `Guest ${bc.customerId.slice(0, 6)}`}
-                                  </p>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {bookingRoom.actualCheckIn && (
-                            <div className="mt-2 pt-2 border-t border-blue-200">
-                              <p className="text-xs text-green-700 font-semibold flex items-center gap-1">
-                                ✓ Checked in at {new Date(bookingRoom.actualCheckIn).toLocaleTimeString('vi-VN', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit'
-                                })}
-                              </p>
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-                            💡 <strong>Tip:</strong> Use the &quot;Guest Names & Special Notes&quot; section below to specify all guest names for this room and any special requests.
-                          </p>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 );
@@ -501,374 +551,86 @@ export function ModernCheckInModal({
             </div>
           </div>
 
-          {/* Guest Registration Button */}
-          <Button
-            variant="outline"
-            onClick={() => setShowGuestRegistration(true)}
-            className="w-full bg-blue-50 border-blue-300 hover:bg-blue-100 text-blue-700 font-medium"
-          >
-            <span className="mr-2">👤</span>
-            Đăng ký khách lưu trú (Register Guest Information)
-          </Button>
-
-          {/* Notes & Guest Details */}
+          {/* Notes - kept same */}
           <div>
             <Label
               htmlFor="notes"
               className="text-sm font-medium text-gray-700 mb-2 block"
             >
-              Guest Names & Special Notes
+              Ghi Chú Check-in
             </Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Example:&#10;Room 201: John (Primary), Mary, Kid&#10;Room 202: Alice, Bob&#10;&#10;Special requests: Late check-in, high floor, etc."
-              className="min-h-24 resize-none text-sm"
+              placeholder="Nhập ghi chú thêm cho lần check-in này..."
+              className="resize-none text-sm"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              ℹ️ List all guest names for each room and any special requests
-            </p>
           </div>
         </div>
 
         {/* Footer with Actions */}
-        <DialogFooter className="pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-            className="min-w-[120px]"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={isLoading || selectedRooms.size === 0}
-            className="min-w-[120px] bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-          >
-            {isLoading ? (
-              <>
-                <span className="w-4 h-4 mr-2 animate-spin">
-                  {ICONS.LOADING}
-                </span>
-                Processing...
-              </>
-            ) : (
-              <>
-                <span className="w-4 h-4 mr-2">{ICONS.CHECK}</span>
-                Confirm Check-in ({selectedRooms.size})
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-
-      {/* Guest Registration Modal */}
-      <GuestRegistrationModal
-        open={showGuestRegistration}
-        onOpenChange={setShowGuestRegistration}
-        booking={booking}
-      />
-    </Dialog>
-  );
-}
-
-// Guest Registration Modal Component
-interface GuestRegistrationModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  booking: Booking | null;
-}
-
-interface GuestInfo {
-  fullName: string;
-  documentType: string;
-  documentNumber: string;
-  dateOfBirth: string;
-  nationality: string;
-  address: string;
-  checkInDate: string;
-  checkOutDate: string;
-}
-
-function GuestRegistrationModal({
-  open,
-  onOpenChange,
-  booking,
-}: GuestRegistrationModalProps) {
-  const [guests, setGuests] = useState<GuestInfo[]>([
-    {
-      fullName: "",
-      documentType: "",
-      documentNumber: "",
-      dateOfBirth: "",
-      nationality: "Việt Nam",
-      address: "",
-      checkInDate: booking?.checkInDate ? booking.checkInDate.split("T")[0] : "",
-      checkOutDate: booking?.checkOutDate ? booking.checkOutDate.split("T")[0] : "",
-    },
-  ]);
-
-  const documentTypes = [
-    { value: "CCCD", label: "Căn cước công dân" },
-    { value: "CMND", label: "Chứng minh nhân dân" },
-    { value: "PASSPORT", label: "Hộ chiếu" },
-    { value: "DRIVER_LICENSE", label: "Bằng lái xe" },
-  ];
-
-  const nationalities = [
-    "Việt Nam",
-    "Thái Lan",
-    "Lào",
-    "Campuchia",
-    "Trung Quốc",
-    "Nhật Bản",
-    "Hàn Quốc",
-    "Mỹ",
-    "Anh",
-    "Pháp",
-    "Đức",
-    "Khác",
-  ];
-
-  const updateGuest = (
-    index: number,
-    field: keyof GuestInfo,
-    value: string
-  ) => {
-    const newGuests = [...guests];
-    newGuests[index] = { ...newGuests[index], [field]: value };
-    setGuests(newGuests);
-  };
-
-  const addGuest = () => {
-    setGuests([
-      ...guests,
-      {
-        fullName: "",
-        documentType: "",
-        documentNumber: "",
-        dateOfBirth: "",
-        nationality: "Việt Nam",
-        address: "",
-        checkInDate: booking?.checkInDate ? booking.checkInDate.split("T")[0] : "",
-        checkOutDate: booking?.checkOutDate ? booking.checkOutDate.split("T")[0] : "",
-      },
-    ]);
-  };
-
-  const removeGuest = (index: number) => {
-    if (guests.length > 1) {
-      setGuests(guests.filter((_, i) => i !== index));
-    }
-  };
-
-  const handleSave = () => {
-    // Validate required fields
-    const allValid = guests.every(
-      (g) => g.fullName && g.documentType && g.documentNumber
-    );
-
-    if (!allValid) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc");
-      return;
-    }
-
-    // Here you would typically save this to backend
-    console.log("Registered guests:", guests);
-    alert("Đã lưu thông tin khách: " + guests.map(g => g.fullName).join(", "));
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4 border-b">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-              <span className="text-lg">👤</span>
-            </div>
-            <div>
-              <DialogTitle className="text-xl font-bold text-gray-900">
-                Đăng ký khách lưu trú
-              </DialogTitle>
-              <DialogDescription className="text-xs mt-1">
-                Nhập thông tin khách lưu trú. Các trường có (*) là bắt buộc.
-              </DialogDescription>
-            </div>
+        <DialogFooter className="pt-4 border-t flex justify-between sm:justify-between items-center bg-gray-50/50 p-6 -mx-6 -mb-6 mt-4">
+          {/* Left side: Notes or Status if needed */}
+          <div className="text-xs text-gray-500 italic">
+            * Check-in nhanh sẽ tự động gán khách hàng chính nếu chưa chọn
+            khách.
           </div>
-        </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto py-4 space-y-6 px-6">
-          {guests.map((guest, index) => (
-            <div key={index} className="border rounded-lg p-4 space-y-4 bg-gray-50">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-bold text-gray-900">Khách {index + 1}</h4>
-                {guests.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeGuest(index)}
-                    className="text-red-500 hover:bg-red-50"
-                  >
-                    ❌ Xóa
-                  </Button>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              className="min-w-[100px]"
+              disabled={isProcessing}
+            >
+              Đóng
+            </Button>
+
+            {activeBooking.bookingRooms?.some(
+              (br) => br.status === "CONFIRMED"
+            ) && (
+              <Button
+                onClick={handleQuickCheckInAll}
+                disabled={isProcessing}
+                className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md border-0"
+              >
+                {isProcessing ? (
+                  <>
+                    <span className="w-4 h-4 mr-2 animate-spin">
+                      {ICONS.LOADING}
+                    </span>
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <span className="w-4 h-4 mr-2">{ICONS.CHECK_CIRCLE}</span>
+                    Check-in Tất Cả (
+                    {
+                      activeBooking.bookingRooms.filter(
+                        (br) => br.status === "CONFIRMED"
+                      ).length
+                    }
+                    )
+                  </>
                 )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Full Name */}
-                <div className="col-span-2">
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Họ và tên <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Nhập họ tên đầy đủ..."
-                    value={guest.fullName}
-                    onChange={(e) =>
-                      updateGuest(index, "fullName", e.target.value)
-                    }
-                  />
-                </div>
-
-                {/* Document Type and Number */}
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Loại giấy tờ <span className="text-red-500">*</span>
-                  </Label>
-                  <select
-                    value={guest.documentType}
-                    onChange={(e) =>
-                      updateGuest(index, "documentType", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Chọn loại...</option>
-                    {documentTypes.map((doc) => (
-                      <option key={doc.value} value={doc.value}>
-                        {doc.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Số giấy tờ <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Nhập số giấy tờ..."
-                    value={guest.documentNumber}
-                    onChange={(e) =>
-                      updateGuest(index, "documentNumber", e.target.value)
-                    }
-                  />
-                </div>
-
-                {/* Date of Birth and Nationality */}
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Ngày sinh
-                  </Label>
-                  <Input
-                    type="date"
-                    value={guest.dateOfBirth}
-                    onChange={(e) =>
-                      updateGuest(index, "dateOfBirth", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Quốc tịch
-                  </Label>
-                  <select
-                    value={guest.nationality}
-                    onChange={(e) =>
-                      updateGuest(index, "nationality", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {nationalities.map((nat) => (
-                      <option key={nat} value={nat}>
-                        {nat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Permanent Address */}
-                <div className="col-span-2">
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Địa chỉ thường trú
-                  </Label>
-                  <Input
-                    placeholder="Nhập địa chỉ thường trú..."
-                    value={guest.address}
-                    onChange={(e) =>
-                      updateGuest(index, "address", e.target.value)
-                    }
-                  />
-                </div>
-
-                {/* Check-in and Check-out Dates */}
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Ngày bắt đầu
-                  </Label>
-                  <Input
-                    type="date"
-                    value={guest.checkInDate}
-                    onChange={(e) =>
-                      updateGuest(index, "checkInDate", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Ngày kết thúc
-                  </Label>
-                  <Input
-                    type="date"
-                    value={guest.checkOutDate}
-                    onChange={(e) =>
-                      updateGuest(index, "checkOutDate", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Add Guest Button */}
-          <Button
-            variant="outline"
-            onClick={addGuest}
-            className="w-full border-dashed border-2 border-blue-300 text-blue-600 hover:bg-blue-50"
-          >
-            + Thêm khách
-          </Button>
-        </div>
-
-        <DialogFooter className="pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="min-w-[120px]"
-          >
-            Hủy
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="min-w-[120px] bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-          >
-            💾 Lưu thông tin
-          </Button>
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
+
+      <MultiCustomerSelectionDialog
+        open={showCustomerSelection}
+        onOpenChange={setShowCustomerSelection}
+        onConfirm={handleCustomerSelected}
+        initialCustomerIds={
+          activeBookingRoomId
+            ? roomGuests[activeBookingRoomId]?.map((g) => g.customerId)
+            : []
+        }
+        title="Chọn Khách Hàng & Check-in Ngay"
+      />
     </Dialog>
   );
 }

@@ -120,7 +120,7 @@ export interface Reservation {
   // Legacy / UI
   reservationID?: string;
   customerID?: string;
-  customer?: Customer; // Computed / Relation
+  customer: Customer; // Computed / Relation
   reservationDate?: string; // maybe createdAt?
   totalRooms: number; // Computed
   depositAmount: number; // alias depositRequired?

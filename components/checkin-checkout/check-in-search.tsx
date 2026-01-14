@@ -10,7 +10,7 @@ interface CheckInSearchProps {
   onWalkIn: () => void;
 }
 
-export function CheckInSearch({ onSearch, onWalkIn }: CheckInSearchProps) {
+export function CheckInSearch({ onSearch }: CheckInSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = () => {
@@ -47,18 +47,7 @@ export function CheckInSearch({ onSearch, onWalkIn }: CheckInSearchProps) {
             <span className="ml-2">Tìm kiếm</span>
           </Button>
         </div>
-        <div className="flex justify-center lg:justify-end">
-          <Button
-            onClick={onWalkIn}
-            variant="outline"
-            className="h-14 px-8 border-2 border-success-600 text-success-600 hover:bg-success-50 rounded-xl font-bold shadow-md hover:shadow-lg transition-all hover:scale-105"
-          >
-            <span className="w-5 h-5">{ICONS.USER_CHECK}</span>
-            <span className="ml-2">Khách vãng lai (Walk-in)</span>
-          </Button>
-        </div>
       </div>
     </div>
   );
 }
-

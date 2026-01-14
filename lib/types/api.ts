@@ -20,6 +20,14 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
+export interface PaginatedList<T> {
+  items: T[];
+  totalItems: number;
+  perPage: number;
+  currentPage: number;
+  totalPages: number;
+}
+
 export interface ApiError {
   code: number;
   message: string;
@@ -492,6 +500,8 @@ export interface CreateBookingRequest {
   checkInDate: string; // ISO 8601 format
   checkOutDate: string; // ISO 8601 format
   totalGuests: number;
+  depositAmount?: number;
+  depositPaymentMethod?: PaymentMethod;
 }
 
 export interface CreateBookingResponse {
@@ -618,6 +628,8 @@ export interface CreateBookingEmployeeRequest {
   checkOutDate: string; // ISO 8601 format
   totalGuests: number;
   notes?: string;
+  depositAmount?: number;
+  depositPaymentMethod?: PaymentMethod;
 }
 
 /**

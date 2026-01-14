@@ -44,13 +44,10 @@ export interface Room {
   id: string;
   roomNumber: string;
   floor: number;
-  code: string;
-  status: RoomStatus;
-  roomTypeId: string;
-  createdAt?: string;
-
-  // Relations
-  roomType?: RoomType;
+  createdAt: string;
+  updatedAt: string;
+  roomType: RoomType;
+  pricePerNight?: string | number; // Optional as it might come from RoomType
 
   // Legacy / UI
   roomID?: string;
@@ -61,6 +58,16 @@ export interface Room {
   // Guest info (populated)
   guestName?: string;
   folioId?: string;
+}
+
+export interface RoomImage {
+  id: string;
+  url: string;
+  isDefault: boolean;
+  sortOrder: number;
+  roomId: string; // Foreign key
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Filter Options

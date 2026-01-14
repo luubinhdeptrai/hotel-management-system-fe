@@ -16,6 +16,7 @@ import type {
   UpdateRoomTypeRequest,
   GetRoomTypesParams,
 } from "@/lib/types/api";
+import { RoomImage } from "@/lib/types/room";
 
 export const roomService = {
   // ============================================================================
@@ -32,8 +33,7 @@ export const roomService = {
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
     if (params?.floor) queryParams.append("floor", params.floor.toString());
-    if (params?.roomTypeId)
-      queryParams.append("roomTypeId", params.roomTypeId);
+    if (params?.roomTypeId) queryParams.append("roomTypeId", params.roomTypeId);
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
@@ -47,9 +47,10 @@ export const roomService = {
       { requiresAuth: true }
     );
 
-    const data = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return data;
   },
 
@@ -62,9 +63,10 @@ export const roomService = {
       `/employee/rooms/${roomId}`,
       { requiresAuth: true }
     );
-    const data = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return data;
   },
 
@@ -78,9 +80,10 @@ export const roomService = {
       data,
       { requiresAuth: true }
     );
-    const unwrappedData = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return unwrappedData;
   },
 
@@ -94,9 +97,10 @@ export const roomService = {
       data,
       { requiresAuth: true }
     );
-    const unwrappedData = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return unwrappedData;
   },
 
@@ -143,9 +147,10 @@ export const roomService = {
       { requiresAuth: true }
     );
 
-    const data = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return data;
   },
 
@@ -158,9 +163,10 @@ export const roomService = {
       `/employee/room-types/${roomTypeId}`,
       { requiresAuth: true }
     );
-    const data = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return data;
   },
 
@@ -174,9 +180,10 @@ export const roomService = {
       data,
       { requiresAuth: true }
     );
-    const unwrappedData = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return unwrappedData;
   },
 
@@ -193,9 +200,10 @@ export const roomService = {
       data,
       { requiresAuth: true }
     );
-    const unwrappedData = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return unwrappedData;
   },
 
@@ -207,5 +215,95 @@ export const roomService = {
     await api.delete(`/employee/room-types/${roomTypeId}`, {
       requiresAuth: true,
     });
+  },
+
+  // ============================================================================
+  // Room Images
+  // ============================================================================
+
+  /**
+   * Get room images
+   * GET /employee/rooms/{roomId}/images
+   */
+  async getRoomImages(roomId: string): Promise<RoomImage[]> {
+    const response = await api.get<ApiResponse<RoomImage[]>>(
+      `/employee/rooms/${roomId}/images`,
+      { requiresAuth: true }
+    );
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
+    return Array.isArray(data) ? data : [];
+  },
+
+  /**
+   * Upload room image
+   * POST /employee/rooms/{roomId}/images
+   */
+  async uploadRoomImage(
+    roomId: string,
+    file: File,
+    isDefault: boolean = false,
+    sortOrder?: number
+  ): Promise<RoomImage> {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("isDefault", String(isDefault));
+    if (sortOrder !== undefined) {
+      formData.append("sortOrder", String(sortOrder));
+    }
+
+    const response = await api.post<ApiResponse<RoomImage>>(
+      `/employee/rooms/${roomId}/images`,
+      formData,
+      {
+        requiresAuth: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
+
+    return data;
+  },
+
+  /**
+   * Reorder room images
+   * PUT /employee/rooms/{roomId}/images/reorder
+   */
+  async reorderRoomImages(roomId: string, imageIds: string[]): Promise<void> {
+    await api.put(
+      `/employee/rooms/${roomId}/images/reorder`,
+      { imageIds },
+      { requiresAuth: true }
+    );
+  },
+
+  /**
+   * Delete room image
+   * DELETE /employee/rooms/images/{imageId}
+   */
+  async deleteRoomImage(imageId: string): Promise<void> {
+    await api.delete(`/employee/rooms/images/${imageId}`, {
+      requiresAuth: true,
+    });
+  },
+
+  /**
+   * Set default room image
+   * PUT /employee/rooms/images/{imageId}/default
+   */
+  async setDefaultRoomImage(imageId: string): Promise<void> {
+    await api.put(
+      `/employee/rooms/images/${imageId}/default`,
+      {},
+      { requiresAuth: true }
+    );
   },
 };

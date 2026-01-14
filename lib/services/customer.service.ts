@@ -6,7 +6,7 @@
 import { api } from "./api";
 import type {
   ApiResponse,
-  PaginatedResponse,
+  PaginatedList,
   Customer,
   CreateCustomerRequest,
   UpdateCustomerRequest,
@@ -20,7 +20,7 @@ export const customerService = {
    */
   async getCustomers(
     params?: GetCustomersParams
-  ): Promise<PaginatedResponse<Customer>> {
+  ): Promise<PaginatedList<Customer>> {
     const queryParams = new URLSearchParams();
 
     if (params?.search) queryParams.append("search", params.search);
@@ -32,14 +32,15 @@ export const customerService = {
     const query = queryParams.toString();
     const endpoint = `/employee/customers${query ? `?${query}` : ""}`;
 
-    const response = await api.get<ApiResponse<PaginatedResponse<Customer>>>(
+    const response = await api.get<ApiResponse<PaginatedList<Customer>>>(
       endpoint,
       { requiresAuth: true }
     );
 
-    const data = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return data;
   },
 
@@ -52,9 +53,10 @@ export const customerService = {
       `/employee/customers/${customerId}`,
       { requiresAuth: true }
     );
-    const data = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return data;
   },
 
@@ -68,9 +70,10 @@ export const customerService = {
       data,
       { requiresAuth: true }
     );
-    const unwrappedData = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return unwrappedData;
   },
 
@@ -87,9 +90,10 @@ export const customerService = {
       data,
       { requiresAuth: true }
     );
-    const unwrappedData = (response && typeof response === "object" && "data" in response)
-      ? (response as any).data
-      : response;
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
     return unwrappedData;
   },
 

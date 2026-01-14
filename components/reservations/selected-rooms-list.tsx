@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Trash2 } from "lucide-react";
-import type { SelectedRoom } from "./room-selector";
+import type { SelectedRoom } from "./booking-modal/room-selector";
 
 interface SelectedRoomsListProps {
   rooms: SelectedRoom[];
@@ -66,7 +66,9 @@ export function SelectedRoomsList({
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-bold text-xl text-gray-900">{room.roomName}</p>
+                    <p className="font-bold text-xl text-gray-900">
+                      {room.roomName}
+                    </p>
                     <p className="text-sm text-blue-600 font-semibold">
                       {room.roomType?.roomTypeName}
                     </p>
@@ -101,7 +103,9 @@ export function SelectedRoomsList({
                     <span className="text-gray-600">{room.checkOutDate}</span>
                   </p>
                   <p className="pt-2 border-t border-blue-200">
-                    <span className="font-semibold text-blue-600">{nights} đêm</span>
+                    <span className="font-semibold text-blue-600">
+                      {nights} đêm
+                    </span>
                   </p>
                 </div>
               </div>
@@ -155,7 +159,12 @@ export function SelectedRoomsList({
           </span>
         </div>
         <p className="text-blue-100 text-sm mt-2">
-          {rooms.length} phòng • {rooms.reduce((sum, r) => sum + calculateNights(r.checkInDate, r.checkOutDate), 0)} đêm
+          {rooms.length} phòng •{" "}
+          {rooms.reduce(
+            (sum, r) => sum + calculateNights(r.checkInDate, r.checkOutDate),
+            0
+          )}{" "}
+          đêm
         </p>
       </div>
     </div>

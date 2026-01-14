@@ -27,6 +27,8 @@ import type {
   UpdateServiceUsageRequest,
   GetServiceUsagesParams,
 } from "@/lib/types/service-unified";
+// Import ServiceImage from api types
+import { ServiceImage } from "@/lib/types/api";
 
 const API_BASE = "/employee";
 
@@ -39,48 +41,55 @@ export const serviceAPI = {
    * Get all services
    * Backend returns ALL services (including "Phạt" and "Phụ thu")
    */
-  async getAllServices(): Promise<Service[]> {
+  async getAllServices(params?: {
+    search?: string;
+    isActive?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  }): Promise<Service[]> {
     try {
-      const endpoint = `${API_BASE}/employee/services`;
-      console.log("📡 [serviceAPI.getAllServices] Calling:", endpoint);
+      const queryParams = new URLSearchParams();
+      if (params) {
+        if (params.search) queryParams.append("search", params.search);
+        if (params.isActive !== undefined)
+          queryParams.append("isActive", String(params.isActive));
+        if (params.minPrice !== undefined)
+          queryParams.append("minPrice", String(params.minPrice));
+        if (params.maxPrice !== undefined)
+          queryParams.append("maxPrice", String(params.maxPrice));
+        if (params.page) queryParams.append("page", String(params.page));
+        if (params.limit) queryParams.append("limit", String(params.limit));
+        if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+        if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+      }
 
-      const response = await api.get(`${API_BASE}/employee/services`, {
+      const query = queryParams.toString();
+      const endpoint = `${API_BASE}/employee/services${
+        query ? `?${query}` : ""
+      }`;
+
+      const response = await api.get(endpoint, {
         requiresAuth: true,
       });
-
-      console.log("📦 [serviceAPI.getAllServices] Raw response:", response);
 
       // Handle nested data structure: { data: { data: [...], total, page, limit } }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let data = (response as any)?.data?.data;
 
-      console.log(
-        "🔍 [serviceAPI.getAllServices] Extracted data (level 1):",
-        data
-      );
-
       // If not array, try other paths
       if (!Array.isArray(data)) {
         data = (response as any)?.data;
-        console.log(
-          "🔍 [serviceAPI.getAllServices] Extracted data (level 2):",
-          data
-        );
 
         if (!Array.isArray(data)) {
           data = response;
-          console.log(
-            "🔍 [serviceAPI.getAllServices] Extracted data (level 3 - raw response):",
-            data
-          );
         }
       }
 
       const result = Array.isArray(data) ? data : [];
-      console.log("✅ [serviceAPI.getAllServices] Final result:", {
-        count: result.length,
-        items: result,
-      });
 
       return result;
     } catch (error) {
@@ -136,7 +145,7 @@ export const serviceAPI = {
         requiresAuth: true,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const data =
         (response as any)?.data?.data || (response as any)?.data || response;
       return data;
@@ -163,7 +172,7 @@ export const serviceAPI = {
         requiresAuth: true,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const unwrapped =
         (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
@@ -190,7 +199,7 @@ export const serviceAPI = {
         }
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const unwrapped =
         (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
@@ -213,6 +222,125 @@ export const serviceAPI = {
       console.error(`Failed to delete service ${id}:`, error);
       throw error;
     }
+  },
+
+  // ============================================================================
+  // SERVICE IMAGES
+  // ============================================================================
+
+  /**
+   * Get service images
+   * GET /employee/services/{serviceId}/images
+   */
+  async getServiceImages(serviceId: string): Promise<ServiceImage[]> {
+    const response = await api.get<any>(
+      `${API_BASE}/employee/services/${serviceId}/images`,
+      { requiresAuth: true }
+    );
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
+    return Array.isArray(data) ? data : [];
+  },
+
+  /**
+   * Upload single service image
+   * POST /employee/services/{serviceId}/images
+   */
+  async uploadServiceImage(
+    serviceId: string,
+    file: File,
+    isDefault: boolean = false,
+    sortOrder?: number
+  ): Promise<ServiceImage> {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("isDefault", String(isDefault));
+    if (sortOrder !== undefined) {
+      formData.append("sortOrder", String(sortOrder));
+    }
+
+    const response = await api.post<any>(
+      `${API_BASE}/employee/services/${serviceId}/images`,
+      formData,
+      {
+        requiresAuth: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    // Check if the response is wrapped in 'data'
+    const data =
+      response && typeof response === "object" && "data" in response
+        ? (response as any).data
+        : response;
+
+    return data;
+  },
+
+  /**
+   * Upload batch service images
+   * POST /employee/services/{serviceId}/images/batch
+   */
+  async uploadServiceImagesBatch(
+    serviceId: string,
+    files: File[]
+  ): Promise<any> {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    return api.post(
+      `${API_BASE}/employee/services/${serviceId}/images/batch`,
+      formData,
+      {
+        requiresAuth: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  },
+
+  /**
+   * Reorder service images
+   * PUT /employee/services/{serviceId}/images/reorder
+   */
+  async reorderServiceImages(
+    serviceId: string,
+    imageIds: string[]
+  ): Promise<void> {
+    await api.put(
+      `${API_BASE}/employee/services/${serviceId}/images/reorder`,
+      { imageIds },
+      { requiresAuth: true }
+    );
+  },
+
+  /**
+   * Delete service image
+   * DELETE /employee/services/images/{imageId}
+   */
+  async deleteServiceImage(imageId: string): Promise<void> {
+    await api.delete(`${API_BASE}/employee/services/images/${imageId}`, {
+      requiresAuth: true,
+    });
+  },
+
+  /**
+   * Set default service image
+   * PUT /employee/services/images/{imageId}/default
+   */
+  async setDefaultServiceImage(imageId: string): Promise<void> {
+    await api.put(
+      `${API_BASE}/employee/services/images/${imageId}/default`,
+      {},
+      { requiresAuth: true }
+    );
   },
 };
 
@@ -246,7 +374,7 @@ export const serviceUsageAPI = {
 
       const response = await api.get(endpoint, { requiresAuth: true });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const data =
         (response as any)?.data?.data ||
         (response as any)?.data ||
@@ -275,7 +403,7 @@ export const serviceUsageAPI = {
         }
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const unwrapped =
         (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
@@ -302,7 +430,7 @@ export const serviceUsageAPI = {
         }
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const unwrapped =
         (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
@@ -423,7 +551,7 @@ export const penaltyAPI = {
         }
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const unwrapped =
         (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
@@ -550,7 +678,7 @@ export const surchargeAPI = {
         }
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const unwrapped =
         (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
