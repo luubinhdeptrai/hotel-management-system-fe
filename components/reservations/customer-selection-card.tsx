@@ -4,12 +4,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { ICONS } from "@/src/constants/icons.enum";
@@ -132,11 +127,17 @@ export function CustomerSelectionCard({
       toast.error("Vui lòng nhập họ tên");
       return;
     }
-    if (!newCustomer.phoneNumber.trim() || !/^[0-9]{10}$/.test(newCustomer.phoneNumber)) {
+    if (
+      !newCustomer.phoneNumber.trim() ||
+      !/^[0-9]{10}$/.test(newCustomer.phoneNumber)
+    ) {
       toast.error("Vui lòng nhập số điện thoại hợp lệ (10 chữ số)");
       return;
     }
-    if (!newCustomer.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCustomer.email)) {
+    if (
+      !newCustomer.email.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCustomer.email)
+    ) {
       toast.error("Vui lòng nhập email hợp lệ");
       return;
     }
@@ -193,11 +194,17 @@ export function CustomerSelectionCard({
           Thông Tin Khách Hàng
         </h3>
         <p className="text-xs text-gray-500 ml-auto">
-          {mode === "create" ? "Chọn khách hàng hoặc thêm mới" : "Chỉnh sửa khách hàng"}
+          {mode === "create"
+            ? "Chọn khách hàng hoặc thêm mới"
+            : "Chỉnh sửa khách hàng"}
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
         {/* Tab List */}
         <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1 rounded-lg">
           <TabsTrigger
@@ -211,7 +218,9 @@ export function CustomerSelectionCard({
             value="new"
             className="rounded-md font-bold data-[state=active]:bg-white data-[state=active]:text-primary-600"
           >
-            <span className="mr-2 flex items-center justify-center w-5 h-5">{ICONS.USER_PLUS}</span>
+            <span className="mr-2 flex items-center justify-center w-5 h-5">
+              {ICONS.USER_PLUS}
+            </span>
             Khách Hàng Mới
           </TabsTrigger>
         </TabsList>
@@ -223,7 +232,11 @@ export function CustomerSelectionCard({
               <span className="text-blue-600 shrink-0 text-lg">ℹ️</span>
               <div>
                 <p className="text-sm text-blue-800">
-                  <span className="font-bold">Mẹo:</span> Tìm kiếm khách hàng theo tên hoặc số điện thoại. Nếu khách hàng đã có tài khoản nhưng không tìm thấy, hãy chuyển sang tab &quot;Khách hàng mới&quot; để nhập số điện thoại - hệ thống sẽ tự động liên kết.
+                  <span className="font-bold">Mẹo:</span> Tìm kiếm khách hàng
+                  theo tên hoặc số điện thoại. Nếu khách hàng đã có tài khoản
+                  nhưng không tìm thấy, hãy chuyển sang tab &quot;Khách hàng
+                  mới&quot; để nhập số điện thoại - hệ thống sẽ tự động liên
+                  kết.
                 </p>
               </div>
             </div>
@@ -231,11 +244,16 @@ export function CustomerSelectionCard({
 
           {/* Search Box */}
           <div>
-            <Label htmlFor="customerSearch" className="text-sm font-bold text-gray-700">
+            <Label
+              htmlFor="customerSearch"
+              className="text-sm font-bold text-gray-700"
+            >
               Tìm Kiếm Khách Hàng
             </Label>
             <div className="relative mt-2">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5">{ICONS.SEARCH}</span>
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5">
+                {ICONS.SEARCH}
+              </span>
               <Input
                 id="customerSearch"
                 type="text"
@@ -254,17 +272,24 @@ export function CustomerSelectionCard({
 
           {/* Customer List - Display as Cards */}
           <div>
-            <Label htmlFor="existingCustomer" className="text-sm font-bold text-gray-700">
+            <Label
+              htmlFor="existingCustomer"
+              className="text-sm font-bold text-gray-700"
+            >
               Chọn Khách Hàng <span className="text-red-600">*</span>
             </Label>
             {isLoadingCustomers ? (
               <div className="mt-3 h-20 flex items-center justify-center bg-gray-100 rounded-lg">
-                <span className="text-gray-500 font-medium">Đang tải danh sách khách hàng...</span>
+                <span className="text-gray-500 font-medium">
+                  Đang tải danh sách khách hàng...
+                </span>
               </div>
-            ) : filteredCustomers.length === 0 ? (
+            ) : !filteredCustomers || filteredCustomers.length === 0 ? (
               <div className="mt-3 h-20 flex items-center justify-center bg-gray-100 rounded-lg">
                 <span className="text-gray-500 font-medium">
-                  {searchTerm ? "Không tìm thấy khách hàng" : "Nhập tên hoặc số điện thoại để tìm kiếm"}
+                  {searchTerm
+                    ? "Không tìm thấy khách hàng"
+                    : "Nhập tên hoặc số điện thoại để tìm kiếm"}
                 </span>
               </div>
             ) : (
@@ -282,20 +307,25 @@ export function CustomerSelectionCard({
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <p className="font-bold text-gray-900">{customer.fullName}</p>
+                          <p className="font-bold text-gray-900">
+                            {customer.fullName}
+                          </p>
                           {selectedCustomerId === customer.id && (
                             <span className="text-primary-600 text-sm">✓</span>
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
                           <p>
-                            <span className="font-semibold">Điện thoại:</span> {customer.phone}
+                            <span className="font-semibold">Điện thoại:</span>{" "}
+                            {customer.phone}
                           </p>
                           <p>
-                            <span className="font-semibold">Email:</span> {customer.email || "-"}
+                            <span className="font-semibold">Email:</span>{" "}
+                            {customer.email || "-"}
                           </p>
                           <p className="col-span-2">
-                            <span className="font-semibold">CMND/CCCD:</span> {customer.idNumber || "-"}
+                            <span className="font-semibold">CMND/CCCD:</span>{" "}
+                            {customer.idNumber || "-"}
                           </p>
                         </div>
                       </div>
@@ -310,32 +340,58 @@ export function CustomerSelectionCard({
           {selectedCustomerId && (
             <div className="bg-green-50 rounded-lg border-2 border-green-200 p-4 space-y-3">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-green-600 text-lg">{ICONS.CHECK_CIRCLE}</span>
-                <h4 className="font-bold text-green-900">Thông tin khách hàng</h4>
+                <span className="text-green-600 text-lg">
+                  {ICONS.CHECK_CIRCLE}
+                </span>
+                <h4 className="font-bold text-green-900">
+                  Thông tin khách hàng
+                </h4>
               </div>
               {(() => {
-                const customer = existingCustomers.find((c) => c.id === selectedCustomerId);
+                const customer = existingCustomers.find(
+                  (c) => c.id === selectedCustomerId
+                );
                 return customer ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-gray-600 text-xs font-semibold">Họ Tên</p>
-                      <p className="text-gray-900 font-bold">{customer.fullName}</p>
+                      <p className="text-gray-600 text-xs font-semibold">
+                        Họ Tên
+                      </p>
+                      <p className="text-gray-900 font-bold">
+                        {customer.fullName}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 text-xs font-semibold">Số Điện Thoại</p>
-                      <p className="text-gray-900 font-bold">{customer.phone}</p>
+                      <p className="text-gray-600 text-xs font-semibold">
+                        Số Điện Thoại
+                      </p>
+                      <p className="text-gray-900 font-bold">
+                        {customer.phone}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 text-xs font-semibold">Email</p>
-                      <p className="text-gray-900 font-bold">{customer.email || "N/A"}</p>
+                      <p className="text-gray-600 text-xs font-semibold">
+                        Email
+                      </p>
+                      <p className="text-gray-900 font-bold">
+                        {customer.email || "N/A"}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 text-xs font-semibold">CMND/CCCD</p>
-                      <p className="text-gray-900 font-bold">{customer.idNumber || "N/A"}</p>
+                      <p className="text-gray-600 text-xs font-semibold">
+                        CMND/CCCD
+                      </p>
+                      <p className="text-gray-900 font-bold">
+                        {customer.idNumber || "N/A"}
+                      </p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-gray-600 text-xs font-semibold">Địa Chỉ</p>
-                      <p className="text-gray-900 font-bold">{customer.address || "N/A"}</p>
+                      <p className="text-gray-600 text-xs font-semibold">
+                        Địa Chỉ
+                      </p>
+                      <p className="text-gray-900 font-bold">
+                        {customer.address || "N/A"}
+                      </p>
                     </div>
                   </div>
                 ) : null;
@@ -349,15 +405,19 @@ export function CustomerSelectionCard({
           <Alert className="border-2 border-amber-200 bg-amber-50 mb-4">
             <span className="text-amber-600">{ICONS.ALERT}</span>
             <AlertDescription className="text-amber-800 ml-2">
-              <span className="font-bold ml-5">Lưu ý:</span> Nếu khách hàng sử dụng số điện thoại đã
-              tồn tại trong hệ thống, booking sẽ được tạo dưới tài khoản hiện có.
+              <span className="font-bold ml-5">Lưu ý:</span> Nếu khách hàng sử
+              dụng số điện thoại đã tồn tại trong hệ thống, booking sẽ được tạo
+              dưới tài khoản hiện có.
             </AlertDescription>
           </Alert>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Full Name */}
             <div className="md:col-span-2">
-              <Label htmlFor="newFullName" className="text-sm font-bold text-gray-700">
+              <Label
+                htmlFor="newFullName"
+                className="text-sm font-bold text-gray-700"
+              >
                 Họ Và Tên <span className="text-red-600">*</span>
               </Label>
               <Input
@@ -365,14 +425,19 @@ export function CustomerSelectionCard({
                 type="text"
                 placeholder="Nguyễn Văn An"
                 value={newCustomer.fullName}
-                onChange={(e) => handleNewCustomerChange("fullName", e.target.value)}
+                onChange={(e) =>
+                  handleNewCustomerChange("fullName", e.target.value)
+                }
                 className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
               />
             </div>
 
             {/* Phone */}
             <div>
-              <Label htmlFor="newPhone" className="text-sm font-bold text-gray-700">
+              <Label
+                htmlFor="newPhone"
+                className="text-sm font-bold text-gray-700"
+              >
                 Số Điện Thoại <span className="text-red-600">*</span>
               </Label>
               <Input
@@ -380,7 +445,9 @@ export function CustomerSelectionCard({
                 type="tel"
                 placeholder="0901234567"
                 value={newCustomer.phoneNumber}
-                onChange={(e) => handleNewCustomerChange("phoneNumber", e.target.value)}
+                onChange={(e) =>
+                  handleNewCustomerChange("phoneNumber", e.target.value)
+                }
                 className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
               />
               <p className="text-xs text-gray-500 mt-1">10 chữ số</p>
@@ -388,7 +455,10 @@ export function CustomerSelectionCard({
 
             {/* Email */}
             <div>
-              <Label htmlFor="newEmail" className="text-sm font-bold text-gray-700">
+              <Label
+                htmlFor="newEmail"
+                className="text-sm font-bold text-gray-700"
+              >
                 Email <span className="text-red-600">*</span>
               </Label>
               <Input
@@ -396,14 +466,19 @@ export function CustomerSelectionCard({
                 type="email"
                 placeholder="example@email.com"
                 value={newCustomer.email}
-                onChange={(e) => handleNewCustomerChange("email", e.target.value)}
+                onChange={(e) =>
+                  handleNewCustomerChange("email", e.target.value)
+                }
                 className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
               />
             </div>
 
             {/* ID Number */}
             <div>
-              <Label htmlFor="newIdNumber" className="text-sm font-bold text-gray-700">
+              <Label
+                htmlFor="newIdNumber"
+                className="text-sm font-bold text-gray-700"
+              >
                 CMND/CCCD <span className="text-red-600">*</span>
               </Label>
               <Input
@@ -411,14 +486,19 @@ export function CustomerSelectionCard({
                 type="text"
                 placeholder="079012345678"
                 value={newCustomer.identityCard}
-                onChange={(e) => handleNewCustomerChange("identityCard", e.target.value)}
+                onChange={(e) =>
+                  handleNewCustomerChange("identityCard", e.target.value)
+                }
                 className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
               />
             </div>
 
             {/* Address */}
             <div className="md:col-span-2">
-              <Label htmlFor="newAddress" className="text-sm font-bold text-gray-700">
+              <Label
+                htmlFor="newAddress"
+                className="text-sm font-bold text-gray-700"
+              >
                 Địa Chỉ <span className="text-red-600">*</span>
               </Label>
               <Input
@@ -426,7 +506,9 @@ export function CustomerSelectionCard({
                 type="text"
                 placeholder="123 Lê Lợi, Q.1, TP.HCM"
                 value={newCustomer.address}
-                onChange={(e) => handleNewCustomerChange("address", e.target.value)}
+                onChange={(e) =>
+                  handleNewCustomerChange("address", e.target.value)
+                }
                 className="h-11 mt-2 border-2 border-gray-300 rounded-lg font-medium"
               />
             </div>

@@ -177,7 +177,8 @@ export interface Customer {
   updatedAt: string;
   totalSpent?: number; // NEW: Total lifetime spending (auto-calculated from completed transactions)
   rankId?: string | null; // NEW: Customer rank reference
-  rank?: { // NEW: Populated rank data (if included)
+  rank?: {
+    // NEW: Populated rank data (if included)
     id: string;
     displayName: string;
     minSpending: number;
@@ -429,7 +430,10 @@ export type TransactionType =
 export type PaymentMethod =
   | "CASH"
   | "CREDIT_CARD"
+  | "DEBIT_CARD"
   | "BANK_TRANSFER"
+  | "MOMO"
+  | "ZALOPAY"
   | "E_WALLET";
 
 // Transaction Status
@@ -474,7 +478,10 @@ export const SERVICE_USAGE_STATUS_COLORS: Record<ServiceUsageStatus, string> = {
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   CASH: "Tiền mặt",
   CREDIT_CARD: "Thẻ tín dụng",
+  DEBIT_CARD: "Thẻ ghi nợ",
   BANK_TRANSFER: "Chuyển khoản",
+  MOMO: "MoMo",
+  ZALOPAY: "ZaloPay",
   E_WALLET: "Ví điện tử",
 };
 
