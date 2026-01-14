@@ -84,16 +84,7 @@ export default function CustomersPage() {
         page: 1,
         limit: 100,
       });
-      // API returns { items: Customer[], totalItems, perPage, currentPage, totalPages }
-      // Handle different response structures for safety
-      const allCustomersData = Array.isArray(allResponse)
-        ? allResponse
-        : Array.isArray((allResponse as any)?.items)
-        ? (allResponse as any).items
-        : Array.isArray(allResponse?.data)
-        ? allResponse.data
-        : [];
-      setAllCustomers(allCustomersData);
+      setAllCustomers(allResponse.data);
 
       // Load filtered customers (for display)
       const params: Record<string, number | string> = {
@@ -103,16 +94,7 @@ export default function CustomersPage() {
       if (searchQuery) params.search = searchQuery;
 
       const response = await customerService.getCustomers(params);
-      // API returns { items: Customer[], totalItems, perPage, currentPage, totalPages }
-      // Handle different response structures for safety
-      const customersData = Array.isArray(response)
-        ? response
-        : Array.isArray((response as any)?.items)
-        ? (response as any).items
-        : Array.isArray(response?.data)
-        ? response.data
-        : [];
-      setCustomers(customersData);
+      setCustomers(response.data);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Vui lòng thử lại sau";
@@ -329,6 +311,7 @@ export default function CustomersPage() {
             )}
           </div>
 
+          {/* Results Summary */}
           <div className="flex items-center gap-2 mt-4 pt-4 border-t">
             <span className="text-sm font-semibold text-gray-700">
               📊 Tìm thấy{" "}
@@ -347,7 +330,7 @@ export default function CustomersPage() {
             <Loader2 className="h-16 w-16 animate-spin text-emerald-600 mb-4" />
             <p className="text-gray-600">Đang tải danh sách khách hàng...</p>
           </div>
-        ) : (customers || []).length === 0 ? (
+        ) : customers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <AlertCircle className="h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -426,12 +409,14 @@ export default function CustomersPage() {
                   </div>
 
                   {/* Rank Badge */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500 font-semibold mb-2 uppercase">
-                      Hạng thành viên
-                    </p>
-                    <RankBadge rank={customer.rank} />
-                  </div>
+                  {customer.rank && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <p className="text-xs text-gray-500 font-semibold mb-2 uppercase">
+                        Hạng thành viên
+                      </p>
+                      <RankBadge rank={customer.rank} />
+                    </div>
+                  )}
 
                   {/* Contact Info */}
                   <div className="space-y-2 pt-2 border-t border-gray-200">

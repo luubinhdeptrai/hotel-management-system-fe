@@ -105,10 +105,7 @@ export function RoomSelector({
         if (searchRoomNumber) {
           params.search = searchRoomNumber;
         }
-        if (selectedFloor && selectedFloor !== "all") {
-          params.floor = parseInt(selectedFloor);
-          logger.log("🔍 FILTER: Floor filter:", params.floor);
-        }
+
         if (minPrice) {
           params.minPrice = parseInt(minPrice);
         }
@@ -261,40 +258,6 @@ export function RoomSelector({
     setMaxPrice("");
     setSearchRoomNumber("");
   };
-
-  const getFloors = (): number[] => {
-    const floors = new Set<number>();
-    availableRooms.forEach((room) => floors.add(room.floor));
-    return Array.from(floors).sort((a, b) => a - b);
-  };
-
-  // Extract room types from actual API response instead of props
-  // This ensures we use the correct room type IDs that match the API
-  const getAvailableRoomTypes = (): Array<{ id: string; name: string }> => {
-    const roomTypeMap = new Map<string, string>();
-    availableRooms.forEach((room) => {
-      if (room.roomType?.id && room.roomType?.name) {
-        roomTypeMap.set(room.roomType.id, room.roomType.name);
-      }
-    });
-    return Array.from(roomTypeMap.entries()).map(([id, name]) => ({
-      id,
-      name,
-    }));
-  };
-
-  const getPriceRange = (): { min: number; max: number } => {
-    if (availableRooms.length === 0) return { min: 0, max: 1000000 };
-
-    const prices = availableRooms.map((r) => getRoomTypePrice(r.roomType));
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
-    };
-  };
-
-  const priceRange = getPriceRange();
-  const floors = getFloors();
 
   return (
     <div className="space-y-6">
@@ -509,7 +472,7 @@ export function RoomSelector({
                         <Button
                           onClick={() => handleSelectRoom(room)}
                           size="sm"
-                          className="w-full bg-primary-700"
+                          className="w-full"
                           variant="default"
                         >
                           Chọn

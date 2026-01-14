@@ -181,7 +181,10 @@ export default function CheckOutPage() {
           isOpen={checkOut.showFinalPaymentModal}
           onClose={() => checkOut.setShowFinalPaymentModal(false)}
           onSuccess={checkOut.handleFinalPaymentSuccess}
-          booking={checkOut.selectedBooking}
+          bookingId={checkOut.selectedBooking.id}
+          bookingCode={
+            checkOut.selectedBooking.bookingCode || checkOut.selectedBooking.id
+          }
         />
       )}
     </div>

@@ -146,61 +146,24 @@ export const authService = {
    * Get current employee profile
    * GET /employee/profile
    */
-  // Internal cache/promise to dedupe and avoid spamming the profile endpoint
-  _currentUserPromise: null as Promise<Employee> | null,
-  _currentUserCache: null as Employee | null,
-  _currentUserLastFetched: 0 as number,
-
   async getCurrentUser(): Promise<Employee> {
-    const now = Date.now();
-
-    // Return cached user if recently fetched (5 seconds) to avoid rapid repeated calls
-    if (this._currentUserCache && now - this._currentUserLastFetched < 5000) {
-      if (process.env.NODE_ENV !== "production") {
-        console.debug("[authService] getCurrentUser: returning cached user", { ageMs: now - this._currentUserLastFetched });
-      }
-      return Promise.resolve(this._currentUserCache);
+    const response = await api.get<ApiResponse<Employee>>(
+      "/employee/profile",
+      { requiresAuth: true }
+    );
+    const userData = (response && typeof response === "object" && "data" in response)
+      ? (response as any).data
+      : response;
+    
+    // Update stored user with fresh data
+    if (userData && typeof window !== "undefined") {
+      localStorage.setItem(
+        AUTH_STORAGE_KEYS.USER,
+        JSON.stringify(userData)
+      );
     }
-
-    // If a request is already in flight, return the same promise (dedupe)
-    if (this._currentUserPromise) {
-      if (process.env.NODE_ENV !== "production") {
-        console.debug("[authService] getCurrentUser: awaiting in-flight request");
-      }
-      return this._currentUserPromise;
-    }
-
-    // Make the request and store the in-flight promise
-    this._currentUserPromise = (async () => {
-      try {
-        const response = await api.get<ApiResponse<Employee>>(
-          "/employee/profile",
-          { requiresAuth: true }
-        );
-        const userData = (response && typeof response === "object" && "data" in response)
-          ? (response as any).data
-          : response;
-
-        // Update stored user with fresh data
-        if (userData && typeof window !== "undefined") {
-          localStorage.setItem(
-            AUTH_STORAGE_KEYS.USER,
-            JSON.stringify(userData)
-          );
-        }
-
-        // Cache result
-        this._currentUserCache = userData;
-        this._currentUserLastFetched = Date.now();
-
-        return userData;
-      } finally {
-        // Clear the in-flight promise so future calls can start a new one when needed
-        this._currentUserPromise = null;
-      }
-    })();
-
-    return this._currentUserPromise;
+    
+    return userData;
   },
 
   /**

@@ -1,11 +1,6 @@
 /**
  * Transaction Service
- * Handles all transaction-related API calls aligned with backend
- *
- * Backend Endpoints:
- * - POST /employee/transactions - Create transaction
- * - GET /employee/transactions - List transactions with filters
- * - GET /employee/transactions/{id} - Transaction details
+ * Handles all transaction-related API calls (deposits, payments, refunds)
  */
 
 import { api } from "./api";
@@ -13,153 +8,88 @@ import type {
   ApiResponse,
   PaymentMethod,
   TransactionType,
-  TransactionStatus,
-  Customer,
-  BookingRoom,
 } from "@/lib/types/api";
 
 // ============================================================================
-// Transaction Types (matching backend)
+// Transaction Types
 // ============================================================================
 
-export interface PromotionApplication {
-  customerPromotionId: string;
-  bookingRoomId?: string;
-  serviceUsageId?: string;
-}
-
 export interface CreateTransactionRequest {
-  bookingId?: string;
+  bookingId?: string; // Optional for guest service payments
   bookingRoomIds?: string[];
-  serviceUsageId?: string;
+  serviceUsageId?: string; // For service payment scenarios
   paymentMethod: PaymentMethod;
   transactionType: TransactionType;
-  description?: string;
-  promotionApplications?: PromotionApplication[];
-}
-
-export interface TransactionDetail {
-  id: string;
-  transactionId?: string;
-  bookingRoomId?: string;
-  serviceUsageId?: string;
-  baseAmount: string;
-  discountAmount: string;
-  amount: string;
-  createdAt: string;
-  bookingRoom?: {
-    id: string;
-    room: { roomNumber: string; floor?: number };
-    roomType?: { name: string };
-  };
-  serviceUsage?: {
-    id: string;
-    service: { name: string; price: number; unit: string };
-    quantity: number;
-  };
-}
-
-export interface Transaction {
-  id: string;
-  bookingId: string;
-  type: TransactionType;
-  status: TransactionStatus;
-  method: PaymentMethod;
-  baseAmount: string;
-  discountAmount: string;
-  amount: string;
-  description?: string;
-  occurredAt: string;
-  createdAt: string;
-  updatedAt: string;
-  booking?: {
-    id: string;
-    bookingCode: string;
-    primaryCustomer?: {
-      id: string;
-      fullName: string;
-      phone: string;
-    };
-    bookingRooms?: BookingRoom[];
-  };
-  processedBy?: {
-    id: string;
-    name: string;
-    username: string;
-  };
-  details?: TransactionDetail[];
-  usedPromotions?: Array<{
-    id: string;
-    promotion: {
-      code: string;
-      description?: string;
-    };
+  description?: string; // Transaction notes
+  promotionApplications?: Array<{
+    customerPromotionId: string;
+    bookingRoomId?: string; // For room-specific promotions
+    serviceUsageId?: string; // For service-specific promotions
   }>;
 }
 
 export interface TransactionResponse {
-  id: string;
+  transactionId: string;
   bookingId: string;
-  type: TransactionType;
-  status: TransactionStatus;
-  method: PaymentMethod;
-  amount: string;
-  baseAmount: string;
-  discountAmount: string;
-  createdAt: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  status: "COMPLETED" | "PENDING" | "FAILED";
+  bookingStatus?: string;
+  remainingBalance?: number;
 }
 
-export interface GetTransactionsFilters {
-  bookingId?: string;
-  status?: TransactionStatus;
-  type?: TransactionType;
-  method?: PaymentMethod;
-  startDate?: string;
-  endDate?: string;
-  search?: string;
+export interface RefundRequest {
+  bookingId: string;
+  refundMethod?: "ORIGINAL_PAYMENT_METHOD" | PaymentMethod;
+  notes?: string;
 }
 
-export interface GetTransactionsOptions {
-  page?: number;
-  limit?: number;
-  sortBy?: "createdAt" | "occurredAt" | "amount";
-  sortOrder?: "asc" | "desc";
+export interface RefundResponse {
+  refundId: string;
+  bookingId: string;
+  amount: number;
+  refundMethod: PaymentMethod;
+  status: "COMPLETED" | "PENDING" | "FAILED";
+  processedAt: string;
 }
 
-export interface TransactionListResponse {
-  transactions: Transaction[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+export interface BillResponse {
+  bookingId: string;
+  customerId: string;
+  customerName: string;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  roomCharges: number;
+  serviceCharges: number;
+  earlyCheckInFee: number;
+  lateCheckOutFee: number;
+  subtotal: number;
+  discounts: number;
+  totalAmount: number;
+  paidAmount: number;
+  remainingBalance: number;
+  breakdown: Array<{
+    description: string;
+    amount: number;
+  }>;
 }
 
 // ============================================================================
 // Transaction Service
 // ============================================================================
 
-function buildQueryString(params: { [key: string]: unknown }): string {
-  const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      searchParams.append(key, String(value));
-    }
-  });
-  const query = searchParams.toString();
-  return query ? `?${query}` : "";
-}
-
 export const transactionService = {
   /**
-   * Create a transaction
+   * Create a transaction (deposit, payment, etc.)
    * POST /employee/transactions
    *
-   * Backend auto-calculates amount based on:
-   * - DEPOSIT: Minimum deposit percentage of booking
-   * - ROOM_CHARGE: Total for specified rooms (or full booking)
-   * - SERVICE_CHARGE: Service usage amount
+   * CRITICAL: The backend automatically calculates the amount based on:
+   * - DEPOSIT: Minimum 30% of total booking amount
+   * - ROOM_CHARGE: Total for specified rooms
+   * - FINAL_PAYMENT: Remaining balance after deposits
+   *
+   * Frontend should NEVER send an amount field.
    */
   async createTransaction(
     data: CreateTransactionRequest
@@ -241,25 +171,8 @@ export const transactionService = {
         processedAt: new Date().toISOString(),
       };
     } catch (error) {
-      console.error("Get transaction by ID failed:", error);
+      console.error("Process refund failed:", error);
       throw error;
-    }
-  },
-
-  /**
-   * Get transactions for a specific booking
-   * Convenience method that filters by bookingId
-   */
-  async getBookingTransactions(bookingId: string): Promise<Transaction[]> {
-    try {
-      const response = await this.getTransactions(
-        { bookingId },
-        { limit: 100, sortBy: "createdAt", sortOrder: "desc" }
-      );
-      return response.transactions;
-    } catch (error) {
-      console.error("Get booking transactions failed:", error);
-      return [];
     }
   },
 };

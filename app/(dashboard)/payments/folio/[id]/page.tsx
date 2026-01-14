@@ -4,7 +4,6 @@ import { use, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ICONS } from "@/src/constants/icons.enum";
 import { transactionService } from "@/lib/services/transaction.service";
-import { bookingService } from "@/lib/services/booking.service";
 import type {
   Folio,
   PostChargeFormData,
@@ -34,51 +33,26 @@ export default function FolioPage({ params }: FolioPageProps) {
   const [isPostChargeOpen, setIsPostChargeOpen] = useState(false);
   const [isPostPaymentOpen, setIsPostPaymentOpen] = useState(false);
   const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] =
-    useState<string>("");
-
-  // Load folio from booking data (backend doesn't have /bill endpoint)
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string>("");
+  
+  // Load folio from API
   useEffect(() => {
     const loadFolio = async () => {
       try {
-        // Fetch booking data and convert to folio format
-        const bookingData = await bookingService.getBookingById(id);
-        const booking = bookingData.booking || bookingData;
-
-        // Build folio from booking data
-        const folioData: Folio = {
-          folioID: id,
-          reservationID: id,
-          customerID: (booking as any).primaryCustomerId || "",
-          customerName:
-            (booking as any).primaryCustomer?.fullName || "Khách hàng",
-          roomID: (booking as any).bookingRooms?.[0]?.roomId || "",
-          roomName:
-            (booking as any).bookingRooms?.[0]?.room?.roomNumber || "N/A",
-          roomTypeName:
-            (booking as any).bookingRooms?.[0]?.roomType?.name || "",
-          checkInDate: (booking as any).checkInDate || "",
-          checkOutDate: (booking as any).checkOutDate || "",
-          status: "OPEN",
-          totalDebit: parseFloat((booking as any).totalAmount || "0"),
-          totalCredit: parseFloat((booking as any).totalPaid || "0"),
-          balance: parseFloat((booking as any).balance || "0"),
-          transactions: [], // Transactions will be fetched separately if needed
-          createdAt: (booking as any).createdAt || new Date().toISOString(),
-        };
-
-        setFolio(folioData);
+        // Use getBill API endpoint to get folio data
+        const data = await transactionService.getBill(id);
+        // Convert bill data to folio structure if needed
+        setFolio(data as unknown as Folio);
       } catch (err) {
         logger.error("Failed to load folio:", err);
+        // TODO: Handle error state when needed
       }
     };
     loadFolio();
   }, [id]);
-
+  
   // Get selected transaction for void confirmation
-  const selectedTransaction = folio?.transactions?.find(
-    (t) => t.transactionID === selectedTransactionId
-  );
+  const selectedTransaction = folio?.transactions?.find(t => t.transactionID === selectedTransactionId);
 
   // Handler for posting charges
   const handlePostCharge = useCallback(
@@ -92,20 +66,10 @@ export default function FolioPage({ params }: FolioPageProps) {
           description: data.description,
         });
 
-        // Reload folio - refetch booking data
-        const bookingData = await bookingService.getBookingById(id);
-        const booking = bookingData.booking || bookingData;
-        setFolio((prev) =>
-          prev
-            ? {
-                ...prev,
-                debit: parseFloat((booking as any).totalAmount || "0"),
-                credit: parseFloat((booking as any).totalPaid || "0"),
-                balance: parseFloat((booking as any).balance || "0"),
-              }
-            : null
-        );
-
+        // Reload folio to get updated data
+        const updatedFolio = await transactionService.getBill(id);
+        setFolio(updatedFolio as unknown as Folio);
+        
         toast.success("Thêm phí thành công", {
           description: `Đã thêm ${data.description} - ${new Intl.NumberFormat(
             "vi-VN",
@@ -142,24 +106,11 @@ export default function FolioPage({ params }: FolioPageProps) {
           description: data.notes,
         });
 
-        // Reload folio - refetch booking data
-        const bookingData = await bookingService.getBookingById(id);
-        const booking = bookingData.booking || bookingData;
-        setFolio((prev) =>
-          prev
-            ? {
-                ...prev,
-                debit: parseFloat((booking as any).totalAmount || "0"),
-                credit: parseFloat((booking as any).totalPaid || "0"),
-                balance: parseFloat((booking as any).balance || "0"),
-              }
-            : null
-        );
-
-        const successMsg =
-          data.mode === "DEPOSIT"
-            ? "Ghi nhận đặt cọc thành công"
-            : "Ghi nhận thanh toán thành công";
+        // Reload folio to get updated data
+        const updatedFolio = await transactionService.getBill(id);
+        setFolio(updatedFolio as unknown as Folio);
+        
+        const successMsg = data.mode === "DEPOSIT" ? "Ghi nhận đặt cọc thành công" : "Ghi nhận thanh toán thành công";
         toast.success(successMsg, {
           description: `Đã nhận ${new Intl.NumberFormat("vi-VN", {
             style: "currency",
@@ -175,40 +126,33 @@ export default function FolioPage({ params }: FolioPageProps) {
   );
 
   // Handler for voiding transactions
-  const handleVoidTransaction = useCallback(async () => {
-    try {
-      // TODO: Implement void transaction API call when backend is ready
-      // await transactionService.voidTransaction(selectedTransactionId, reason);
+  const handleVoidTransaction = useCallback(
+    async () => {
+      try {
+        // TODO: Implement void transaction API call when backend is ready
+        // await transactionService.voidTransaction(selectedTransactionId, reason);
 
-      // Reload folio - refetch booking data
-      const bookingData = await bookingService.getBookingById(id);
-      const booking = bookingData.booking || bookingData;
-      setFolio((prev) =>
-        prev
-          ? {
-              ...prev,
-              debit: parseFloat((booking as any).totalAmount || "0"),
-              credit: parseFloat((booking as any).totalPaid || "0"),
-              balance: parseFloat((booking as any).balance || "0"),
-            }
-          : null
-      );
-
-      toast.success("Hủy giao dịch thành công", {
-        description: "Giao dịch đã được đánh dấu là đã hủy",
-      });
-    } catch (err) {
-      logger.error("Failed to void transaction:", err);
-      toast.error("Lỗi", { description: "Không thể hủy giao dịch" });
-    }
-  }, [id]);
-
+        // Reload folio to get updated data
+        const updatedFolio = await transactionService.getBill(id);
+        setFolio(updatedFolio as unknown as Folio);
+        
+        toast.success("Hủy giao dịch thành công", {
+          description: "Giao dịch đã được đánh dấu là đã hủy",
+        });
+      } catch (err) {
+        logger.error("Failed to void transaction:", err);
+        toast.error("Lỗi", { description: "Không thể hủy giao dịch" });
+      }
+    },
+    [id]
+  );
+  
   // Open void confirmation dialog
   const handleOpenVoidDialog = (transactionId: string) => {
     setSelectedTransactionId(transactionId);
     setIsVoidDialogOpen(true);
   };
-
+  
   // Confirm void transaction
   const handleConfirmVoid = () => {
     if (selectedTransactionId) {
@@ -224,27 +168,19 @@ export default function FolioPage({ params }: FolioPageProps) {
           <div className="bg-linear-to-br from-error-50 to-error-100/30 rounded-2xl p-6 border-2 border-error-200 shadow-lg">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-linear-to-br from-error-600 to-error-500 rounded-xl flex items-center justify-center">
-                <span className="inline-flex items-center justify-center w-6 h-6 text-white">
-                  {ICONS.ALERT}
-                </span>
+                <span className="inline-flex items-center justify-center w-6 h-6 text-white">{ICONS.ALERT}</span>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">
-                  Không tìm thấy Folio
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Không tìm thấy folio với ID: {id}
-                </p>
+                <h3 className="font-bold text-gray-900">Không tìm thấy Folio</h3>
+                <p className="text-sm text-gray-600">Không tìm thấy folio với ID: {id}</p>
               </div>
             </div>
           </div>
-          <Button
+          <Button 
             onClick={() => window.history.back()}
             className="inline-flex items-center gap-2 bg-linear-to-r from-gray-600 to-gray-500 hover:from-gray-700 hover:to-gray-600 text-white h-11 px-6 rounded-lg shadow-md"
           >
-            <span className="inline-flex items-center justify-center w-4 h-4">
-              {ICONS.CHEVRON_LEFT}
-            </span>
+            <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.CHEVRON_LEFT}</span>
             Quay lại
           </Button>
         </div>
@@ -261,9 +197,7 @@ export default function FolioPage({ params }: FolioPageProps) {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-md backdrop-blur-sm">
-              <span className="inline-flex items-center justify-center w-8 h-8 text-white">
-                {ICONS.RECEIPT}
-              </span>
+              <span className="inline-flex items-center justify-center w-8 h-8 text-white">{ICONS.RECEIPT}</span>
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-extrabold">Chi tiết Folio</h1>
@@ -275,9 +209,7 @@ export default function FolioPage({ params }: FolioPageProps) {
               onClick={() => window.history.back()}
               className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white h-11 px-6 rounded-lg shadow-md backdrop-blur-sm transition-all"
             >
-              <span className="inline-flex items-center justify-center w-4 h-4">
-                {ICONS.CHEVRON_LEFT}
-              </span>
+              <span className="inline-flex items-center justify-center w-4 h-4">{ICONS.CHEVRON_LEFT}</span>
               Quay lại
             </Button>
           </div>
@@ -295,9 +227,7 @@ export default function FolioPage({ params }: FolioPageProps) {
         <div className="rounded-2xl bg-white border-2 border-gray-100 p-6 shadow-lg">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center shadow-md">
-              <span className="inline-flex items-center justify-center w-5 h-5 text-white">
-                {ICONS.SETTINGS}
-              </span>
+              <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.SETTINGS}</span>
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Thao tác</h2>
@@ -312,9 +242,7 @@ export default function FolioPage({ params }: FolioPageProps) {
               className="h-24 flex-col gap-3 bg-linear-to-br from-primary-50 to-primary-100/30 hover:from-primary-100 hover:to-primary-200/50 border-2 border-primary-200 text-primary-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="w-10 h-10 bg-linear-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center">
-                <span className="inline-flex items-center justify-center w-5 h-5 text-white">
-                  {ICONS.PLUS}
-                </span>
+                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.PLUS}</span>
               </div>
               <span className="text-sm">Post Charge</span>
             </Button>
@@ -325,9 +253,7 @@ export default function FolioPage({ params }: FolioPageProps) {
               className="h-24 flex-col gap-3 bg-linear-to-br from-success-50 to-success-100/30 hover:from-success-100 hover:to-success-200/50 border-2 border-success-200 text-success-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="w-10 h-10 bg-linear-to-br from-success-600 to-success-500 rounded-xl flex items-center justify-center">
-                <span className="inline-flex items-center justify-center w-5 h-5 text-white">
-                  {ICONS.CREDIT_CARD}
-                </span>
+                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.CREDIT_CARD}</span>
               </div>
               <span className="text-sm">Post Payment</span>
             </Button>
@@ -337,9 +263,7 @@ export default function FolioPage({ params }: FolioPageProps) {
               className="h-24 flex-col gap-3 bg-linear-to-br from-gray-50 to-gray-100/30 hover:from-gray-100 hover:to-gray-200/50 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
             >
               <div className="w-10 h-10 bg-linear-to-br from-gray-600 to-gray-500 rounded-xl flex items-center justify-center">
-                <span className="inline-flex items-center justify-center w-5 h-5 text-white">
-                  {ICONS.PRINTER}
-                </span>
+                <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.PRINTER}</span>
               </div>
               <span className="text-sm">Print Folio</span>
             </Button>
@@ -347,74 +271,61 @@ export default function FolioPage({ params }: FolioPageProps) {
 
           {isFolioClosed && (
             <div className="mt-4 bg-warning-50 border-2 border-warning-200 rounded-xl p-4 flex items-center gap-3">
-              <span className="inline-flex items-center justify-center w-6 h-6 text-warning-600">
-                {ICONS.ALERT_CIRCLE}
-              </span>
+              <span className="inline-flex items-center justify-center w-6 h-6 text-warning-600">{ICONS.ALERT_CIRCLE}</span>
               <p className="text-sm text-warning-700 font-semibold">
                 Folio đã đóng. Không thể thêm/chỉnh sửa giao dịch.
               </p>
             </div>
           )}
         </div>
-        {/* Transaction Table */}
-        <TransactionTable
-          transactions={folio.transactions}
-          onVoidTransaction={handleOpenVoidDialog}
-          isFolioClosed={isFolioClosed}
-        />
+      {/* Transaction Table */}
+      <TransactionTable 
+        transactions={folio.transactions} 
+        onVoidTransaction={handleOpenVoidDialog}
+        isFolioClosed={isFolioClosed}
+      />
 
-        {/* Info Note */}
-        <div className="bg-linear-to-br from-info-50 to-info-100/30 rounded-2xl p-5 border-2 border-info-200 shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-linear-to-br from-info-600 to-info-500 rounded-xl flex items-center justify-center shrink-0">
-              <span className="inline-flex items-center justify-center w-5 h-5 text-white">
-                {ICONS.INFO}
-              </span>
-            </div>
-            <div className="text-sm text-gray-700">
-              <p className="font-semibold mb-1">Hướng dẫn sử dụng:</p>
-              <ul className="space-y-1">
-                <li>
-                  • <strong>Debit (Nợ):</strong> Các khoản phí khách cần thanh
-                  toán (phòng, dịch vụ, phụ phí...)
-                </li>
-                <li>
-                  • <strong>Credit (Có):</strong> Các khoản tiền khách đã thanh
-                  toán (tiền mặt, chuyển khoản...)
-                </li>
-                <li>
-                  • <strong>Balance:</strong> Số dư = Debit - Credit (dương =
-                  khách nợ, âm = cần hoàn tiền)
-                </li>
-              </ul>
-            </div>
+      {/* Info Note */}
+      <div className="bg-linear-to-br from-info-50 to-info-100/30 rounded-2xl p-5 border-2 border-info-200 shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 bg-linear-to-br from-info-600 to-info-500 rounded-xl flex items-center justify-center shrink-0">
+            <span className="inline-flex items-center justify-center w-5 h-5 text-white">{ICONS.INFO}</span>
+          </div>
+          <div className="text-sm text-gray-700">
+            <p className="font-semibold mb-1">Hướng dẫn sử dụng:</p>
+            <ul className="space-y-1">
+              <li>• <strong>Debit (Nợ):</strong> Các khoản phí khách cần thanh toán (phòng, dịch vụ, phụ phí...)</li>
+              <li>• <strong>Credit (Có):</strong> Các khoản tiền khách đã thanh toán (tiền mặt, chuyển khoản...)</li>
+              <li>• <strong>Balance:</strong> Số dư = Debit - Credit (dương = khách nợ, âm = cần hoàn tiền)</li>
+            </ul>
           </div>
         </div>
-
-        {/* Modals */}
-        <PostChargeModal
-          isOpen={isPostChargeOpen}
-          onClose={() => setIsPostChargeOpen(false)}
-          onSubmit={handlePostCharge}
-        />
-
-        <PostPaymentModal
-          isOpen={isPostPaymentOpen}
-          onClose={() => setIsPostPaymentOpen(false)}
-          onSubmit={handlePostPayment}
-          balance={folio.balance}
-        />
-
-        <VoidConfirmDialog
-          isOpen={isVoidDialogOpen}
-          onClose={() => {
-            setIsVoidDialogOpen(false);
-            setSelectedTransactionId("");
-          }}
-          onConfirm={handleConfirmVoid}
-          transactionDescription={selectedTransaction?.description}
-        />
       </div>
+
+      {/* Modals */}
+      <PostChargeModal
+        isOpen={isPostChargeOpen}
+        onClose={() => setIsPostChargeOpen(false)}
+        onSubmit={handlePostCharge}
+      />
+
+      <PostPaymentModal
+        isOpen={isPostPaymentOpen}
+        onClose={() => setIsPostPaymentOpen(false)}
+        onSubmit={handlePostPayment}
+        balance={folio.balance}
+      />
+
+      <VoidConfirmDialog
+        isOpen={isVoidDialogOpen}
+        onClose={() => {
+          setIsVoidDialogOpen(false);
+          setSelectedTransactionId("");
+        }}
+        onConfirm={handleConfirmVoid}
+        transactionDescription={selectedTransaction?.description}
+      />
+    </div>
     </div>
   );
 }
