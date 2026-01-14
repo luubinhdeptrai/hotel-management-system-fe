@@ -3,6 +3,8 @@
  * Generated from swagger.yml specification
  */
 
+import { CustomerRank } from "./customer-rank";
+
 // ============================================================================
 // Generic API Response Wrappers
 // ============================================================================
@@ -177,14 +179,7 @@ export interface Customer {
   updatedAt: string;
   totalSpent?: number; // NEW: Total lifetime spending (auto-calculated from completed transactions)
   rankId?: string | null; // NEW: Customer rank reference
-  rank?: { // NEW: Populated rank data (if included)
-    id: string;
-    displayName: string;
-    minSpending: number;
-    maxSpending: number | null;
-    color: string;
-    benefits: any;
-  } | null;
+  rank?: CustomerRank | null;
   _count?: {
     bookings: number;
     customerPromotions: number;

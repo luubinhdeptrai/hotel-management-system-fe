@@ -1,43 +1,65 @@
-// Room Status Types (7 statuses including housekeeping workflow)
-// 🟢 Sẵn sàng (READY) - Available for sale
-// 🔴 Đang thuê (OCCUPIED) - Guest currently staying
-// 🟡 Bẩn (DIRTY) - Guest checked out, needs cleaning
-// 🧹 Đang dọn (CLEANING) - Currently being cleaned
-// 🔍 Đang kiểm tra (INSPECTING) - Cleaned, awaiting supervisor inspection
-// ⚫ Bảo trì (MAINTENANCE) - Under maintenance
-// 🔵 Đã đặt (RESERVED) - Empty but assigned to upcoming booking
+// Room Status Enum (matches Backend)
 export type RoomStatus =
-  | "Sẵn sàng"
-  | "Đang thuê"
-  | "Bẩn"
-  | "Đang dọn"
-  | "Đang kiểm tra"
-  | "Bảo trì"
-  | "Đã đặt";
+  | "AVAILABLE"
+  | "RESERVED"
+  | "OCCUPIED"
+  | "CLEANING"
+  | "MAINTENANCE"
+  | "OUT_OF_SERVICE";
+
+// Display mapping
+export const ROOM_STATUS_LABELS: Record<RoomStatus, string> = {
+  AVAILABLE: "Sẵn sàng",
+  RESERVED: "Đã đặt",
+  OCCUPIED: "Đang thuê",
+  CLEANING: "Đang dọn",
+  MAINTENANCE: "Bảo trì",
+  OUT_OF_SERVICE: "Ngưng hoạt động",
+};
+
+// Legacy support (optional, if UI relies on Vietnamese strings as values)
+// export type RoomStatusLegacy = "Sẵn sàng" | ...
 
 // Room Type
 export interface RoomType {
-  roomTypeID: string;
-  roomTypeName: string;
-  price: number;
+  // Schema fields
+  id: string;
+  name: string;
   capacity: number;
+  totalBed: number;
+  basePrice: number; // Decimal -> number. was price
+  imageUrl?: string | null;
+
+  // Legacy / UI
+  roomTypeID?: string;
+  roomTypeName?: string;
+  price?: number; // alias basePrice
   amenities?: string[];
-  imageUrl?: string;
-  totalBed?: number;
   tags?: string[];
 }
 
 // Room
 export interface Room {
-  roomID: string;
-  roomName: string;
-  roomTypeID: string;
-  roomType: RoomType;
-  roomStatus: RoomStatus;
+  // Schema fields
+  id: string;
+  roomNumber: string;
   floor: number;
-  // Guest name when room is occupied
+  code: string;
+  status: RoomStatus;
+  roomTypeId: string;
+  createdAt?: string;
+
+  // Relations
+  roomType?: RoomType;
+
+  // Legacy / UI
+  roomID?: string;
+  roomName?: string; // alias roomNumber
+  roomTypeID?: string;
+  roomStatus?: RoomStatus; // or mapped display string?
+
+  // Guest info (populated)
   guestName?: string;
-  // Folio ID when room is occupied (for linking to Folio detail)
   folioId?: string;
 }
 

@@ -9,13 +9,18 @@ import type { CustomerRank } from "@/lib/types/customer-rank";
 import { getRankColor } from "@/lib/types/customer-rank";
 
 interface RankBadgeProps {
-  rank?: CustomerRank | null;
+  rank: CustomerRank;
   className?: string;
   showIcon?: boolean;
   size?: "sm" | "md" | "lg";
 }
 
-export function RankBadge({ rank, className, showIcon = true, size = "md" }: RankBadgeProps) {
+export function RankBadge({
+  rank,
+  className,
+  showIcon = true,
+  size = "md",
+}: RankBadgeProps) {
   const sizeClasses = {
     sm: "text-xs px-2 py-0.5",
     md: "text-sm px-3 py-1",
@@ -24,8 +29,8 @@ export function RankBadge({ rank, className, showIcon = true, size = "md" }: Ran
 
   if (!rank) {
     return (
-      <Badge 
-        variant="outline" 
+      <Badge
+        variant="outline"
         className={cn(
           "font-medium text-gray-600 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 border-2 border-gray-300 shadow-sm hover:shadow-md transition-all",
           sizeClasses[size],
@@ -38,7 +43,7 @@ export function RankBadge({ rank, className, showIcon = true, size = "md" }: Ran
     );
   }
 
-  const color = getRankColor(rank.color);
+  const color = getRankColor(rank.color || "#000000");
 
   return (
     <Badge

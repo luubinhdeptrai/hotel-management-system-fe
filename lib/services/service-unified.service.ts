@@ -1,11 +1,11 @@
 /**
  * Unified Service API Layer
- * 
+ *
  * Handles API calls for:
  * 1. Regular Services (CRUD)
  * 2. Penalty Service (READ-ONLY) + Penalty Usage (CRUD)
  * 3. Surcharge Service (READ-ONLY) + Surcharge Usage (CRUD)
- * 
+ *
  * Backend endpoints:
  * - /employee/services (regular services)
  * - /employee/service/service-usage (service usages)
@@ -26,8 +26,6 @@ import type {
   CreatePenaltySurchargeRequest,
   UpdateServiceUsageRequest,
   GetServiceUsagesParams,
-  categorizeService,
-  isRegularService
 } from "@/lib/types/service-unified";
 
 const API_BASE = "/employee";
@@ -44,40 +42,49 @@ export const serviceAPI = {
   async getAllServices(): Promise<Service[]> {
     try {
       const endpoint = `${API_BASE}/employee/services`;
-      console.log('📡 [serviceAPI.getAllServices] Calling:', endpoint);
-      
+      console.log("📡 [serviceAPI.getAllServices] Calling:", endpoint);
+
       const response = await api.get(`${API_BASE}/employee/services`, {
-        requiresAuth: true
+        requiresAuth: true,
       });
-      
-      console.log('📦 [serviceAPI.getAllServices] Raw response:', response);
-      
+
+      console.log("📦 [serviceAPI.getAllServices] Raw response:", response);
+
       // Handle nested data structure: { data: { data: [...], total, page, limit } }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let data = (response as any)?.data?.data;
-      
-      console.log('🔍 [serviceAPI.getAllServices] Extracted data (level 1):', data);
-      
+
+      console.log(
+        "🔍 [serviceAPI.getAllServices] Extracted data (level 1):",
+        data
+      );
+
       // If not array, try other paths
       if (!Array.isArray(data)) {
         data = (response as any)?.data;
-        console.log('🔍 [serviceAPI.getAllServices] Extracted data (level 2):', data);
-        
+        console.log(
+          "🔍 [serviceAPI.getAllServices] Extracted data (level 2):",
+          data
+        );
+
         if (!Array.isArray(data)) {
           data = response;
-          console.log('🔍 [serviceAPI.getAllServices] Extracted data (level 3 - raw response):', data);
+          console.log(
+            "🔍 [serviceAPI.getAllServices] Extracted data (level 3 - raw response):",
+            data
+          );
         }
       }
-      
+
       const result = Array.isArray(data) ? data : [];
-      console.log('✅ [serviceAPI.getAllServices] Final result:', {
+      console.log("✅ [serviceAPI.getAllServices] Final result:", {
         count: result.length,
-        items: result
+        items: result,
       });
-      
+
       return result;
     } catch (error) {
-      console.error('❌ [serviceAPI.getAllServices] Error:', error);
+      console.error("❌ [serviceAPI.getAllServices] Error:", error);
       throw error;
     }
   },
@@ -88,7 +95,7 @@ export const serviceAPI = {
    */
   async getServicesWithCategory(): Promise<ServiceWithCategory[]> {
     const services = await this.getAllServices();
-    const { categorizeService } = await import('@/lib/types/service-unified');
+    const { categorizeService } = await import("@/lib/types/service-unified");
     return services.map(categorizeService);
   },
 
@@ -98,7 +105,7 @@ export const serviceAPI = {
    */
   async getRegularServices(): Promise<Service[]> {
     const services = await this.getAllServices();
-    const { isRegularService } = await import('@/lib/types/service-unified');
+    const { isRegularService } = await import("@/lib/types/service-unified");
     return services.filter(isRegularService);
   },
 
@@ -108,7 +115,7 @@ export const serviceAPI = {
    */
   async getPenaltyService(): Promise<Service | null> {
     const services = await this.getAllServices();
-    return services.find(s => s.name === 'Phạt') || null;
+    return services.find((s) => s.name === "Phạt") || null;
   },
 
   /**
@@ -117,7 +124,7 @@ export const serviceAPI = {
    */
   async getSurchargeService(): Promise<Service | null> {
     const services = await this.getAllServices();
-    return services.find(s => s.name === 'Phụ thu') || null;
+    return services.find((s) => s.name === "Phụ thu") || null;
   },
 
   /**
@@ -126,11 +133,12 @@ export const serviceAPI = {
   async getServiceById(id: string): Promise<Service> {
     try {
       const response = await api.get(`${API_BASE}/employee/services/${id}`, {
-        requiresAuth: true
+        requiresAuth: true,
       });
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = (response as any)?.data?.data || (response as any)?.data || response;
+      const data =
+        (response as any)?.data?.data || (response as any)?.data || response;
       return data;
     } catch (error) {
       console.error(`Failed to get service ${id}:`, error);
@@ -145,19 +153,22 @@ export const serviceAPI = {
   async createService(data: CreateServiceRequest): Promise<Service> {
     try {
       // Validate not creating penalty/surcharge
-      if (data.name === 'Phạt' || data.name === 'Phụ thu') {
-        throw new Error('Cannot create penalty or surcharge service. Those are system services.');
+      if (data.name === "Phạt" || data.name === "Phụ thu") {
+        throw new Error(
+          "Cannot create penalty or surcharge service. Those are system services."
+        );
       }
-      
+
       const response = await api.post(`${API_BASE}/employee/services`, data, {
-        requiresAuth: true
+        requiresAuth: true,
       });
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const unwrapped = (response as any)?.data?.data || (response as any)?.data || response;
+      const unwrapped =
+        (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
     } catch (error) {
-      console.error('Failed to create service:', error);
+      console.error("Failed to create service:", error);
       throw error;
     }
   },
@@ -166,14 +177,22 @@ export const serviceAPI = {
    * Update service
    * Can update regular services, NOT penalty/surcharge services
    */
-  async updateService(id: string, data: UpdateServiceRequest): Promise<Service> {
+  async updateService(
+    id: string,
+    data: UpdateServiceRequest
+  ): Promise<Service> {
     try {
-      const response = await api.put(`${API_BASE}/employee/services/${id}`, data, {
-        requiresAuth: true
-      });
-      
+      const response = await api.put(
+        `${API_BASE}/employee/services/${id}`,
+        data,
+        {
+          requiresAuth: true,
+        }
+      );
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const unwrapped = (response as any)?.data?.data || (response as any)?.data || response;
+      const unwrapped =
+        (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
     } catch (error) {
       console.error(`Failed to update service ${id}:`, error);
@@ -188,13 +207,13 @@ export const serviceAPI = {
   async deleteService(id: string): Promise<void> {
     try {
       await api.delete(`${API_BASE}/employee/services/${id}`, {
-        requiresAuth: true
+        requiresAuth: true,
       });
     } catch (error) {
       console.error(`Failed to delete service ${id}:`, error);
       throw error;
     }
-  }
+  },
 };
 
 // ============================================================================
@@ -206,27 +225,36 @@ export const serviceUsageAPI = {
    * Get service usages with filters
    * Can filter by serviceId, bookingId, bookingRoomId, status
    */
-  async getServiceUsages(params?: GetServiceUsagesParams): Promise<ServiceUsage[]> {
+  async getServiceUsages(
+    params?: GetServiceUsagesParams
+  ): Promise<ServiceUsage[]> {
     try {
       const queryParams = new URLSearchParams();
-      
-      if (params?.serviceId) queryParams.append('serviceId', params.serviceId);
-      if (params?.bookingId) queryParams.append('bookingId', params.bookingId);
-      if (params?.bookingRoomId) queryParams.append('bookingRoomId', params.bookingRoomId);
-      if (params?.status) queryParams.append('status', params.status);
-      if (params?.page) queryParams.append('page', params.page.toString());
-      if (params?.limit) queryParams.append('limit', params.limit.toString());
-      
+
+      if (params?.serviceId) queryParams.append("serviceId", params.serviceId);
+      if (params?.bookingId) queryParams.append("bookingId", params.bookingId);
+      if (params?.bookingRoomId)
+        queryParams.append("bookingRoomId", params.bookingRoomId);
+      if (params?.status) queryParams.append("status", params.status);
+      if (params?.page) queryParams.append("page", params.page.toString());
+      if (params?.limit) queryParams.append("limit", params.limit.toString());
+
       const query = queryParams.toString();
-      const endpoint = `${API_BASE}/service/service-usage${query ? `?${query}` : ''}`;
-      
+      const endpoint = `${API_BASE}/service/service-usage${
+        query ? `?${query}` : ""
+      }`;
+
       const response = await api.get(endpoint, { requiresAuth: true });
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = (response as any)?.data?.data || (response as any)?.data || response || [];
+      const data =
+        (response as any)?.data?.data ||
+        (response as any)?.data ||
+        response ||
+        [];
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error('Failed to get service usages:', error);
+      console.error("Failed to get service usages:", error);
       throw error;
     }
   },
@@ -235,17 +263,24 @@ export const serviceUsageAPI = {
    * Create regular service usage
    * For booking services (laundry, massage, etc.)
    */
-  async createServiceUsage(data: CreateServiceUsageRequest): Promise<ServiceUsage> {
+  async createServiceUsage(
+    data: CreateServiceUsageRequest
+  ): Promise<ServiceUsage> {
     try {
-      const response = await api.post(`${API_BASE}/service/service-usage`, data, {
-        requiresAuth: true
-      });
-      
+      const response = await api.post(
+        `${API_BASE}/service/service-usage`,
+        data,
+        {
+          requiresAuth: true,
+        }
+      );
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const unwrapped = (response as any)?.data?.data || (response as any)?.data || response;
+      const unwrapped =
+        (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
     } catch (error) {
-      console.error('Failed to create service usage:', error);
+      console.error("Failed to create service usage:", error);
       throw error;
     }
   },
@@ -254,14 +289,22 @@ export const serviceUsageAPI = {
    * Update service usage
    * Can update quantity or status
    */
-  async updateServiceUsage(id: string, data: UpdateServiceUsageRequest): Promise<ServiceUsage> {
+  async updateServiceUsage(
+    id: string,
+    data: UpdateServiceUsageRequest
+  ): Promise<ServiceUsage> {
     try {
-      const response = await api.patch(`${API_BASE}/service/service-usage/${id}`, data, {
-        requiresAuth: true
-      });
-      
+      const response = await api.patch(
+        `${API_BASE}/service/service-usage/${id}`,
+        data,
+        {
+          requiresAuth: true,
+        }
+      );
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const unwrapped = (response as any)?.data?.data || (response as any)?.data || response;
+      const unwrapped =
+        (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
     } catch (error) {
       console.error(`Failed to update service usage ${id}:`, error);
@@ -275,13 +318,13 @@ export const serviceUsageAPI = {
   async deleteServiceUsage(id: string): Promise<void> {
     try {
       await api.delete(`${API_BASE}/service/service-usage/${id}`, {
-        requiresAuth: true
+        requiresAuth: true,
       });
     } catch (error) {
       console.error(`Failed to delete service usage ${id}:`, error);
       throw error;
     }
-  }
+  },
 };
 
 // ============================================================================
@@ -297,11 +340,13 @@ export const penaltyAPI = {
     try {
       const penaltyService = await serviceAPI.getPenaltyService();
       if (!penaltyService) {
-        throw new Error('Penalty service not found. Please check Backend seed data.');
+        throw new Error(
+          "Penalty service not found. Please check Backend seed data."
+        );
       }
       return penaltyService.id;
     } catch (error) {
-      console.error('Failed to get penalty service ID:', error);
+      console.error("Failed to get penalty service ID:", error);
       throw error;
     }
   },
@@ -316,28 +361,42 @@ export const penaltyAPI = {
     bookingRoomId?: string;
   }): Promise<ServiceUsage[]> {
     try {
-      console.log('📡 [penaltyAPI.getPenaltyUsages] Called with filters:', filters);
-      
+      console.log(
+        "📡 [penaltyAPI.getPenaltyUsages] Called with filters:",
+        filters
+      );
+
       // Get penalty service ID
       const penaltyServiceId = await this.getPenaltyServiceId();
-      console.log('🎯 [penaltyAPI.getPenaltyUsages] Penalty service ID:', penaltyServiceId);
-      
+      console.log(
+        "🎯 [penaltyAPI.getPenaltyUsages] Penalty service ID:",
+        penaltyServiceId
+      );
+
       // Query all service usages
-      console.log('📡 [penaltyAPI.getPenaltyUsages] Calling getServiceUsages with filters:', filters);
+      console.log(
+        "📡 [penaltyAPI.getPenaltyUsages] Calling getServiceUsages with filters:",
+        filters
+      );
       const allUsages = await serviceUsageAPI.getServiceUsages(filters);
-      console.log('📦 [penaltyAPI.getPenaltyUsages] All usages returned:', allUsages);
-      
+      console.log(
+        "📦 [penaltyAPI.getPenaltyUsages] All usages returned:",
+        allUsages
+      );
+
       // Filter to only penalty usages
-      const filtered = allUsages.filter(usage => usage.serviceId === penaltyServiceId);
-      console.log('✅ [penaltyAPI.getPenaltyUsages] Filtered penalties:', {
+      const filtered = allUsages.filter(
+        (usage) => usage.serviceId === penaltyServiceId
+      );
+      console.log("✅ [penaltyAPI.getPenaltyUsages] Filtered penalties:", {
         total: allUsages.length,
         penalties: filtered.length,
-        items: filtered
+        items: filtered,
       });
-      
+
       return filtered;
     } catch (error) {
-      console.error('❌ [penaltyAPI.getPenaltyUsages] Error:', error);
+      console.error("❌ [penaltyAPI.getPenaltyUsages] Error:", error);
       throw error;
     }
   },
@@ -346,23 +405,30 @@ export const penaltyAPI = {
    * Apply penalty (create ServiceUsage with customPrice)
    * Backend endpoint: POST /employee/service/penalty
    */
-  async applyPenalty(data: CreatePenaltySurchargeRequest): Promise<ServiceUsage> {
+  async applyPenalty(
+    data: CreatePenaltySurchargeRequest
+  ): Promise<ServiceUsage> {
     try {
-      const response = await api.post(`${API_BASE}/service/penalty`, {
-        bookingId: data.bookingId,
-        bookingRoomId: data.bookingRoomId,
-        customPrice: data.customPrice,
-        quantity: data.quantity || 1,
-        reason: data.reason
-      }, {
-        requiresAuth: true
-      });
-      
+      const response = await api.post(
+        `${API_BASE}/service/penalty`,
+        {
+          bookingId: data.bookingId,
+          bookingRoomId: data.bookingRoomId,
+          customPrice: data.customPrice,
+          quantity: data.quantity || 1,
+          reason: data.reason,
+        },
+        {
+          requiresAuth: true,
+        }
+      );
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const unwrapped = (response as any)?.data?.data || (response as any)?.data || response;
+      const unwrapped =
+        (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
     } catch (error) {
-      console.error('Failed to apply penalty:', error);
+      console.error("Failed to apply penalty:", error);
       throw error;
     }
   },
@@ -370,10 +436,13 @@ export const penaltyAPI = {
   /**
    * Update penalty usage
    */
-  async updatePenalty(id: string, data: {
-    quantity?: number;
-    status?: ServiceUsage['status'];
-  }): Promise<ServiceUsage> {
+  async updatePenalty(
+    id: string,
+    data: {
+      quantity?: number;
+      status?: ServiceUsage["status"];
+    }
+  ): Promise<ServiceUsage> {
     return await serviceUsageAPI.updateServiceUsage(id, data);
   },
 
@@ -382,7 +451,7 @@ export const penaltyAPI = {
    */
   async deletePenalty(id: string): Promise<void> {
     return await serviceUsageAPI.deleteServiceUsage(id);
-  }
+  },
 };
 
 // ============================================================================
@@ -398,11 +467,13 @@ export const surchargeAPI = {
     try {
       const surchargeService = await serviceAPI.getSurchargeService();
       if (!surchargeService) {
-        throw new Error('Surcharge service not found. Please check Backend seed data.');
+        throw new Error(
+          "Surcharge service not found. Please check Backend seed data."
+        );
       }
       return surchargeService.id;
     } catch (error) {
-      console.error('Failed to get surcharge service ID:', error);
+      console.error("Failed to get surcharge service ID:", error);
       throw error;
     }
   },
@@ -417,28 +488,42 @@ export const surchargeAPI = {
     bookingRoomId?: string;
   }): Promise<ServiceUsage[]> {
     try {
-      console.log('📡 [surchargeAPI.getSurchargeUsages] Called with filters:', filters);
-      
+      console.log(
+        "📡 [surchargeAPI.getSurchargeUsages] Called with filters:",
+        filters
+      );
+
       // Get surcharge service ID
       const surchargeServiceId = await this.getSurchargeServiceId();
-      console.log('🎯 [surchargeAPI.getSurchargeUsages] Surcharge service ID:', surchargeServiceId);
-      
+      console.log(
+        "🎯 [surchargeAPI.getSurchargeUsages] Surcharge service ID:",
+        surchargeServiceId
+      );
+
       // Query all service usages
-      console.log('📡 [surchargeAPI.getSurchargeUsages] Calling getServiceUsages with filters:', filters);
+      console.log(
+        "📡 [surchargeAPI.getSurchargeUsages] Calling getServiceUsages with filters:",
+        filters
+      );
       const allUsages = await serviceUsageAPI.getServiceUsages(filters);
-      console.log('📦 [surchargeAPI.getSurchargeUsages] All usages returned:', allUsages);
-      
+      console.log(
+        "📦 [surchargeAPI.getSurchargeUsages] All usages returned:",
+        allUsages
+      );
+
       // Filter to only surcharge usages
-      const filtered = allUsages.filter(usage => usage.serviceId === surchargeServiceId);
-      console.log('✅ [surchargeAPI.getSurchargeUsages] Filtered surcharges:', {
+      const filtered = allUsages.filter(
+        (usage) => usage.serviceId === surchargeServiceId
+      );
+      console.log("✅ [surchargeAPI.getSurchargeUsages] Filtered surcharges:", {
         total: allUsages.length,
         surcharges: filtered.length,
-        items: filtered
+        items: filtered,
       });
-      
+
       return filtered;
     } catch (error) {
-      console.error('❌ [surchargeAPI.getSurchargeUsages] Error:', error);
+      console.error("❌ [surchargeAPI.getSurchargeUsages] Error:", error);
       throw error;
     }
   },
@@ -447,23 +532,30 @@ export const surchargeAPI = {
    * Apply surcharge (create ServiceUsage with customPrice)
    * Backend endpoint: POST /employee/service/surcharge
    */
-  async applySurcharge(data: CreatePenaltySurchargeRequest): Promise<ServiceUsage> {
+  async applySurcharge(
+    data: CreatePenaltySurchargeRequest
+  ): Promise<ServiceUsage> {
     try {
-      const response = await api.post(`${API_BASE}/service/surcharge`, {
-        bookingId: data.bookingId,
-        bookingRoomId: data.bookingRoomId,
-        customPrice: data.customPrice,
-        quantity: data.quantity || 1,
-        reason: data.reason
-      }, {
-        requiresAuth: true
-      });
-      
+      const response = await api.post(
+        `${API_BASE}/service/surcharge`,
+        {
+          bookingId: data.bookingId,
+          bookingRoomId: data.bookingRoomId,
+          customPrice: data.customPrice,
+          quantity: data.quantity || 1,
+          reason: data.reason,
+        },
+        {
+          requiresAuth: true,
+        }
+      );
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const unwrapped = (response as any)?.data?.data || (response as any)?.data || response;
+      const unwrapped =
+        (response as any)?.data?.data || (response as any)?.data || response;
       return unwrapped;
     } catch (error) {
-      console.error('Failed to apply surcharge:', error);
+      console.error("Failed to apply surcharge:", error);
       throw error;
     }
   },
@@ -471,10 +563,13 @@ export const surchargeAPI = {
   /**
    * Update surcharge usage
    */
-  async updateSurcharge(id: string, data: {
-    quantity?: number;
-    status?: ServiceUsage['status'];
-  }): Promise<ServiceUsage> {
+  async updateSurcharge(
+    id: string,
+    data: {
+      quantity?: number;
+      status?: ServiceUsage["status"];
+    }
+  ): Promise<ServiceUsage> {
     return await serviceUsageAPI.updateServiceUsage(id, data);
   },
 
@@ -483,7 +578,7 @@ export const surchargeAPI = {
    */
   async deleteSurcharge(id: string): Promise<void> {
     return await serviceUsageAPI.deleteServiceUsage(id);
-  }
+  },
 };
 
 // ============================================================================
@@ -494,5 +589,5 @@ export default {
   service: serviceAPI,
   serviceUsage: serviceUsageAPI,
   penalty: penaltyAPI,
-  surcharge: surchargeAPI
+  surcharge: surchargeAPI,
 };

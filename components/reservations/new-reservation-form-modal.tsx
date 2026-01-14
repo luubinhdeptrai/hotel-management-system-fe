@@ -6,21 +6,20 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ICONS } from "@/src/constants/icons.enum";
 import { appSettingsService } from "@/lib/services";
 import { ReservationFormData, Reservation } from "@/lib/types/reservation";
-import { Customer as ApiCustomer } from "@/lib/types/api";
 import { RoomType } from "@/lib/types/room";
 import { RoomSelector, type SelectedRoom } from "./room-selector";
 import { SelectedRoomsList } from "./selected-rooms-list";
 import { BookingSummary } from "./booking-summary";
-import { CustomerSelectionCard, type CustomerSelectionData } from "./customer-selection-card";
+import {
+  CustomerSelectionCard,
+  type CustomerSelectionData,
+} from "./customer-selection-card";
 import { logger } from "@/lib/utils/logger";
 
 interface NewReservationFormModalProps {
@@ -37,7 +36,7 @@ const FORM_STEPS = {
   summary: "summary",
 } as const;
 
-type FormStep = typeof FORM_STEPS[keyof typeof FORM_STEPS];
+type FormStep = (typeof FORM_STEPS)[keyof typeof FORM_STEPS];
 
 export function NewReservationFormModal({
   isOpen,
@@ -51,10 +50,10 @@ export function NewReservationFormModal({
   const [apiError, setApiError] = useState<string | null>(null);
   const [depositPercentage, setDepositPercentage] = useState(30);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
-  const [loadingRoomTypes, setLoadingRoomTypes] = useState(false);
 
   // Form states
-  const [customerData, setCustomerData] = useState<CustomerSelectionData | null>(null);
+  const [customerData, setCustomerData] =
+    useState<CustomerSelectionData | null>(null);
   const [selectedRooms, setSelectedRooms] = useState<SelectedRoom[]>([]);
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
@@ -68,15 +67,12 @@ export function NewReservationFormModal({
     if (!isOpen) return;
 
     const loadRoomTypes = async () => {
-      setLoadingRoomTypes(true);
       try {
         // TODO: Fetch room types from API
         // For now, set empty array
         setRoomTypes([]);
       } catch (err) {
         logger.error("Failed to load room types:", err);
-      } finally {
-        setLoadingRoomTypes(false);
       }
     };
 
@@ -110,24 +106,43 @@ export function NewReservationFormModal({
       setNotes(reservation.notes || "");
 
       // Convert existing booking rooms to SelectedRoom format
-      const convertedRooms: SelectedRoom[] = reservation.details.map((detail) => ({
-        roomID: `mock-${detail.detailID}`, // Mock room ID for display
-        roomName: detail.roomName,
-        roomTypeID: detail.roomTypeID || "",
-        roomType: {
-          roomTypeID: detail.roomTypeID || "",
-          roomTypeName: detail.roomTypeName || "",
-          price: detail.pricePerNight || 0,
-          capacity: 1,
-        },
-        roomStatus: "AVAILABLE" as any,
-        floor: 0,
-        selectedAt: new Date().toISOString(),
-        checkInDate: detail.checkInDate,
-        checkOutDate: detail.checkOutDate,
-        numberOfGuests: detail.numberOfGuests || 1,
-        pricePerNight: detail.pricePerNight || 0,
-      }));
+      const convertedRooms: SelectedRoom[] = reservation.details.map(
+        (detail) => ({
+          // Room properties (Required by Room interface)
+          id: detail.roomId,
+          roomNumber: detail.roomName,
+          floor: 0, // Mock
+          code: "", // Mock
+          status: "OCCUPIED", // Mock
+          roomTypeId: detail.roomTypeId,
+
+          // Legacy/UI aliases
+          roomID: detail.roomId,
+          roomName: detail.roomName,
+          roomTypeID: detail.roomTypeId,
+          roomStatus: "OCCUPIED",
+
+          // RoomType properties
+          roomType: {
+            id: detail.roomTypeId,
+            name: detail.roomTypeName,
+            capacity: 1, // Mock
+            totalBed: 1, // Mock
+            basePrice: detail.pricePerNight,
+            // Legacy aliases
+            roomTypeID: detail.roomTypeId,
+            roomTypeName: detail.roomTypeName,
+            price: detail.pricePerNight,
+          },
+
+          // SelectedRoom specific
+          selectedAt: new Date().toISOString(),
+          checkInDate: detail.checkInDate,
+          checkOutDate: detail.checkOutDate,
+          numberOfGuests: detail.numberOfGuests || 1,
+          pricePerNight: detail.pricePerNight || 0,
+        })
+      );
       setSelectedRooms(convertedRooms);
     } else {
       // Reset for create mode
@@ -229,7 +244,8 @@ export function NewReservationFormModal({
         depositAmount: 0,
         notes,
         depositConfirmed,
-        depositPaymentMethod: depositPaymentMethod as any,
+        depositPaymentMethod:
+          depositPaymentMethod as ReservationFormData["depositPaymentMethod"],
         customerSelection: {
           useExisting: customerData.useExisting,
           customerId: customerData.customerId,
@@ -251,8 +267,6 @@ export function NewReservationFormModal({
     }
   };
 
-  const canSubmit = customerData && selectedRooms.length > 0 && checkInDate && checkOutDate;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl w-[95vw] max-h-[95vh] overflow-hidden flex flex-col bg-gradient-to-br from-slate-50 to-white border-0 shadow-2xl rounded-2xl">
@@ -260,14 +274,14 @@ export function NewReservationFormModal({
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-3xl font-bold text-white">
-                {mode === "create" 
-                  ? "🏨 Tạo Đặt Phòng Mới" 
+                {mode === "create"
+                  ? "🏨 Tạo Đặt Phòng Mới"
                   : mode === "view"
                   ? "👁️ Xem Chi Tiết Đặt Phòng"
                   : "✏️ Chỉnh Sửa Đặt Phòng"}
               </DialogTitle>
               <p className="text-blue-100 mt-2 text-sm">
-                {mode === "view" 
+                {mode === "view"
                   ? "Xem chi tiết đặt phòng (không thể chỉnh sửa)"
                   : currentStep === FORM_STEPS.customer
                   ? "Bước 1 / 3: Chọn khách hàng"
@@ -276,7 +290,7 @@ export function NewReservationFormModal({
                   : "Bước 3 / 3: Xác nhận đặt phòng"}
               </p>
             </div>
-            
+
             {/* Step Indicator - hide in view mode */}
             {mode !== "view" && (
               <div className="flex gap-3 items-center">
@@ -302,8 +316,13 @@ export function NewReservationFormModal({
         </DialogHeader>
 
         {apiError && (
-          <Alert variant="destructive" className="mx-6 mt-4 border-l-4 border-red-500 bg-red-50">
-            <AlertDescription className="text-red-800 font-medium">⚠️ {apiError}</AlertDescription>
+          <Alert
+            variant="destructive"
+            className="mx-6 mt-4 border-l-4 border-red-500 bg-red-50"
+          >
+            <AlertDescription className="text-red-800 font-medium">
+              ⚠️ {apiError}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -314,34 +333,63 @@ export function NewReservationFormModal({
               {/* Info Alert */}
               <Alert className="bg-blue-50 border-blue-200 border-2">
                 <AlertDescription className="text-blue-700 font-medium">
-                  ℹ️ Đặt phòng ở trạng thái &quot;{reservation?.status}&quot; không thể chỉnh sửa. Bạn chỉ có thể xem thông tin chi tiết.
+                  ℹ️ Đặt phòng ở trạng thái &quot;{reservation?.status}&quot;
+                  không thể chỉnh sửa. Bạn chỉ có thể xem thông tin chi tiết.
                 </AlertDescription>
               </Alert>
 
               {/* Summary view - render regardless of customerData state since it's loaded from useEffect */}
               <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
                 <BookingSummary
-                  rooms={selectedRooms.length > 0 ? selectedRooms : reservation.details.map((detail) => ({
-                    roomID: `view-${detail.detailID}`,
-                    roomName: detail.roomName,
-                    roomTypeID: detail.roomTypeID || "",
-                    roomType: {
-                      roomTypeID: detail.roomTypeID || "",
-                      roomTypeName: detail.roomTypeName || "",
-                      price: detail.pricePerNight || 0,
-                      capacity: 1,
-                    },
-                    roomStatus: "AVAILABLE" as any,
-                    floor: 0,
-                    selectedAt: new Date().toISOString(),
-                    checkInDate: detail.checkInDate,
-                    checkOutDate: detail.checkOutDate,
-                    numberOfGuests: detail.numberOfGuests || 1,
-                    pricePerNight: detail.pricePerNight || 0,
-                  }))}
-                  customerName={customerData?.customerName || reservation.customer?.customerName || ""}
-                  checkInDate={checkInDate || reservation.details[0]?.checkInDate || ""}
-                  checkOutDate={checkOutDate || reservation.details[0]?.checkOutDate || ""}
+                  rooms={
+                    selectedRooms.length > 0
+                      ? selectedRooms
+                      : reservation.details.map((detail) => ({
+                          // Room properties
+                          id: detail.roomId,
+                          roomNumber: detail.roomName,
+                          floor: 0,
+                          code: "",
+                          status: "OCCUPIED",
+                          roomTypeId: detail.roomTypeId,
+
+                          // Legacy/UI aliases
+                          roomID: detail.roomId,
+                          roomName: detail.roomName,
+                          roomTypeID: detail.roomTypeId,
+                          roomStatus: "OCCUPIED",
+
+                          // RoomType properties
+                          roomType: {
+                            id: detail.roomTypeId,
+                            name: detail.roomTypeName,
+                            capacity: 1,
+                            totalBed: 1,
+                            basePrice: detail.pricePerNight,
+                            roomTypeID: detail.roomTypeId,
+                            roomTypeName: detail.roomTypeName,
+                            price: detail.pricePerNight,
+                          },
+
+                          // SelectedRoom specific
+                          selectedAt: new Date().toISOString(),
+                          checkInDate: detail.checkInDate,
+                          checkOutDate: detail.checkOutDate,
+                          numberOfGuests: detail.numberOfGuests || 1,
+                          pricePerNight: detail.pricePerNight || 0,
+                        }))
+                  }
+                  customerName={
+                    customerData?.customerName ||
+                    reservation.customer?.customerName ||
+                    ""
+                  }
+                  checkInDate={
+                    checkInDate || reservation.details[0]?.checkInDate || ""
+                  }
+                  checkOutDate={
+                    checkOutDate || reservation.details[0]?.checkOutDate || ""
+                  }
                   totalGuests={totalGuests || reservation.totalRooms || 1}
                   depositPercentage={depositPercentage}
                 />
@@ -354,145 +402,164 @@ export function NewReservationFormModal({
             <>
               {/* Step 1: Customer Selection */}
               {currentStep === FORM_STEPS.customer && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-blue-100">
-                <CustomerSelectionCard
-                mode={mode}
-                onCustomerSelected={setCustomerData}
-                initialCustomerId={customerData?.customerId}
-                initialData={customerData ? {
-                  id: customerData.customerId || "",
-                  fullName: customerData.customerName,
-                  phone: customerData.phoneNumber,
-                  email: customerData.email,
-                  idNumber: customerData.identityCard,
-                  address: customerData.address,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                } : undefined}
-              />
-              </div>
-            </div>
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="bg-white p-8 rounded-xl shadow-sm border border-blue-100">
+                    <CustomerSelectionCard
+                      mode={mode}
+                      onCustomerSelected={setCustomerData}
+                      initialCustomerId={customerData?.customerId}
+                      initialData={
+                        customerData
+                          ? {
+                              id: customerData.customerId || "",
+                              fullName: customerData.customerName,
+                              phone: customerData.phoneNumber,
+                              email: customerData.email,
+                              idNumber: customerData.identityCard,
+                              address: customerData.address,
+                              createdAt: new Date().toISOString(),
+                              updatedAt: new Date().toISOString(),
+                            }
+                          : undefined
+                      }
+                    />
+                  </div>
+                </div>
               )}
 
               {/* Step 2: Room Selection */}
-          {currentStep === FORM_STEPS.rooms && (
-            <div className="space-y-6 animate-fadeIn">
-              {/* Date Inputs */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  📅 Chọn Ngày Nhận và Trả Phòng
-                </h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Ngày nhận phòng</label>
-                    <input
-                      type="date"
-                      value={checkInDate}
-                      onChange={(e) => setCheckInDate(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white font-medium"
-                    />
+              {currentStep === FORM_STEPS.rooms && (
+                <div className="space-y-6 animate-fadeIn">
+                  {/* Date Inputs */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      📅 Chọn Ngày Nhận và Trả Phòng
+                    </h3>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700">
+                          Ngày nhận phòng
+                        </label>
+                        <input
+                          type="date"
+                          value={checkInDate}
+                          onChange={(e) => setCheckInDate(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white font-medium"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700">
+                          Ngày trả phòng
+                        </label>
+                        <input
+                          type="date"
+                          value={checkOutDate}
+                          onChange={(e) => setCheckOutDate(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white font-medium"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Ngày trả phòng</label>
-                    <input
-                      type="date"
-                      value={checkOutDate}
-                      onChange={(e) => setCheckOutDate(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Room Selector */}
-              {checkInDate && checkOutDate && (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    🛏️ Chọn Phòng
-                  </h3>
-                  <RoomSelector
-                  checkInDate={checkInDate}
-                  checkOutDate={checkOutDate}
-                  roomTypes={roomTypes}
-                  selectedRooms={selectedRooms}
-                  onRoomsSelected={setSelectedRooms}
-                />
+                  {/* Room Selector */}
+                  {checkInDate && checkOutDate && (
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        🛏️ Chọn Phòng
+                      </h3>
+                      <RoomSelector
+                        checkInDate={checkInDate}
+                        checkOutDate={checkOutDate}
+                        roomTypes={roomTypes}
+                        selectedRooms={selectedRooms}
+                        onRoomsSelected={setSelectedRooms}
+                      />
+                    </div>
+                  )}
+
+                  {/* Selected Rooms */}
+                  {selectedRooms.length > 0 && (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        ✅ Phòng Đã Chọn ({selectedRooms.length})
+                      </h3>
+                      <SelectedRoomsList
+                        rooms={selectedRooms}
+                        onRemoveRoom={(id) => {
+                          setSelectedRooms(
+                            selectedRooms.filter((r) => r.roomID !== id)
+                          );
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Total Guests & Notes */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">
+                        👥 Tổng số khách
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={totalGuests}
+                        onChange={(e) =>
+                          setTotalGuests(parseInt(e.target.value) || 1)
+                        }
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white font-medium text-lg"
+                      />
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">
+                        📝 Ghi chú (tùy chọn)
+                      </label>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Yêu cầu đặc biệt, các ghi chú quan trọng..."
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white resize-none"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* Selected Rooms */}
-              {selectedRooms.length > 0 && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    ✅ Phòng Đã Chọn ({selectedRooms.length})
-                  </h3>
-                  <SelectedRoomsList rooms={selectedRooms} onRemoveRoom={(id) => {
-                    setSelectedRooms(selectedRooms.filter(r => r.roomID !== id));
-                  }} />
+              {/* Step 3: Summary */}
+              {currentStep === FORM_STEPS.summary && customerData && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                    <BookingSummary
+                      rooms={selectedRooms}
+                      customerName={customerData.customerName}
+                      checkInDate={checkInDate}
+                      checkOutDate={checkOutDate}
+                      totalGuests={totalGuests}
+                      depositPercentage={depositPercentage}
+                    />
+                  </div>
+
+                  {/* Deposit Confirmation */}
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-xl border-2 border-amber-200 space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      💳 Xác Nhận Thanh Toán Cọc
+                    </h3>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={depositConfirmed}
+                        onChange={(e) => setDepositConfirmed(e.target.checked)}
+                        className="w-5 h-5 rounded border-2 border-gray-300 accent-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
+                        ✓ Tôi xác nhận sẽ thanh toán cọc khi tạo đặt phòng này
+                      </span>
+                    </label>
+                  </div>
                 </div>
               )}
-
-              {/* Total Guests & Notes */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">👥 Tổng số khách</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={totalGuests}
-                    onChange={(e) => setTotalGuests(parseInt(e.target.value) || 1)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white font-medium text-lg"
-                  />
-                </div>
-
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">📝 Ghi chú (tùy chọn)</label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Yêu cầu đặc biệt, các ghi chú quan trọng..."
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-white resize-none"
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Summary */}
-          {currentStep === FORM_STEPS.summary && customerData && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                <BookingSummary
-                  rooms={selectedRooms}
-                  customerName={customerData.customerName}
-                  checkInDate={checkInDate}
-                  checkOutDate={checkOutDate}
-                  totalGuests={totalGuests}
-                  depositPercentage={depositPercentage}
-                />
-              </div>
-
-              {/* Deposit Confirmation */}
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-xl border-2 border-amber-200 space-y-3">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  💳 Xác Nhận Thanh Toán Cọc
-                </h3>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={depositConfirmed}
-                    onChange={(e) => setDepositConfirmed(e.target.checked)}
-                    className="w-5 h-5 rounded border-2 border-gray-300 accent-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
-                    ✓ Tôi xác nhận sẽ thanh toán cọc khi tạo đặt phòng này
-                  </span>
-                </label>
-              </div>
-            </div>
-          )}
             </>
           )}
         </div>
@@ -521,7 +588,9 @@ export function NewReservationFormModal({
                 variant="outline"
                 className="px-8 py-2 rounded-lg border-2 hover:bg-gray-100 transition-colors font-medium"
               >
-                {currentStep === FORM_STEPS.customer ? "❌ Đóng" : "⬅️ Quay lại"}
+                {currentStep === FORM_STEPS.customer
+                  ? "❌ Đóng"
+                  : "⬅️ Quay lại"}
               </Button>
 
               <div className="flex gap-3">
@@ -529,7 +598,9 @@ export function NewReservationFormModal({
                   <Button
                     onClick={handleNextStep}
                     disabled={
-                      currentStep === FORM_STEPS.customer ? !customerData : selectedRooms.length === 0
+                      currentStep === FORM_STEPS.customer
+                        ? !customerData
+                        : selectedRooms.length === 0
                     }
                     className="px-8 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all hover:shadow-lg disabled:opacity-50"
                   >
@@ -540,7 +611,11 @@ export function NewReservationFormModal({
                 {currentStep === FORM_STEPS.summary && (
                   <Button
                     onClick={handleSubmit}
-                    disabled={isSubmitting || !customerData || selectedRooms.length === 0}
+                    disabled={
+                      isSubmitting ||
+                      !customerData ||
+                      selectedRooms.length === 0
+                    }
                     className="px-8 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium transition-all hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
                   >
                     {isSubmitting ? (
@@ -561,4 +636,3 @@ export function NewReservationFormModal({
     </Dialog>
   );
 }
-

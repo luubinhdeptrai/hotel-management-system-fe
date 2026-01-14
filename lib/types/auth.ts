@@ -7,27 +7,18 @@
 // User/Employee Types
 // ============================================================================
 
-export interface UserGroup {
-  id: number;
-  code: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Employee } from "./employee";
 
-export interface Employee {
-  id: number;
-  code: string;
+// ============================================================================
+// User/Employee Types
+// ============================================================================
+
+// Legacy/UI alias if needed
+export type UserGroup = {
+  id: string;
   name: string;
-  email: string;
-  phone: string;
-  userGroupId: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  userGroup?: UserGroup;
-}
+  description?: string;
+};
 
 // Legacy User type for backwards compatibility with mock-auth
 export interface User {
@@ -112,11 +103,11 @@ export interface AuthState {
 
 export function employeeToUser(employee: Employee): User {
   return {
-    employeeId: employee.code,
-    fullName: employee.name,
-    email: employee.email,
-    role: employee.userGroup?.name || "Unknown",
-    phoneNumber: employee.phone,
+    employeeId: employee.id || employee.employeeId || "",
+    fullName: employee.name || employee.fullName || "",
+    email: employee.email || "",
+    role: employee.role?.name || "Unknown",
+    phoneNumber: employee.phoneNumber || "",
   };
 }
 
@@ -126,9 +117,9 @@ export function employeeToUser(employee: Employee): User {
 
 export function userToEmployee(user: User): Partial<Employee> {
   return {
-    code: user.employeeId,
+    id: user.employeeId,
     name: user.fullName,
     email: user.email,
-    phone: user.phoneNumber,
+    phoneNumber: user.phoneNumber,
   };
 }

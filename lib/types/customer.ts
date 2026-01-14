@@ -15,26 +15,38 @@ export interface CustomerHistoryRecord {
 }
 
 export interface CustomerRecord {
-  customerId: string;
-  customerName: string;
-  phoneNumber: string;
-  email: string;
-  identityCard: string;
-  address: string;
-  nationality: string;
-  customerType: CustomerType;
-  status: CustomerStatus;
+  // Schema fields
+  id: string;
+  fullName: string;
+  email: string | null;
+  phone: string;
+  idNumber: string | null; // CMND/CCCD
+  address: string | null;
+  imageUrl: string | null;
+  isEmailVerified: boolean;
+
+  // Relations / Computed
+  rankId: string | null;
+  rank: CustomerRank | null;
+  totalSpent: number; // Decimal -> number
+
+  // Legacy/UI fields (mapped or deprecated)
+  customerId?: string; // alias for id
+  customerName?: string; // alias for fullName
+  phoneNumber?: string; // alias for phone
+  identityCard?: string; // alias for idNumber
+
+  // UI Specific
+  nationality?: string;
+  customerType?: CustomerType;
+  status?: CustomerStatus;
   notes?: string;
   createdAt: string;
-  lastVisit: string;
-  totalBookings: number;
-  totalSpent: number; // Total lifetime spending from Backend
+  updatedAt?: string;
+  lastVisit?: string;
+  totalBookings?: number;
   tags?: string[];
-  history: CustomerHistoryRecord[];
-  
-  // NEW: Dynamic rank system from Backend
-  rank: CustomerRank | null; // Customer's current rank (null = no rank)
-  rankId: string | null; // Rank ID reference
+  history?: CustomerHistoryRecord[];
 }
 
 export interface CustomerFormData {

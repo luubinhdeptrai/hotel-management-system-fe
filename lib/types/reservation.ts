@@ -42,6 +42,24 @@ export const DETAIL_STATUS_LABELS: Record<ReservationDetailStatus, string> = {
   Hủy: "❌ Hủy",
 };
 
+// Backend Booking Status Enum
+export type BookingStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "CHECKED_IN"
+  | "PARTIALLY_CHECKED_OUT"
+  | "CHECKED_OUT"
+  | "CANCELLED";
+
+export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
+  PENDING: "Chờ xác nhận",
+  CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đã nhận phòng",
+  PARTIALLY_CHECKED_OUT: "Trả phòng một phần",
+  CHECKED_OUT: "Đã trả phòng",
+  CANCELLED: "Đã hủy",
+};
+
 // Legacy type alias for backward compatibility
 export type ReservationStatus = ReservationHeaderStatus;
 
@@ -56,38 +74,64 @@ export interface Customer {
 }
 
 // Reservation Detail (Room in a Reservation)
+// Reservation Detail (Room in a Reservation)
 export interface ReservationDetail {
-  detailID: string;
-  reservationID: string;
-  roomID: string;
-  roomName: string;
-  roomTypeID: string;
-  roomTypeName: string;
+  // Schema fields (BookingRoom)
+  id: string; // was detailID
+  bookingId: string; // was reservationID
+  roomId: string;
+  roomTypeId: string;
   checkInDate: string;
   checkOutDate: string;
-  detailStatus?: ReservationDetailStatus; // NEW: Per-room status (optional for backward compat)
-  status: ReservationStatus; // Required for backward compatibility
-  numberOfGuests: number;
   pricePerNight: number;
+  subtotalRoom?: number; // Backend field
+  status?: BookingStatus; // Backend field
+
+  // Legacy / UI
+  detailID?: string;
+  reservationID?: string;
+  roomName: string; // Likely from relation
+  roomTypeName: string; // Likely from relation
+
+  detailStatus?: ReservationDetailStatus; // NEW: Per-room status (optional for backward compat)
+  // status: ReservationStatus; // Conflict with schema status?
+  // I'll keep generic status field type loose or union
+  uiStatus?: ReservationStatus; // Renamed legacy? Or just keep "status" as union?
+
+  numberOfGuests: number;
 }
 
 // Main Reservation
+// Main Reservation
 export interface Reservation {
-  reservationID: string;
-  customerID: string;
-  customer: Customer;
-  reservationDate: string;
-  totalRooms: number;
+  // Schema fields (Booking)
+  id: string; // was reservationID
+  bookingCode: string; // Schema says @unique, FE didn't have it?
+  primaryCustomerId: string;
+  checkInDate: string;
+  checkOutDate: string;
   totalAmount: number;
-  depositAmount: number;
-  paidDeposit?: number; // NEW: Actual deposit paid
-  notes?: string;
-  headerStatus?: ReservationHeaderStatus; // NEW: Booking-level status (optional for backward compat)
-  status: ReservationStatus; // Required for backward compatibility - Vietnamese label for display
+  depositRequired: number; // vs depositAmount
+  status: BookingStatus | ReservationStatus;
+
+  // Relations
   details: ReservationDetail[];
-  // Backend data for accurate deposit and status logic (Issue #6 fix)
-  backendStatus?: string; // Backend status enum: "PENDING" | "CONFIRMED" | "CHECKED_IN" | etc.
-  backendData?: any; // Full booking data from backend (includes totalDeposit, totalPaid, etc.)
+
+  // Legacy / UI
+  reservationID?: string;
+  customerID?: string;
+  customer?: Customer; // Computed / Relation
+  reservationDate?: string; // maybe createdAt?
+  totalRooms: number; // Computed
+  depositAmount: number; // alias depositRequired?
+  paidDeposit?: number;
+  notes?: string; // Not in schema directly? Ah, schema has no notes on Booking? Wait.
+  // Booking schema: id, bookingCode, status, primaryCustomerId, checkInDate, checkOutDate, totalGuests, totalAmount, depositRequired, createdAt, updatedAt.
+  // NO notes field in Booking schema!
+
+  headerStatus?: ReservationHeaderStatus;
+  backendStatus?: string;
+  backendData?: any;
 }
 
 // Room Type Selection for multi-room booking
