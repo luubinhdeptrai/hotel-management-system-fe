@@ -66,18 +66,6 @@ const bookingManagement = [
     icon: ICONS.CALENDAR,
     permission: "booking:read",
   },
-  {
-    title: "Check-in",
-    url: "/checkin",
-    icon: ICONS.CALENDAR_CHECK,
-    permission: "booking:checkIn",
-  },
-  {
-    title: "Check-out",
-    url: "/checkout",
-    icon: ICONS.DOOR_OPEN,
-    permission: "booking:checkOut",
-  },
 ];
 
 const serviceManagement = [
@@ -381,7 +369,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {/* Booking Management */}
           <SidebarGroup className="border-b border-slate-700 py-3">
             <SidebarGroupLabel className="text-xs font-bold text-slate-400 uppercase tracking-wider px-4 py-2 mb-2">
-              Booking & Check-in/out
+              Booking
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>{renderMenuItems(bookingManagement)}</SidebarMenu>
