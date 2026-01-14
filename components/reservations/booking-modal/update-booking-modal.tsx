@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -12,19 +13,44 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  bookingFormSchema,
-  BookingFormValues,
-} from "@/lib/schemas/booking.schema";
-import { ICONS } from "@/src/constants/icons.enum";
-import { BookingRoomSelection } from "./booking-room-selection";
-import { useAppDispatch } from "@/lib/redux/hooks";
-import { fetchRoomTypes } from "@/lib/redux/slices/room-type.slice";
-import { BookingCustomerStep } from "./booking-customer-step";
-import { updateBooking, fetchBookings } from "@/lib/redux/slices/booking.slice";
 import { Reservation } from "@/lib/types/reservation";
-import { UpdateBookingRequest } from "@/lib/types/api";
-import { X } from "lucide-react";
+import { ICONS } from "@/src/constants/icons.enum";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { updateBooking, fetchBookings } from "@/lib/redux/slices/booking.slice";
+import { format } from "date-fns";
+import { CalendarIcon, Loader2, X } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { transactionService } from "@/lib/services/transaction.service";
+import { PaymentMethod, PAYMENT_METHOD_LABELS } from "@/lib/types/api";
+
+// Schema for updating booking
+const updateBookingSchema = z
+  .object({
+    checkInDate: z.date({ required_error: "Vui lòng chọn ngày nhận phòng" }),
+    checkOutDate: z.date({ required_error: "Vui lòng chọn ngày trả phòng" }),
+    totalGuests: z.number().min(1, "Số khách phải ít nhất là 1"),
+  })
+  .refine((data) => data.checkOutDate > data.checkInDate, {
+    message: "Ngày trả phòng phải sau ngày nhận phòng",
+    path: ["checkOutDate"],
+  });
+
+type UpdateBookingValues = z.infer<typeof updateBookingSchema>;
 
 interface UpdateBookingModalProps {
   isOpen: boolean;
@@ -32,327 +58,358 @@ interface UpdateBookingModalProps {
   reservation: Reservation | null;
 }
 
-const STEPS = {
-  CUSTOMER: 0,
-  ROOMS: 1,
-  SUMMARY: 2,
-};
-
 export function UpdateBookingModal({
   isOpen,
   onClose,
   reservation,
 }: UpdateBookingModalProps) {
-  const [step, setStep] = useState(STEPS.CUSTOMER);
   const dispatch = useAppDispatch();
-  const calculateNights = (start: string, end: string) => {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays || 1;
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDeposit, setConfirmDeposit] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
 
-  const form = useForm<BookingFormValues>({
-    resolver: zodResolver(bookingFormSchema) as any,
+  // Determine if deposit confirmation is allowed/needed
+  // Allowed if status is PENDING or deposit not fully paid
+  const canConfirmDeposit =
+    reservation &&
+    (reservation.backendStatus === "PENDING" ||
+      (reservation.depositRequired > 0 &&
+        (reservation.paidDeposit || 0) < reservation.depositRequired));
+
+  const form = useForm<UpdateBookingValues>({
+    resolver: zodResolver(updateBookingSchema),
     defaultValues: {
-      customer: {
-        fullName: "",
-        phoneNumber: "",
-        identityCard: "",
-        useExisting: false,
-      },
-      selectedRooms: [],
-      dateRange: {
-        from: new Date(),
-        to: new Date(new Date().setDate(new Date().getDate() + 1)),
-      },
+      checkInDate: new Date(),
+      checkOutDate: new Date(),
       totalGuests: 1,
-      deposit: {
-        amount: 0,
-        confirmed: false,
-        paymentMethod: "CASH",
-      },
     },
   });
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    trigger,
-    formState: { errors, isSubmitting },
-  } = form;
+  const { control, handleSubmit, reset } = form;
 
-  // Watch values
-  const customer = useWatch({ control, name: "customer" });
-  const selectedRooms = useWatch({ control, name: "selectedRooms" });
-  const dateRange = useWatch({ control, name: "dateRange" });
-
-  // Load initial data
   useEffect(() => {
-    if (isOpen && reservation) {
-      dispatch(fetchRoomTypes({ limit: 100 }));
-
-      // Map existing reservation to form values
-      const defaultValues: Partial<BookingFormValues> = {
-        customer: {
-          fullName: reservation.customer.customerName,
-          phoneNumber: reservation.customer.phoneNumber,
-          identityCard: reservation.customer.identityCard,
-          email: reservation.customer.email,
-          address: reservation.customer.address,
-          useExisting: true, // Assuming editing existing customer
-          id: reservation.customer.customerID,
-        },
-        selectedRooms: reservation.details.map((detail) => ({
-          roomID: detail.roomId,
-          roomName: detail.roomName,
-          roomType: {
-            id: detail.roomTypeId,
-            name: detail.roomTypeName || "Phòng",
-            capacity: 0, // Fallback
-            totalBed: 0, // Fallback
-            basePrice: detail.pricePerNight,
-            roomTypeID: detail.roomTypeId,
-            roomTypeName: detail.roomTypeName,
-            price: detail.pricePerNight,
-          },
-          roomTypeID: detail.roomTypeId || "", // fallback
-          pricePerNight: detail.pricePerNight,
-          checkInDate: detail.checkInDate,
-          checkOutDate: detail.checkOutDate,
-          numberOfGuests: detail.numberOfGuests,
-          totalPrice:
-            detail.pricePerNight *
-            calculateNights(detail.checkInDate, detail.checkOutDate),
-          id: detail.roomId,
-        })),
-        dateRange: {
-          from: new Date(reservation.checkInDate),
-          to: new Date(reservation.checkOutDate),
-        },
-        totalGuests: reservation.details.reduce(
-          (sum, d) => sum + d.numberOfGuests,
-          0
-        ),
-        deposit: {
-          amount: reservation.depositAmount,
-          confirmed: reservation.status !== "Chờ xác nhận", // Simplify logic based on status
-          paymentMethod: "CASH", // We don't have this in Reservation type, defaulting
-        },
-        notes: reservation.notes,
-      };
-
-      reset(defaultValues as BookingFormValues);
-      setStep(STEPS.CUSTOMER);
+    if (reservation && isOpen) {
+      reset({
+        checkInDate: new Date(reservation.checkInDate),
+        checkOutDate: new Date(reservation.checkOutDate),
+        // Calculate total guests from details if possible, otherwise use default
+        totalGuests:
+          reservation.details.reduce(
+            (sum, detail) => sum + detail.numberOfGuests,
+            0
+          ) || 1,
+      });
+      // Reset deposit confirmation state when modal opens
+      setConfirmDeposit(false);
+      setPaymentMethod("CASH");
     }
-  }, [isOpen, reservation, dispatch, reset]);
+  }, [reservation, isOpen, reset]);
 
-  const handleNext = async () => {
-    let isValid = false;
-    if (step === STEPS.CUSTOMER) {
-      isValid = await trigger("customer");
-      if (!customer) {
-        toast.error("Vui lòng chọn khách hàng");
-        return;
-      }
-    } else if (step === STEPS.ROOMS) {
-      isValid = await trigger(["dateRange", "selectedRooms", "totalGuests"]);
-      if (selectedRooms?.length === 0) {
-        toast.error("Vui lòng chọn ít nhất một phòng");
-        return;
-      }
-    }
-
-    if (isValid) {
-      setStep((prev) => prev + 1);
-    }
-  };
-
-  const handleBack = () => {
-    setStep((prev) => prev - 1);
-  };
-
-  // Determine if full edit is allowed based on status
-  // "if booking status still not is CONFIRMED" -> Allow full edit
-  // CONFIRMED implies deposit paid.
-  // PENDING = Chờ xác nhận
-  // CONFIRMED = Đã xác nhận
-  const isPending =
-    reservation?.status === "Chờ xác nhận" ||
-    reservation?.backendStatus === "PENDING";
-
-  const onSubmit = async (data: BookingFormValues) => {
+  const onSubmit = async (data: UpdateBookingValues) => {
     if (!reservation) return;
-
+    setIsSubmitting(true);
     try {
-      // Construct update request
-      // Note: Backend currently only supports updating checkInDate, checkOutDate, totalGuests
-      // This implementation assumes we might be able to update more or the backend needs update
-      // For now, we maximize what we send.
-
-      const updateData: UpdateBookingRequest = {
-        checkInDate: data.dateRange.from.toISOString(),
-        checkOutDate: data.dateRange.to.toISOString(),
-        totalGuests: data.totalGuests,
-      };
-
+      // 1. Update Booking
       await dispatch(
-        updateBooking({ id: reservation.id, data: updateData })
+        updateBooking({
+          id: reservation.id,
+          data: {
+            checkInDate: data.checkInDate.toISOString(),
+            checkOutDate: data.checkOutDate.toISOString(),
+            totalGuests: data.totalGuests,
+          },
+        })
       ).unwrap();
-      await dispatch(fetchBookings({ limit: 1000 }));
 
+      // 2. Confirm Deposit if checked
+      if (confirmDeposit && canConfirmDeposit) {
+        await transactionService.createTransaction({
+          bookingId: reservation.id,
+          paymentMethod: paymentMethod,
+          transactionType: "DEPOSIT",
+          // Amount is auto-calculated by backend
+        });
+        toast.success("Đã xác nhận tiền cọc thành công");
+      }
+
+      await dispatch(fetchBookings({ limit: 1000 }));
       toast.success("Cập nhật đặt phòng thành công");
       onClose();
     } catch (error) {
       console.error(error);
-      const message = error instanceof Error ? error.message : "Có lỗi xảy ra";
-      toast.error(`Cập nhật thất bại: ${message}`);
+      toast.error(
+        "Cập nhật thất bại: " +
+          (error instanceof Error ? error.message : "Có lỗi xảy ra")
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Calculate generic total
-  const totalAmount =
-    selectedRooms?.reduce((sum, room) => sum + (room.totalPrice || 0), 0) || 0;
+  if (!reservation) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-w-7xl w-[95vw] max-h-[95vh] h-[90vh] flex flex-col p-0 overflow-hidden bg-gray-50"
-      >
-        <DialogHeader className="px-6 py-4 bg-white border-b shrink-0">
+      <DialogContent className="max-w-2xl bg-gray-50 p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4 bg-white border-b">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              {ICONS.EDIT} Cập Nhật Đặt Phòng
-              {!isPending && (
-                <span className="text-sm font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full ml-2">
-                  (Chế độ hạn chế - Đã xác nhận)
-                </span>
-              )}
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-blue-600">
+              {ICONS.EDIT} Cập Nhật Đặt Phòng #
+              {reservation.bookingCode || reservation.reservationID}
             </DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 hover:bg-gray-100 rounded-full"
+              className="h-8 w-8 rounded-full hover:bg-gray-100"
             >
               <X className="h-5 w-5 text-gray-500" />
-              <span className="sr-only">Close</span>
             </Button>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* STEP 1: CUSTOMER */}
-          {step === STEPS.CUSTOMER && (
-            <BookingCustomerStep
-              control={control}
-              errors={errors}
-              // If not pending, maybe disable customer editing?
-              // readOnly={!isPending}
-            />
-          )}
-
-          {/* STEP 2: ROOMS */}
-          {step === STEPS.ROOMS && (
-            <BookingRoomSelection control={control} errors={errors} />
-          )}
-
-          {/* STEP 3: SUMMARY */}
-          {step === STEPS.SUMMARY && (
-            <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 className="text-lg font-bold mb-4">Xác nhận thay đổi</h3>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Khách hàng</p>
-                    <p className="font-medium">{customer?.fullName}</p>
-                    <p className="text-sm">{customer?.phoneNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Thời gian</p>
-                    <p className="font-medium">
-                      {dateRange.from.toLocaleDateString("vi-VN")} -{" "}
-                      {dateRange.to.toLocaleDateString("vi-VN")}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4">
-                  <p className="font-semibold mb-2">
-                    Phòng đã chọn ({selectedRooms?.length})
-                  </p>
-                  {selectedRooms?.map((room, idx) => (
+        <div className="p-6 overflow-y-auto max-h-[80vh]">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Read-only info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl border shadow-sm">
+              <div>
+                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                  Khách hàng
+                </label>
+                <p className="font-bold text-gray-900 mt-1">
+                  {reservation.customer.customerName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {reservation.customer.phoneNumber}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                  Phòng hiện tại
+                </label>
+                <div className="flex flex-col gap-2 mt-1">
+                  {reservation.details.map((detail) => (
                     <div
-                      key={idx}
-                      className="flex justify-between text-sm py-1"
+                      key={detail.id}
+                      className="text-sm font-semibold bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 flex justify-between"
                     >
-                      <span>
-                        {room.roomName} ({(room as any).roomTypeName || "Phòng"}
-                        )
+                      <span>{detail.roomName}</span>
+                      <span className="text-gray-500 text-xs self-center">
+                        {detail.roomTypeName}
                       </span>
-                      <span>{(room.totalPrice || 0).toLocaleString()}₫</span>
                     </div>
                   ))}
-                  <div className="flex justify-between font-bold text-lg mt-4 pt-4 border-t">
-                    <span>Tổng tiền dự kiến</span>
-                    <span className="text-primary-600">
-                      {totalAmount.toLocaleString()}₫
-                    </span>
-                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Editable Fields */}
+            <div className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">
+                  {ICONS.CALENDAR}
+                </span>
+                Thông tin lưu trú
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Dates */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Ngày nhận phòng
+                  </label>
+                  <Controller
+                    control={control}
+                    name="checkInDate"
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal border-gray-300 h-10",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "dd/MM/yyyy")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Ngày trả phòng
+                  </label>
+                  <Controller
+                    control={control}
+                    name="checkOutDate"
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal border-gray-300 h-10",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "dd/MM/yyyy")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date <= form.getValues("checkInDate")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-                <h3 className="font-bold flex items-center gap-2">
-                  {ICONS.EDIT} Ghi chú
-                </h3>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Tổng số khách
+                </label>
                 <Controller
                   control={control}
-                  name="notes"
+                  name="totalGuests"
                   render={({ field }) => (
-                    <textarea
-                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      placeholder="Ghi chú thêm..."
-                      value={field.value || ""}
-                      onChange={field.onChange}
+                    <input
+                      type="number"
+                      className="flex h-10 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={field.value}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      min={1}
                     />
                   )}
                 />
               </div>
             </div>
-          )}
+
+            {/* Deposit Section */}
+            {canConfirmDeposit && (
+              <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 shadow-sm space-y-4">
+                <h3 className="font-bold text-yellow-800 flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 bg-yellow-200 text-yellow-700 rounded-full flex items-center justify-center text-xs">
+                    $
+                  </span>
+                  Xác nhận đặt cọc
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  <div className="flex items-start space-x-3 pt-2">
+                    <Checkbox
+                      id="confirmDeposit"
+                      checked={confirmDeposit}
+                      onCheckedChange={(checked) =>
+                        setConfirmDeposit(checked as boolean)
+                      }
+                      className="mt-1"
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label
+                        htmlFor="confirmDeposit"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Xác nhận đã nhận tiền cọc
+                      </Label>
+                      <p className="text-sm text-yellow-700">
+                        Tiền cọc yêu cầu:{" "}
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(reservation.depositRequired)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {confirmDeposit && (
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="paymentMethod"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Phương thức thanh toán
+                      </Label>
+                      <Select
+                        value={paymentMethod}
+                        onValueChange={(val) =>
+                          setPaymentMethod(val as PaymentMethod)
+                        }
+                      >
+                        <SelectTrigger className="w-full bg-white">
+                          <SelectValue placeholder="Chọn phương thức" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(PAYMENT_METHOD_LABELS).map(
+                            ([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </form>
         </div>
 
-        <DialogFooter className="px-6 py-4 bg-white border-t shrink-0">
-          {step > STEPS.CUSTOMER && (
-            <Button
-              variant={"outline"}
-              onClick={handleBack}
-              disabled={isSubmitting}
-            >
-              Quay lại
-            </Button>
-          )}
-
-          {step < STEPS.SUMMARY ? (
-            <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={handleNext}
-            >
-              Tiếp theo
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isSubmitting ? "Đang xử lý..." : "Lưu Thay Đổi"}
-            </Button>
-          )}
+        <DialogFooter className="px-6 py-4 bg-white border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="h-10 hover:bg-gray-100"
+          >
+            Hủy
+          </Button>
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+            className="bg-blue-600 hover:bg-blue-700 h-10 font-bold px-6"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              "Cập nhật & Lưu"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
