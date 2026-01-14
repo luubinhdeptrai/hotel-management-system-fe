@@ -116,6 +116,10 @@ export function useAuth(): UseAuthReturn {
   }, [router]);
 
   const refreshUser = useCallback(async (): Promise<void> => {
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[useAuth] refreshUser called");
+    }
+
     try {
       const freshUser = await authService.getCurrentUser();
       setUser(freshUser);
