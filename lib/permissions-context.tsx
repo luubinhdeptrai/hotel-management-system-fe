@@ -103,7 +103,6 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
           "customer:create", "customer:read", "customer:update",
           "service:read",
           "transaction:create", "transaction:read",
-          "report:view"
         ]);
         setPermissions([
           { action: "read", subject: "Booking" },
@@ -117,7 +116,6 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
           { action: "read", subject: "Service" },
           { action: "read", subject: "Transaction" },
           { action: "create", subject: "Transaction" },
-          { action: "read", subject: "Report" }
         ]);
       } else if (user?.role === "HOUSEKEEPING") {
         setActions([

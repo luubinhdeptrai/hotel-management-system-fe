@@ -327,7 +327,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {navItems.map((item) => {
                   const isActive = pathname === item.url;
-                  return (
+
+                  // Create the menu item JSX
+                  const menuItem = (
                     <SidebarMenuItem key={item.title}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -362,6 +364,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       </Tooltip>
                     </SidebarMenuItem>
                   );
+
+                  // If permission is required, wrap with PermissionGuard so it doesn't render for users without permission
+                  if (item.permission) {
+                    return (
+                      <PermissionGuard key={item.title} permission={item.permission}>
+                        {menuItem}
+                      </PermissionGuard>
+                    );
+                  }
+
+                  return menuItem;
                 })}
               </SidebarMenu>
             </SidebarGroupContent>
