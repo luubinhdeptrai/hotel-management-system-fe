@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from "@/lib/utils/logger";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -85,7 +86,7 @@ export function AddServiceModal({
 
         setServices(converted);
       } catch (err) {
-        console.error("Failed to load services:", err);
+        logger.error("Failed to load services:", err);
         setError("Không thể tải danh sách dịch vụ. Vui lòng thử lại.");
         // Use prop services as fallback if provided
         if (propServices) {

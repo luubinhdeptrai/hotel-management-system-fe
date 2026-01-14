@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from "@/lib/utils/logger";
 import { CheckInSearch } from "@/components/checkin-checkout/check-in-search";
 import { CheckInResultsTable } from "@/components/checkin-checkout/check-in-results-table";
 import { ModernCheckInModal } from "@/components/checkin-checkout/modern-check-in-modal";
@@ -33,7 +34,7 @@ export default function CheckInPage() {
       );
     } catch (error) {
       notification.showError("Walk-in check-in thất bại. Vui lòng thử lại.");
-      console.error("Walk-in error:", error);
+      logger.error("Walk-in error:", error);
     }
   };
 

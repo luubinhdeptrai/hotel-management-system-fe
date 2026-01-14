@@ -8,6 +8,9 @@ import type {
   ApiResponse,
   PaymentMethod,
   TransactionType,
+  Transaction,
+  GetTransactionsParams,
+  PaginatedResponse,
 } from "@/lib/types/api";
 
 // ============================================================================
@@ -15,16 +18,16 @@ import type {
 // ============================================================================
 
 export interface CreateTransactionRequest {
-  bookingId?: string; // Optional for guest service payments
+  bookingId?: string;
   bookingRoomIds?: string[];
-  serviceUsageId?: string; // For service payment scenarios
+  serviceUsageId?: string;
   paymentMethod: PaymentMethod;
   transactionType: TransactionType;
-  description?: string; // Transaction notes
+  description?: string;
   promotionApplications?: Array<{
     customerPromotionId: string;
-    bookingRoomId?: string; // For room-specific promotions
-    serviceUsageId?: string; // For service-specific promotions
+    bookingRoomId?: string;
+    serviceUsageId?: string;
   }>;
 }
 
@@ -87,28 +90,64 @@ export const transactionService = {
    * CRITICAL: The backend automatically calculates the amount based on:
    * - DEPOSIT: Minimum 30% of total booking amount
    * - ROOM_CHARGE: Total for specified rooms
-   * - FINAL_PAYMENT: Remaining balance after deposits
+   * - SERVICE_CHARGE: Total for specified services
    *
    * Frontend should NEVER send an amount field.
    */
   async createTransaction(
     data: CreateTransactionRequest
   ): Promise<TransactionResponse> {
-    try {
-      const response = await api.post<ApiResponse<TransactionResponse>>(
-        "/employee/transactions",
-        data,
-        { requiresAuth: true }
-      );
-      const unwrappedData =
-        response && typeof response === "object" && "data" in response
-          ? (response as ApiResponse<TransactionResponse>).data
-          : (response as unknown as TransactionResponse);
-      return unwrappedData;
-    } catch (error) {
-      console.error("Create transaction failed:", error);
-      throw error;
-    }
+    const response = await api.post<ApiResponse<TransactionResponse>>(
+      "/employee/transactions",
+      data,
+      { requiresAuth: true }
+    );
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as ApiResponse<TransactionResponse>).data
+        : (response as unknown as TransactionResponse);
+    return unwrappedData;
+  },
+
+  /**
+   * Get all transactions with pagination and filters
+   * GET /employee/transactions
+   */
+  async getTransactions(
+    params?: GetTransactionsParams
+  ): Promise<PaginatedResponse<Transaction>> {
+    const queryParams = new URLSearchParams();
+    if (params?.bookingId) queryParams.append("bookingId", params.bookingId);
+    if (params?.type) queryParams.append("type", params.type);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+
+    const query = queryParams.toString();
+    const url = `/employee/transactions${query ? `?${query}` : ""}`;
+
+    const response = await api.get<PaginatedResponse<Transaction>>(url, {
+      requiresAuth: true,
+    });
+    return response;
+  },
+
+  /**
+   * Get transaction by ID
+   * GET /employee/transactions/{transactionId}
+   */
+  async getTransactionById(transactionId: string): Promise<Transaction> {
+    const response = await api.get<ApiResponse<Transaction>>(
+      `/employee/transactions/${transactionId}`,
+      { requiresAuth: true }
+    );
+    const unwrappedData =
+      response && typeof response === "object" && "data" in response
+        ? (response as ApiResponse<Transaction>).data
+        : (response as unknown as Transaction);
+    return unwrappedData;
   },
 
   /**

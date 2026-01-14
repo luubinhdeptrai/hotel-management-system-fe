@@ -1,16 +1,19 @@
 import { logger } from "@/lib/utils/logger";
 import { useState, useEffect, useCallback } from "react";
-import type { PaymentMethod } from "@/lib/types/payment";
-import type { Booking, BookingRoom } from "@/lib/types/api";
+import type { PaymentMethod as UIPaymentMethod } from "@/lib/types/payment";
+import type { Booking, BookingRoom, PaymentMethod } from "@/lib/types/api";
 import type {
   AddServiceFormData,
   AddPenaltyFormData,
   CheckOutFormData,
   ServiceUsageResponse,
+  CheckoutSummary,
+  RentalReceipt,
 } from "@/lib/types/checkin-checkout";
 import type { AddSurchargeFormData } from "@/components/checkin-checkout/add-surcharge-modal";
 import { bookingService } from "@/lib/services/booking.service";
 import { checkinCheckoutService } from "@/lib/services/checkin-checkout.service";
+import { transactionService } from "@/lib/services/transaction.service";
 import { useAuth } from "@/hooks/use-auth";
 
 export function useCheckOut() {  
@@ -30,6 +33,7 @@ export function useCheckOut() {
   const [serviceUsages, setServiceUsages] = useState<ServiceUsageResponse[]>(
     []
   );
+  const [checkoutSummary, setCheckoutSummary] = useState<CheckoutSummary | null>(null);
 
   // Fetch initial bookings on mount (only after auth is ready)
   const fetchInitialBookings = useCallback(async () => {
@@ -134,9 +138,98 @@ export function useCheckOut() {
     return true;
   };
 
-  const handleCompleteCheckout = () => {
-    // Open payment modal instead of native confirm
+  const handleCompleteCheckout = async () => {
+    // Calculate checkout summary for payment modal
+    if (!selectedBooking || selectedBookingRooms.length === 0) return;
+
+    setIsLoading(true);
+    try {
+      // Step 1: Verify all charges are paid by checking transactions
+      const bookingBalance = parseFloat(selectedBooking.balance);
+
+      // Format currency helper
+      const formatCurrency = (amount: number | string) => {
+        const value = typeof amount === "string" ? parseFloat(amount) : amount;
+        return new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(value);
+      };
+
+      // If there's a significant balance remaining, require payment first
+      if (bookingBalance > 100) {
+        // More than 100 VND unpaid
+        setIsLoading(false);
+        throw new Error(
+          `Còn ${formatCurrency(bookingBalance)} chưa thanh toán. Vui lòng thanh toán trước khi trả phòng.`
+        );
+      }
+
+      // Step 2: Calculate checkout summary for confirmation
+      const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    };
+
+    const calculateNights = () => {
+      const checkIn = new Date(selectedBooking.checkInDate);
+      const checkOut = new Date(selectedBooking.checkOutDate);
+      return Math.ceil(
+        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+      );
+    };
+
+    const nights = calculateNights();
+    const roomTotal = selectedBookingRooms.reduce(
+      (sum, br) => sum + parseFloat(br.totalAmount),
+      0
+    );
+
+    // Create rental receipt for first room
+    const firstRoom = selectedBookingRooms[0];
+    const rentalReceipt: RentalReceipt = {
+      receiptID: selectedBooking.id,
+      reservationID: selectedBooking.id,
+      roomID: firstRoom.roomId,
+      roomName: firstRoom.room?.roomNumber || "N/A",
+      roomTypeName: firstRoom.roomType?.name || "N/A",
+      customerName: selectedBooking.primaryCustomer?.fullName || "Guest",
+      phoneNumber: selectedBooking.primaryCustomer?.phone || "",
+      identityCard: selectedBooking.primaryCustomer?.idNumber || "",
+      checkInDate: formatDate(selectedBooking.checkInDate),
+      checkOutDate: formatDate(selectedBooking.checkOutDate),
+      numberOfGuests: selectedBooking.totalGuests,
+      pricePerNight: parseFloat(firstRoom.pricePerNight),
+      totalNights: nights,
+      roomTotal: roomTotal,
+      status: "Đang thuê",
+    };
+
+    const summary: CheckoutSummary = {
+      receiptID: selectedBooking.id,
+      receipt: rentalReceipt,
+      services: [],
+      penalties: [],
+      surcharges: [],
+      roomTotal,
+      servicesTotal: 0,
+      penaltiesTotal: 0,
+      surchargesTotal: 0,
+      grandTotal: roomTotal,
+    };
+
+    setCheckoutSummary(summary);
     setShowPaymentModal(true);
+    } catch (error) {
+      logger.error("Complete checkout failed:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Open final payment modal to view bill and pay remaining balance
@@ -166,20 +259,39 @@ export function useCheckOut() {
   };
 
   const handleConfirmPayment = async (
-    method: PaymentMethod
+    method: UIPaymentMethod
   ): Promise<string> => {
     if (!selectedBooking || selectedBookingRooms.length === 0) return "";
 
     setIsLoading(true);
     try {
-      logger.log("Confirm payment with method:", method);
+      // Convert UI payment method to API format
+      const apiPaymentMethod: PaymentMethod =
+        method === "Tiền mặt"
+          ? "CASH"
+          : method === "Thẻ tín dụng"
+            ? "CREDIT_CARD"
+            : "BANK_TRANSFER";
 
+      logger.log("Creating transaction with method:", apiPaymentMethod);
+
+      // Step 1: Create transaction (ROOM_CHARGE for room payment)
+      const transactionResponse = await transactionService.createTransaction({
+        bookingId: selectedBooking.id,
+        bookingRoomIds: selectedBookingRooms.map((br) => br.id),
+        paymentMethod: apiPaymentMethod,
+        transactionType: "ROOM_CHARGE",
+        description: `Payment for rooms: ${selectedBookingRooms.map((br) => br.room?.roomNumber).join(", ")}`,
+      });
+
+      logger.log("Transaction created:", transactionResponse);
+
+      // Step 2: Perform check-out
       const checkoutData: CheckOutFormData = {
         bookingRoomIds: selectedBookingRooms.map((br) => br.id),
         notes: `Checked out with payment method: ${method}`,
       };
 
-      // Call real backend API
       const response = await bookingService.checkOut(checkoutData);
 
       logger.log("Check-out successful:", response);
@@ -192,6 +304,7 @@ export function useCheckOut() {
       setResults((prev) => prev.filter((b) => b.id !== selectedBooking.id));
       setSelectedBooking(null);
       setSelectedBookingRooms([]);
+      setCheckoutSummary(null);
       setShowPaymentModal(false);
 
       return roomName;
@@ -209,6 +322,7 @@ export function useCheckOut() {
     selectedBooking,
     selectedBookingRooms,
     serviceUsages,
+    checkoutSummary,
     showAddServiceModal,
     showAddPenaltyModal,
     showAddSurchargeModal,

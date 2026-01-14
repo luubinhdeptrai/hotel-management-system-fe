@@ -66,18 +66,6 @@ const bookingManagement = [
     icon: ICONS.CALENDAR,
     permission: "booking:read",
   },
-  {
-    title: "Check-in",
-    url: "/checkin",
-    icon: ICONS.CALENDAR_CHECK,
-    permission: "booking:checkIn",
-  },
-  {
-    title: "Check-out",
-    url: "/checkout",
-    icon: ICONS.DOOR_OPEN,
-    permission: "booking:checkOut",
-  },
 ];
 
 const serviceManagement = [
@@ -112,6 +100,12 @@ const serviceManagement = [
     permission: "penalty:read",
   },
   {
+    title: "Giao Dịch",
+    url: "/transactions",
+    icon: ICONS.CREDIT_CARD,
+    permission: "transaction:read",
+  },
+  {
     title: "Folio",
     url: "/folio",
     icon: ICONS.FILE_TEXT,
@@ -138,12 +132,7 @@ const adminManagement = [
     icon: ICONS.STAR,
     permission: "customerRank:read",
   },
-  {
-    title: "Khách Lưu Trú",
-    url: "/nguoio",
-    icon: ICONS.USERS,
-    permission: "customer:read",
-  },
+
   {
     title: "Nhân Viên",
     url: "/staff",
@@ -177,12 +166,6 @@ const operationalManagement = [
     icon: ICONS.DOOR_OPEN,
     permission: "room:update",
   },
-  {
-    title: "Quản lý Ca",
-    url: "/shift-management",
-    icon: ICONS.CLOCK,
-    permission: "employee:read",
-  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -192,7 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const renderMenuItems = (items: any[]) => {
     return items.map((item) => {
       const isActive = pathname === item.url;
-      
+
       // Special case: Always render RoomType for authenticated users (read-only for non-admin)
       if (item.title === "Loại Phòng" && authService.isAuthenticated()) {
         return (
@@ -208,7 +191,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                   )}
                 >
-                  <Link href={item.url} className="flex items-center gap-3 px-2">
+                  <Link
+                    href={item.url}
+                    className="flex items-center gap-3 px-2"
+                  >
                     <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
                     <span className="group-data-[collapsible=icon]:hidden">
                       {item.title}
@@ -226,7 +212,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         );
       }
-      
+
       // If permission is required, wrap with PermissionGuard
       if (item.permission) {
         return (
@@ -243,7 +229,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                     )}
                   >
-                    <Link href={item.url} className="flex items-center gap-3 px-2">
+                    <Link
+                      href={item.url}
+                      className="flex items-center gap-3 px-2"
+                    >
                       <span className="w-5 h-5 shrink-0">{item.icon}</span>
                       <span className="group-data-[collapsible=icon]:hidden">
                         {item.title}
@@ -262,7 +251,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </PermissionGuard>
         );
       }
-      
+
       // No permission required, render normally
       return (
         <SidebarMenuItem key={item.title}>
@@ -380,7 +369,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {/* Booking Management */}
           <SidebarGroup className="border-b border-slate-700 py-3">
             <SidebarGroupLabel className="text-xs font-bold text-slate-400 uppercase tracking-wider px-4 py-2 mb-2">
-              Booking & Check-in/out
+              Booking
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>{renderMenuItems(bookingManagement)}</SidebarMenu>
