@@ -27,8 +27,10 @@ export const activityService = {
     if (filters.type) params.append("type", filters.type);
     if (filters.customerId) params.append("customerId", filters.customerId);
     if (filters.employeeId) params.append("employeeId", filters.employeeId);
-    if (filters.bookingRoomId) params.append("bookingRoomId", filters.bookingRoomId);
-    if (filters.serviceUsageId) params.append("serviceUsageId", filters.serviceUsageId);
+    if (filters.bookingRoomId)
+      params.append("bookingRoomId", filters.bookingRoomId);
+    if (filters.serviceUsageId)
+      params.append("serviceUsageId", filters.serviceUsageId);
     if (filters.startDate) params.append("startDate", filters.startDate);
     if (filters.endDate) params.append("endDate", filters.endDate);
     if (filters.search) params.append("search", filters.search);
@@ -65,34 +67,9 @@ export const activityService = {
       );
       return response;
     } catch (err) {
-      // Fallback: fetch all activities without filters to calculate stats
-      console.warn("Stats endpoint not available, calculating from full activity list");
-      try {
-        const stats: Record<string, number> = {};
-        let page = 1;
-        let hasMore = true;
-
-        // Fetch all activities in batches and accumulate stats
-        while (hasMore) {
-          const allActivities = await this.getActivities({}, { page, limit: 100 });
-          
-          if (Array.isArray(allActivities.data)) {
-            allActivities.data.forEach((activity: any) => {
-              const type = activity.type;
-              stats[type] = (stats[type] || 0) + 1;
-            });
-          }
-
-          // Check if there are more pages
-          hasMore = page < (allActivities.totalPages || 0);
-          page++;
-        }
-
-        return stats;
-      } catch (fallbackErr) {
-        console.error("Failed to calculate activity stats:", fallbackErr);
-        return {};
-      }
+      console.error("Stats endpoint not available:", err);
+      // Return empty stats instead of potentially heavy client-side calculation
+      return {};
     }
   },
 };

@@ -19,6 +19,7 @@ export enum ActivityType {
   CREATE_PROMOTION = "CREATE_PROMOTION",
   UPDATE_PROMOTION = "UPDATE_PROMOTION",
   CLAIM_PROMOTION = "CLAIM_PROMOTION",
+  UPDATE_CUSTOMER_RANK = "UPDATE_CUSTOMER_RANK",
 }
 
 export interface Activity {
@@ -26,7 +27,7 @@ export interface Activity {
   type: ActivityType;
   description: string;
   metadata?: Record<string, unknown>;
-  
+
   // Optional relations
   serviceUsageId?: string;
   bookingRoomId?: string;

@@ -20,15 +20,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Loader2, User, Lock, Shield, UserCircle } from "lucide-react";
-import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, EmployeeRole } from "@/lib/types/api";
+import {
+  AlertCircle,
+  Loader2,
+  User,
+  Lock,
+  Shield,
+  UserCircle,
+} from "lucide-react";
+import type {
+  Employee,
+  CreateEmployeeRequest,
+  UpdateEmployeeRequest,
+  EmployeeRole,
+} from "@/lib/types/api";
 import { getEmployeeRole } from "@/lib/utils";
 
 interface EmployeeFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   employee?: Employee | null;
-  onSave: (data: CreateEmployeeRequest | UpdateEmployeeRequest) => Promise<void>;
+  onSave: (
+    data: CreateEmployeeRequest | UpdateEmployeeRequest
+  ) => Promise<void>;
 }
 
 const roleOptions: { value: EmployeeRole; label: string; color: string }[] = [
@@ -93,7 +107,8 @@ export function EmployeeFormModal({
       } else if (formData.username.length > 50) {
         newErrors.username = "Tên đăng nhập không được vượt quá 50 ký tự";
       } else if (!/^[a-z0-9_]+$/.test(formData.username)) {
-        newErrors.username = "Tên đăng nhập chỉ chứa chữ thường, số và dấu gạch dưới";
+        newErrors.username =
+          "Tên đăng nhập chỉ chứa chữ thường, số và dấu gạch dưới";
       }
     }
 
@@ -179,16 +194,23 @@ export function EmployeeFormModal({
 
           {/* Name Field */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-bold text-gray-700 flex items-center gap-2">
+            <Label
+              htmlFor="name"
+              className="text-sm font-bold text-gray-700 flex items-center gap-2"
+            >
               <User className="h-4 w-4 text-blue-600" />
               Tên nhân viên <span className="text-red-500">*</span>
             </Label>
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="Nhập tên đầy đủ của nhân viên"
-              className={`h-12 ${errors.name ? "border-red-500 focus:ring-red-500" : ""}`}
+              className={`h-12 ${
+                errors.name ? "border-red-500 focus:ring-red-500" : ""
+              }`}
               disabled={isSubmitting}
             />
             {errors.name && (
@@ -202,16 +224,26 @@ export function EmployeeFormModal({
           {/* Username Field (Only for new employee) */}
           {!employee && (
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <Label
+                htmlFor="username"
+                className="text-sm font-bold text-gray-700 flex items-center gap-2"
+              >
                 <UserCircle className="h-4 w-4 text-blue-600" />
                 Tên đăng nhập <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="username"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    username: e.target.value.toLowerCase(),
+                  })
+                }
                 placeholder="Nhập tên đăng nhập (chữ thường, số, _)"
-                className={`h-12 ${errors.username ? "border-red-500 focus:ring-red-500" : ""}`}
+                className={`h-12 ${
+                  errors.username ? "border-red-500 focus:ring-red-500" : ""
+                }`}
                 disabled={isSubmitting}
                 autoComplete="off"
               />
@@ -222,7 +254,8 @@ export function EmployeeFormModal({
                 </p>
               )}
               <p className="text-xs text-gray-500">
-                Tên đăng nhập sẽ được dùng để đăng nhập vào hệ thống. Chỉ chứa chữ thường, số và dấu gạch dưới.
+                Tên đăng nhập sẽ được dùng để đăng nhập vào hệ thống. Chỉ chứa
+                chữ thường, số và dấu gạch dưới.
               </p>
             </div>
           )}
@@ -230,7 +263,10 @@ export function EmployeeFormModal({
           {/* Password Field (Only for new employee) */}
           {!employee && (
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <Label
+                htmlFor="password"
+                className="text-sm font-bold text-gray-700 flex items-center gap-2"
+              >
                 <Lock className="h-4 w-4 text-blue-600" />
                 Mật khẩu <span className="text-red-500">*</span>
               </Label>
@@ -238,9 +274,13 @@ export function EmployeeFormModal({
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)"
-                className={`h-12 ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`}
+                className={`h-12 ${
+                  errors.password ? "border-red-500 focus:ring-red-500" : ""
+                }`}
                 disabled={isSubmitting}
                 autoComplete="new-password"
               />
@@ -258,11 +298,19 @@ export function EmployeeFormModal({
 
           {/* Role Field */}
           <div className="space-y-2">
-            <Label htmlFor="role" className="text-sm font-bold text-gray-700 flex items-center gap-2">
+            <Label
+              htmlFor="role"
+              className="text-sm font-bold text-gray-700 flex items-center gap-2"
+            >
               <Shield className="h-4 w-4 text-blue-600" />
               Vai trò <span className="text-red-500">*</span>
             </Label>
-            <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as EmployeeRole })}>
+            <Select
+              value={formData.role}
+              onValueChange={(value) =>
+                setFormData({ ...formData, role: value as EmployeeRole })
+              }
+            >
               <SelectTrigger className="h-12">
                 <SelectValue placeholder="Chọn vai trò" />
               </SelectTrigger>
@@ -272,7 +320,9 @@ export function EmployeeFormModal({
                     <div className="flex items-center gap-2">
                       <Shield className={`h-4 w-4 ${option.color}`} />
                       <span className="font-medium">{option.label}</span>
-                      <span className="text-xs text-gray-500">({option.value})</span>
+                      <span className="text-xs text-gray-500">
+                        ({option.value})
+                      </span>
                     </div>
                   </SelectItem>
                 ))}
@@ -286,17 +336,20 @@ export function EmployeeFormModal({
           {/* Current Info (for editing) */}
           {employee && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-semibold text-blue-900">Thông tin hiện tại:</p>
+              <p className="text-sm font-semibold text-blue-900">
+                Thông tin hiện tại:
+              </p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <p className="text-gray-600">Tên đăng nhập:</p>
                 <p className="font-medium text-gray-900">{employee.username}</p>
                 <p className="text-gray-600">Vai trò hiện tại:</p>
                 <p className="font-medium text-gray-900">
-                  {roleOptions.find(r => r.value === employee.role)?.label}
+                  {roleOptions.find((r) => r.value === employee.role)?.label}
                 </p>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                ⚠️ Tên đăng nhập không thể thay đổi. Để đổi mật khẩu, vui lòng dùng chức năng "Đổi mật khẩu".
+                ⚠️ Tên đăng nhập không thể thay đổi. Để đổi mật khẩu, vui lòng
+                dùng chức năng "Đổi mật khẩu".
               </p>
             </div>
           )}

@@ -10,25 +10,17 @@ import { ICONS } from "@/src/constants/icons.enum";
 import { useCheckIn } from "@/hooks/use-checkin";
 import { useNotification } from "@/hooks/use-notification";
 import type { Booking } from "@/lib/types/api";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { initCheckIn } from "@/lib/redux/slices/checkin.slice";
 
 export default function CheckInPage() {
   // Custom hooks for business logic
   const checkIn = useCheckIn();
   const notification = useNotification();
+  const dispatch = useAppDispatch();
 
   // Check-in handlers
-  const handleCheckInConfirm = async (
-    data: Parameters<typeof checkIn.handleConfirmCheckIn>[0]
-  ) => {
-    try {
-      const customerName = await checkIn.handleConfirmCheckIn(data);
-      notification.showSuccess(
-        `Check-in thành công cho ${customerName || "khách hàng"}!`
-      );
-    } catch {
-      notification.showError("Check-in thất bại. Vui lòng thử lại.");
-    }
-  };
+  // Check-in handlers (moved to modal)
 
   // Walk-in handler
   const handleWalkInConfirm = async (
@@ -40,9 +32,7 @@ export default function CheckInPage() {
         `Check-in khách vãng lai thành công cho ${data.customerName}!`
       );
     } catch (error) {
-      notification.showError(
-        "Walk-in check-in thất bại. Vui lòng thử lại."
-      );
+      notification.showError("Walk-in check-in thất bại. Vui lòng thử lại.");
       console.error("Walk-in error:", error);
     }
   };
@@ -112,7 +102,10 @@ export default function CheckInPage() {
         ) : (
           <CheckInResultsTable
             reservations={checkIn.results}
-            onCheckIn={checkIn.handleSelectBooking}
+            onCheckIn={(booking) => {
+              checkIn.handleSelectBooking(booking);
+              dispatch(initCheckIn({ bookingId: booking.id }));
+            }}
           />
         )}
       </div>
@@ -122,8 +115,6 @@ export default function CheckInPage() {
         open={checkIn.showModal}
         onOpenChange={checkIn.setShowModal}
         booking={checkIn.selectedBooking as Booking | null}
-        onConfirm={handleCheckInConfirm}
-        isLoading={checkIn.isLoading}
       />
 
       <WalkInModal

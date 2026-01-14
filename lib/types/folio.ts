@@ -26,6 +26,21 @@ export const TRANSACTION_TYPE_COLORS: Record<TransactionType, string> = {
   ADJUSTMENT: "bg-gray-100 text-gray-800",
 };
 
+export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
+
+export type PaymentMethod =
+  | "CASH"
+  | "CREDIT_CARD"
+  | "BANK_TRANSFER"
+  | "E_WALLET";
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  CASH: "Tiền mặt",
+  CREDIT_CARD: "Thẻ tín dụng",
+  BANK_TRANSFER: "Chuyển khoản",
+  E_WALLET: "Ví điện tử",
+};
+
 // Transaction Detail (individual charge allocation)
 export interface TransactionDetail {
   id: string;
@@ -41,23 +56,33 @@ export interface TransactionDetail {
 
 // Individual transaction
 export interface FolioTransaction {
-  transactionID: string;
-  folioID: string;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM:SS
+  // Schema fields
+  id: string; // was transactionID
+  bookingId: string | null; // was folioID?
   type: TransactionType;
-  description: string;
-  baseAmount: number; // Amount before discounts
-  discountAmount: number; // Total discounts applied
-  amount: number; // Final amount (baseAmount - discountAmount)
-  method?: string; // Payment method (CASH, CREDIT_CARD, etc.)
-  status: string; // Transaction status
-  createdBy: string; // Employee name
-  createdAt: string; // Full timestamp
-  isVoided?: boolean; // True if transaction was cancelled
+  baseAmount: number;
+  discountAmount: number;
+  amount: number;
+  method?: PaymentMethod | null;
+  status: TransactionStatus;
+
+  processedById: string | null;
+  occurredAt: string;
+  createdAt: string;
+
+  // Relations
+  details?: TransactionDetail[];
+
+  // Legacy / UI
+  transactionID?: string;
+  folioID?: string;
+  date?: string; // Derived from occurredAt
+  time?: string; // Derived from occurredAt
+  description: string; // Matches Schema
+  createdBy?: string; // from processedBy
+  isVoided?: boolean;
   voidedBy?: string;
   voidedAt?: string;
-  details?: TransactionDetail[]; // Breakdown by room/service
 }
 
 // Folio status
@@ -101,9 +126,9 @@ export interface PostPaymentFormData {
   mode?: "PAYMENT" | "DEPOSIT"; // Payment mode
 }
 
-// Payment method labels
-export const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: "Tiền mặt",
-  CARD: "Thẻ tín dụng/ghi nợ",
-  TRANSFER: "Chuyển khoản",
-};
+// Payment method labels (Moved up)
+// export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+//   CASH: "Tiền mặt",
+//   CARD: "Thẻ tín dụng/ghi nợ",
+//   TRANSFER: "Chuyển khoản",
+// };
